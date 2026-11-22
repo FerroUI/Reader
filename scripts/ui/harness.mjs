@@ -27,6 +27,15 @@ export async function createHarness(site, output) {
     await until(() => page.evaluate("!!globalThis.readerApp?.inspectView"), "Reader startup", 60000);
     await control(e => e.name === "SearchReader", "the search field");
   }
+  async function newDocument(method, params) {
+    const previous = await page.evaluate("performance.timeOrigin");
+    const result = await page.send(method, params);
+    assert(!result?.error && !result?.errorText, JSON.stringify(result));
+    await until(() => page.evaluate(`performance.timeOrigin !== ${JSON.stringify(previous)}`),
+      "a new document after navigation", 60000);
+  }
+  const reload = () => newDocument("Page.reload", {});
+  const navigate = url => newDocument("Page.navigate", { url });
   async function control(match, label) {
     return until(async () => {
       const matches = (await snapshot())?.elements.filter(e => e.hit && match(e)) || [];
@@ -63,5 +72,5 @@ export async function createHarness(site, output) {
       return view.width === width && view.height === height;
     }, `viewport ${width} × ${height}`);
   }
-  return { page, state, snapshot, healthy, until, ready, control, click, clickName, clickLabel, clickNavigation, clickText, edit, capture, resize };
+  return { page, state, snapshot, healthy, until, ready, reload, navigate, control, click, clickName, clickLabel, clickNavigation, clickText, edit, capture, resize };
 }

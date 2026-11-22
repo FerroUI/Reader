@@ -117,7 +117,7 @@ jobs:
       - name: Check feed and reader state
         run: |
           cargo test --locked -p reader-domain -p reader-state
-          node --test scripts/host.test.mjs
+          node --test scripts/*.test.mjs
       - name: Build the browser app
         run: bash scripts/build-browser.sh
       - name: Save compiled dependencies
@@ -137,6 +137,7 @@ jobs:
           key: ${{ steps.cargo.outputs.cache-primary-key }}
       - name: Verify rendered controls when requested
         if: contains(github.event.head_commit.message, '[verify-ui]') || inputs.verify_ui
+        timeout-minutes: 4
         run: node scripts/ui-smoke.mjs target/browser/reader-browser target/ui-smoke
       - name: Save requested visual verification
         if: always() && (contains(github.event.head_commit.message, '[verify-ui]') || inputs.verify_ui)

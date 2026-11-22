@@ -67,7 +67,7 @@ try {
     await check("atomic IndexedDB persistence survives reload", async () => {
       const expected = await h.state();
       await h.page.evaluate("readerApp.flushSave(); import('./host.js').then(m => m.flush())");
-      await h.page.send("Page.reload");
+      await h.reload();
       await h.ready();
       const actual = await h.state();
       assert.deepEqual(actual.feeds, expected.feeds);
@@ -126,13 +126,21 @@ try {
       await h.page.evaluate("import('./host.js').then(m => m.flush())");
       const url = new URL(h.page.url);
       url.search = "";
-      await h.page.send("Page.navigate", { url: url.href });
+      await h.navigate(url.href);
       await h.ready();
-      await h.page.evaluate("navigator.serviceWorker.ready");
-      await h.until(() => h.page.evaluate("!!navigator.serviceWorker.controller"), "offline worker activates");
-      await h.page.send("Network.emulateNetworkConditions", { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
-      await h.page.send("Page.reload");
+      const build = await h.page.evaluate("document.documentElement.dataset.readerBuild");
+      assert.match(build, /^[a-f0-9]{16}$/);
+      await h.until(() => h.page.evaluate("navigator.serviceWorker?.controller?.state === 'activated'"),
+        "offline worker activates", 30000);
+      assert(await h.page.evaluate("new URL(navigator.serviceWorker.controller.scriptURL).pathname.endsWith('/app-sw.js')"),
+        "Reader's own worker must control the offline navigation");
+      const offline = await h.page.send("Network.emulateNetworkConditions", { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
+      assert(!offline.error, JSON.stringify(offline));
+      await h.until(() => h.page.evaluate("navigator.onLine === false"), "browser network is offline");
+      await h.reload();
       await h.ready();
+      assert.equal(await h.page.evaluate("document.documentElement.dataset.readerBuild"), build,
+        "offline navigation must restore the installed application version");
       assert.equal((await h.state()).articles.length, 10000);
       await h.capture("10-offline");
       await h.page.send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });

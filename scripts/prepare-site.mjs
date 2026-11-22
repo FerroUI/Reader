@@ -59,13 +59,21 @@ export async function prepareSite(root, template) {
   for (const [name, bytes] of contents) digest.update(`\0${name}\0${bytes.length}\0`).update(bytes);
   const version = digest.digest("hex").slice(0, 16);
   const assets = names.map(name => `./${name.split(path.sep).map(encodeURIComponent).join("/")}`);
-  await writeFile(path.join(root, "index.html"), stampIndex(index, version));
+  // The version is derived from normalized inputs; hashes describe the final stamped bytes.
+  // Hashing before stamping the index would install an unverifiable, circular build manifest.
+  const stamped = stampIndex(index, version);
+  contents.set("index.html", Buffer.from(stamped));
+  const manifest = names.map((name, index) => {
+    const bytes = contents.get(name);
+    return { path: assets[index], sha256: createHash("sha256").update(bytes).digest("hex"), size: bytes.length };
+  });
+  await writeFile(path.join(root, "index.html"), stamped);
   await writeFile(path.join(root, "app-sw.js"), worker
     .replaceAll(versionMarker, version)
-    .replace(precacheMarker, JSON.stringify(assets)));
+    .replace(precacheMarker, JSON.stringify(manifest)));
   await writeFile(path.join(root, "build.json"), `${JSON.stringify({ version, assets: assets.length })}\n`);
   await writeFile(path.join(root, ".nojekyll"), "");
-  return { version, assets };
+  return { version, assets, manifest };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
