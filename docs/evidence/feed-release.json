@@ -1,0 +1,65 @@
+{
+  "application_revision": "eba78c5bcd25dc87ce1f5e5aafa32197199eb3ee",
+  "feed_implementation_revision": "49f06fcd48e41cce3124a7c5161fcd5d8f366981",
+  "build_id": "3e729d7df7656e42",
+  "workflow_run": 45065501775,
+  "workflow_url": "https://github.com/FerroUI/Reader/actions/runs/45065501775",
+  "build_result": "success",
+  "deploy_result": "success",
+  "live_url": "https://ferroui.com/Reader/#home",
+  "live_build_id_observed": "3e729d7df7656e42",
+  "verification_date": "2026-11-22",
+  "test_counts": {
+    "domain_state": 34,
+    "subscription_tree": 5,
+    "gesture_motion": 4,
+    "native_operations": 2,
+    "javascript": 41,
+    "rendered_browser": 24
+  },
+  "scenario_time_sum_ms": 40010,
+  "cross_origin_scenario_ms": 3110,
+  "offline_manifest_resources": 31,
+  "virtualized_snapshot": {
+    "article_records": 10000,
+    "article_containers": 28,
+    "native_visuals": 939
+  },
+  "live_observations": [
+    {
+      "action": "Subscribe through native controls",
+      "entered": "https://feeds.bbci.co.uk/news/rss.xml",
+      "title": "BBC News",
+      "visible_unread": 97,
+      "route": "#feed/16"
+    },
+    {
+      "action": "Subscribe with bare address through native controls",
+      "entered": "news.ycombinator.com/rss",
+      "title": "Hacker News",
+      "visible_unread": 10,
+      "route": "#feed/114"
+    },
+    {
+      "action": "Refresh newly added Hacker News through native controls",
+      "status": "Refresh complete.",
+      "visible_unread": 10,
+      "route": "#feed/114"
+    },
+    {
+      "action": "Open Reader settings",
+      "observed": "Automatic disclosure names rss2json; Direct only, Custom proxy and Save feed connection controls are present"
+    },
+    {
+      "action": "Activate updated offline application",
+      "observed": "Initial tab served prior build; closing the old Reader client and opening a fresh tab activated the verified build without clearing storage"
+    }
+  ],
+  "provider_item_count_guaranteed": false,
+  "physical_ios_keyboard_verified": false,
+  "full_historical_parity_established": false,
+  "prior_gate_failure": {
+    "workflow_run": 45064732347,
+    "cause": "Scoped diagnostic matcher excluded Chromium security-source CORS logs; transport rendered the fixture article. Corrected matcher and four unit checks passed in the final release."
+  }
+}

@@ -1,8 +1,51 @@
 # Verification record
 
+## Current feed-connection release — 22 November 2026
+
+The browser feed fix is deployed on [GitHub Pages](https://ferroui.com/Reader/#home). The final run passed **24 rendered-browser scenarios**, including a publisher that deliberately rejects cross-origin reads, and independent live Chrome checks successfully added **BBC News** and **Hacker News** through the native Subscribe control. The connection behavior and its limits are documented in [feed-connection.md](feed-connection.md).
+
+| Evidence | Observed result |
+| --- | --- |
+| Workflow | [45065501775](https://github.com/FerroUI/Reader/actions/runs/45065501775): checks, browser build and Pages deployment succeeded |
+| Deployed revision | [`eba78c5bcd25dc87ce1f5e5aafa32197199eb3ee`](https://github.com/FerroUI/Reader/commit/eba78c5bcd25dc87ce1f5e5aafa32197199eb3ee); feed implementation introduced by [`49f06fc`](https://github.com/FerroUI/Reader/commit/49f06fcd48e41cce3124a7c5161fcd5d8f366981) |
+| Build identifier | `3e729d7df7656e42`, also read from the deployed page's DOM |
+| Rust checks | **34 domain/state**, **5 tree**, **4 motion** and **2 native-operation** tests passed in CI; the native desktop host also compiled locally |
+| JavaScript checks | **41 passed**, including public-service normalization, routing/privacy guards, terminal errors, download limits, string parsing errors, rate-limit cooldowns and scoped Chromium diagnostic matching |
+| Rendered checks | **24 passed**; exact scenario names and durations preserved in [feed-verification-results.json](feed-verification-results.json) |
+| Cross-origin regression | **3,110ms** for discovery, subscription, refresh, missing-feed and malformed-feed cases |
+| Offline and virtualization | New-document offline reload passed with **31 verified resources** and **10,000 saved articles**; the stress snapshot retained **28 article containers / 939 native visuals** |
+| Release metadata | [feed-release.json](evidence/feed-release.json) records the revision, build, workflow, counts and live observations |
+
+### What the cross-origin fixture proves
+
+The isolated test runs Reader, a publisher and a raw-response relay on separate origins. The publisher deliberately omits `Access-Control-Allow-Origin`. Chromium actually blocks its direct requests, and Automatic mode uses the saved custom relay, exercising migration precedence without depending on a public service during CI.
+
+The native Subscribe control accepts an HTML page with a leading comment, a relative `<base>` and a relative Atom alternate. Rust parses the resulting article, the subscription retains the publisher feed URL, and relative article links resolve against that publisher. Refresh retains the feed and existing article identities and adds exactly one new article. HTTP 404 and HTTP 200 with malformed XML both report meaningful native status messages, preserve the current feed route and create no empty subscription. A cookie seeded in the isolated profile reaches neither publisher nor relay; authorization headers are also absent.
+
+| Preserved evidence | Content |
+| --- | --- |
+| [Subscription screenshot](screenshots/12-cross-origin-feed.png) / [control tree](evidence/12-cross-origin-feed.json) | Article rendered after enforced CORS failure and relay discovery |
+| [Missing feed screenshot](screenshots/12-feed-error.png) / [control tree](evidence/12-feed-error.json) | Readable HTTP 404 without navigation or subscription mutation |
+| [Malformed feed screenshot](screenshots/12-feed-parse-error.png) / [control tree](evidence/12-feed-parse-error.json) | Rust XML error retained across the JavaScript boundary |
+| [Network evidence](evidence/12-feed-network.json) | Exact expected CORS diagnostics, publisher/relay requests, credential omission and refresh result |
+
+The initial [45064732347](https://github.com/FerroUI/Reader/actions/runs/45064732347) gate rendered the cross-origin article but failed because its diagnostic filter excluded Chromium's security-source CORS entry. The final matcher accepts only the exact expected CORS sentence with matching publisher URL and caller origin. Four focused tests cover this diagnostic shape and rejection of unrelated errors; console errors and exceptions remain fatal. The failed run did not deploy.
+
+### Independent checks on the published application
+
+Chrome initially loaded the preceding offline build. Closing the old Reader client and opening a new tab activated `3e729d7df7656e42` normally, without clearing the library or forcing service-worker activation.
+
+Using the visible Subscribe field, `https://feeds.bbci.co.uk/news/rss.xml` produced **BBC News with 97 unread items** at the time of observation. Entering the bare address `news.ycombinator.com/rss` produced a new **Hacker News subscription with 10 unread items**. Refresh completed on that same feed route and retained the 10-item count. Reader settings displayed the Automatic disclosure naming rss2json and the Direct only, Custom proxy and Save feed connection controls. These counts describe that observation; they are not provider item-count guarantees.
+
+The live checks establish successful public subscriptions on the deployed build. The deterministic CI fixture separately establishes actual CORS rejection and relay behavior. Public-provider availability, quotas, cached responses and returned item counts remain external dependencies. JSON Feed requires direct access or a custom raw proxy; blocked website HTML may require the actual RSS/Atom URL. See the [connection guide](feed-connection.md) for private-feed handling and these boundaries.
+
+The previous UI review below is retained as historical evidence for its explicitly identified revision. Its screenshots and per-scenario timings were not relabeled as captures from this feed release. Existing touch, responsive-editor, browser-history and offline scenarios ran again in the current 24-check gate. Physical iOS testing and complete historical Google service/pixel parity remain unverified.
+
+## Previous UI/UX review — revision 05a865b
+
 The final review release passed **all 23 rendered-browser checks**, including source-feed Home navigation, article tag links, empty-stream recovery, anchored Subscribe editing across a narrow resize, the subscription-tree keyboard cursor, responsive shortcut help and dated mark-all confirmation. The existing touch, browser-history, persistence and new-document offline checks also passed with **10,000 saved articles**. Build and deployment succeeded, and the deployed build was independently observed in Chrome. These results verify the recorded implementation and scenarios; they do not establish 100% historical visual or service parity. See [parity.md](parity.md) for boundaries and [reference.md](reference.md) for the original sources.
 
-## Reviewed release — 22 November 2026
+### Reviewed release — 22 November 2026
 
 | Evidence | Observed result |
 | --- | --- |
@@ -15,7 +58,7 @@ The final review release passed **all 23 rendered-browser checks**, including so
 | Live input/navigation | The 302px Subscribe popup was anchored to its button; its focused DOM input exposed URL/Go hints with capitalization disabled. Browser Back dismissed the popup and retained Home after asynchronous navigation completed |
 | Persistent evidence | [Screenshots](screenshots/) and [native-control snapshots](evidence/) copied from this release's CI artifact |
 
-## Checks and measured scope
+### Checks and measured scope
 
 | Check family | Verified evidence |
 | --- | --- |
@@ -58,7 +101,7 @@ The following durations are the final release's recorded scenario times.
 
 The scenario times sum to **33,211 ms**. They include harness readiness, assertions and capture work. The **1,606 ms first-paint step** is a headless CI observation, not production download latency, a memory measurement or a device-independent startup guarantee.
 
-### Viewports and control counts
+#### Viewports and control counts
 
 Desktop captures use **1363 × 936**. Touch checks use **390 × 844**, small portrait dialogs **320 × 568**, and landscape dialogs **844 × 390**. The keyboard scenario overrides the public visual-viewport values to **390 × 380**, with **offsetTop = 30** and scale 1. It verifies both the DOM host rectangle and the native dialog bounds, text and focus, then restores the viewport. This is a synthetic contract test, not a physical phone keyboard test.
 
@@ -79,7 +122,7 @@ The new [empty-feed snapshot](evidence/11-empty-feed.json) measures its message 
 | Responsive quick add | [Desktop anchored popup](screenshots/subscribe.png), [phone editor after appended typing](screenshots/mobile-subscribe.png) |
 | Help and confirmation | [Desktop shortcuts](screenshots/shortcuts.png), [phone shortcuts](screenshots/mobile-shortcuts.png), [dated mark-all confirmation](screenshots/mark-confirmation.png) |
 
-## Fixes exercised by the review
+### Fixes exercised by the review
 
 Home previews now open the selected article in its source feed, with the title, date and compact summary following the preserved overview renderer. Article footers show Add tags when empty and Edit tags with individual navigation links when populated. Empty unread feedback clears only the current stream's unread filter; empty searches retain their query. The original message box is content-sized rather than stretched to the reading viewport. The final gate explicitly rejects that previous layout defect.
 
@@ -95,7 +138,7 @@ Both hosts validate a library generation before applying pending feed results. F
 
 The final browser-only adapter reads the focused native `TextBox`'s `TextInputOptions` on `GotFocus`, before the framework focuses its shared browser input. It updates keyboard/return/capitalization hints without polling, field-name inference, refocusing, or changing input type, text, selection or composition. Autocorrection, spellcheck and suggestions remain off for plain TextBoxes; the framework's exact-edit textarea is untouched. Search exposes **Search/Search** and Subscribe exposes **URL/Go**. The final rendered gate checks the actual DOM attributes, and focused JavaScript tests cover preservation of text, selection and composition state while the shared input changes hints.
 
-## Reload, offline integrity and limits
+### Reload, offline integrity and limits
 
 Reload checks wait for a changed `performance.timeOrigin`, with bounded readiness and protocol-error checks. The offline scenario requires Reader's activated worker, `navigator.onLine === false`, a new document after reload, a matching build identifier and all **10,000 saved articles**. Runtime-error assertions are part of the gate.
 
@@ -105,7 +148,7 @@ During independent live verification, older duplicate Reader clients initially k
 
 **Physical iOS/Safari keyboards and hardware gesture variation have not been checked.** Chromium's dispatched touch events and synthetic visual-viewport changes establish the host/native contract exercised here; they do not reproduce every mobile browser's keyboard, zoom or accessibility behavior. Native share/clipboard/file/print availability follows browser permissions and platform support; the test suite does not operate every OS sharing sheet or printer. External publisher images are not all cached. The narrow UI is a modern adaptation of final desktop Reader, not a verified replica of Google's separate historical mobile client. Historical pixel parity and retired Google services remain outside these verification claims.
 
-## Earlier verification history
+### Earlier verification history
 
 - [45042481284](https://github.com/FerroUI/Reader/actions/runs/45042481284), revision `d6906685190049bac9693174fc20736cfd5f4d05`, build `b7fd96dc173b6471`: the preceding **17-check** release passed with 26 domain/state, four motion, two native-operation and 18 JavaScript tests. Its rendered scenarios totaled 24,847ms; the first-paint step was 2,087ms and the local native check took 2.19 seconds. It recorded the same 28-container/939-visual stress snapshot and 26-resource offline manifest. Independent Chrome observation confirmed native Home, URL/Go hints and Back dismissal after old clients released the preceding `f26d4636d1bb37b3` worker. Its [complete verification record](https://github.com/FerroUI/Reader/blob/c8162dc3831f0a1100b033380526c41bf28e0492/docs/verification.md) preserves the earlier per-scenario durations and evidence references.
 - [45055241079](https://github.com/FerroUI/Reader/actions/runs/45055241079), revision `c8162dc3831f0a1100b033380526c41bf28e0492`: the first expanded review gate exposed the caret reset during desktop-to-phone editor replacement. Screenshot review also found the stretched empty-message border. The final release above corrects both and passes all 23 scenarios, including the new empty-height assertion.
@@ -113,7 +156,7 @@ During independent live verification, older duplicate Reader clients initially k
 - [45034186372](https://github.com/FerroUI/Reader/actions/runs/45034186372), revision `5a4985b4`: the earlier strict **11-check** gate established verified new-document offline reload with 10,000 articles.
 - [45031751686](https://github.com/FerroUI/Reader/actions/runs/45031751686), revision `20167c92`, and [45033246424](https://github.com/FerroUI/Reader/actions/runs/45033246424), revision `b3477eb`: early screenshots informed Home typography/columns, expanded spacing, checkbox/footer icons and narrow-header fixes. Their reload assertions could inspect the old document and had an unbounded worker wait. Later strict gates supersede that reload/offline evidence.
 
-## Reproduce
+### Reproduce
 
 ```bash
 cargo test --locked -p reader-domain -p reader-state

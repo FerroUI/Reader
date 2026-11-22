@@ -1,0 +1,129 @@
+{
+  "publisherUrl": "http://127.0.0.1:36397/publisher/feed.xml",
+  "subscriptionId": 18,
+  "articleCountAfterRefresh": 2,
+  "cookieSeeded": true,
+  "error": "The feed address was not found (HTTP 404 from the custom feed proxy).",
+  "parseError": "The feed is not valid XML: expected 'channel' tag, not 'rss' at 1:47",
+  "expectedNetworkLogs": [
+    {
+      "kind": "cors-policy",
+      "url": "http://127.0.0.1:36397/publisher/index.html",
+      "text": "Access to fetch at 'http://127.0.0.1:36397/publisher/index.html' from origin 'http://127.0.0.1:42551' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "kind": "cors-load",
+      "url": "http://127.0.0.1:36397/publisher/index.html",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "kind": "cors-policy",
+      "url": "http://127.0.0.1:36397/publisher/feed.xml",
+      "text": "Access to fetch at 'http://127.0.0.1:36397/publisher/feed.xml' from origin 'http://127.0.0.1:42551' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "kind": "cors-load",
+      "url": "http://127.0.0.1:36397/publisher/feed.xml",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "kind": "cors-policy",
+      "url": "http://127.0.0.1:36397/publisher/feed.xml",
+      "text": "Access to fetch at 'http://127.0.0.1:36397/publisher/feed.xml' from origin 'http://127.0.0.1:42551' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "kind": "cors-load",
+      "url": "http://127.0.0.1:36397/publisher/feed.xml",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "kind": "cors-policy",
+      "url": "http://127.0.0.1:36397/publisher/missing.xml",
+      "text": "Access to fetch at 'http://127.0.0.1:36397/publisher/missing.xml' from origin 'http://127.0.0.1:42551' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "kind": "cors-load",
+      "url": "http://127.0.0.1:36397/publisher/missing.xml",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    },
+    {
+      "kind": "http-status",
+      "url": "http://127.0.0.1:45993/relay?url=http%3A%2F%2F127.0.0.1%3A36397%2Fpublisher%2Fmissing.xml",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "kind": "cors-policy",
+      "url": "http://127.0.0.1:36397/publisher/malformed.xml",
+      "text": "Access to fetch at 'http://127.0.0.1:36397/publisher/malformed.xml' from origin 'http://127.0.0.1:42551' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."
+    },
+    {
+      "kind": "cors-load",
+      "url": "http://127.0.0.1:36397/publisher/malformed.xml",
+      "text": "Failed to load resource: net::ERR_FAILED"
+    }
+  ],
+  "publisherRequests": [
+    {
+      "path": "/publisher/index.html",
+      "origin": "http://127.0.0.1:42551",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "path": "/publisher/feed.xml",
+      "origin": "http://127.0.0.1:42551",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "path": "/publisher/feed.xml",
+      "origin": "http://127.0.0.1:42551",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "path": "/publisher/missing.xml",
+      "origin": "http://127.0.0.1:42551",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "path": "/publisher/malformed.xml",
+      "origin": "http://127.0.0.1:42551",
+      "cookie": "",
+      "authorization": ""
+    }
+  ],
+  "relayRequests": [
+    {
+      "target": "http://127.0.0.1:36397/publisher/index.html",
+      "origin": "http://127.0.0.1:42551",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "target": "http://127.0.0.1:36397/publisher/feed.xml",
+      "origin": "http://127.0.0.1:42551",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "target": "http://127.0.0.1:36397/publisher/feed.xml",
+      "origin": "http://127.0.0.1:42551",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "target": "http://127.0.0.1:36397/publisher/missing.xml",
+      "origin": "http://127.0.0.1:42551",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "target": "http://127.0.0.1:36397/publisher/malformed.xml",
+      "origin": "http://127.0.0.1:42551",
+      "cookie": "",
+      "authorization": ""
+    }
+  ]
+}

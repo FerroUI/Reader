@@ -1,0 +1,101 @@
+{
+  "passed": 24,
+  "checks": [
+    {
+      "name": "native first paint",
+      "milliseconds": 2213
+    },
+    {
+      "name": "stream navigation and list shortcut",
+      "milliseconds": 1315
+    },
+    {
+      "name": "scan, open, star, tag, and keep unread",
+      "milliseconds": 953
+    },
+    {
+      "name": "search typing does not trigger reading shortcuts",
+      "milliseconds": 760
+    },
+    {
+      "name": "browser modifiers and composition keys do not execute Reader commands",
+      "milliseconds": 573
+    },
+    {
+      "name": "feed subscription through the browser network host",
+      "milliseconds": 935
+    },
+    {
+      "name": "preferences menu and exact compact density",
+      "milliseconds": 1603
+    },
+    {
+      "name": "atomic IndexedDB persistence survives reload",
+      "milliseconds": 1473
+    },
+    {
+      "name": "competing storage writers cannot silently overwrite a newer generation",
+      "milliseconds": 14
+    },
+    {
+      "name": "home stories open their source and article tags navigate",
+      "milliseconds": 1974
+    },
+    {
+      "name": "empty unread recovery keeps its feed and search keeps its query",
+      "milliseconds": 1722
+    },
+    {
+      "name": "desktop quick add anchors, cancels and survives a narrow resize",
+      "milliseconds": 2117
+    },
+    {
+      "name": "subscription cursor scans, collapses and opens without reading early",
+      "milliseconds": 1219
+    },
+    {
+      "name": "keyboard help keeps four groups and a reachable phone close action",
+      "milliseconds": 1366
+    },
+    {
+      "name": "dated mark-all confirmation preserves cutoff and opt-out",
+      "milliseconds": 1697
+    },
+    {
+      "name": "cross-origin discovery, relay subscription, refresh and failure reporting",
+      "milliseconds": 3110
+    },
+    {
+      "name": "phone touch scrolling, cancellation and tap-to-expand",
+      "milliseconds": 4075
+    },
+    {
+      "name": "browser Back dismisses mobile overlays before changing streams",
+      "milliseconds": 1058
+    },
+    {
+      "name": "held subscription menus, cancellation, reordering and folder movement",
+      "milliseconds": 4501
+    },
+    {
+      "name": "small portrait and landscape dialogs keep actions reachable",
+      "milliseconds": 1083
+    },
+    {
+      "name": "visual viewport keyboard resize preserves dialog input and focus",
+      "milliseconds": 945
+    },
+    {
+      "name": "expanded read tracking follows user scrolling and preserves Keep unread",
+      "milliseconds": 1466
+    },
+    {
+      "name": "ten thousand items keep a bounded native control tree",
+      "milliseconds": 1191
+    },
+    {
+      "name": "installed application and saved library reload without network",
+      "milliseconds": 2647
+    }
+  ]
+}
