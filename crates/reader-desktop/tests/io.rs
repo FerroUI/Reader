@@ -95,7 +95,7 @@ fn malformed_library_is_preserved_before_new_saves_are_allowed() {
 #[test]
 fn shutdown_barrier_persists_the_latest_coalesced_snapshot_and_reports_failure() {
     let directory = Directory::new();
-    let writer = writer::Writer::new(directory.0.clone(), true, false);
+    let writer = writer::Writer::new(directory.0.clone(), true);
     for number in 0..100 {
         writer.submit(&format!("{{\"number\":{number}}}")).unwrap();
     }
@@ -109,7 +109,7 @@ fn shutdown_barrier_persists_the_latest_coalesced_snapshot_and_reports_failure()
 
     let invalid = directory.0.join("ordinary-file");
     std::fs::write(&invalid, "original").unwrap();
-    let writer = writer::Writer::new(invalid.clone(), true, false);
+    let writer = writer::Writer::new(invalid.clone(), true);
     writer.submit("replacement").unwrap();
     assert!(writer.wait().is_err());
     assert!(writer.error().is_some());

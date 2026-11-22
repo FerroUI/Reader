@@ -12,7 +12,6 @@ use ferroui_base::threading::{DispatcherPriority, DispatcherTimer};
 use ferroui_controls::{AppBuilder, Application, Control, Window};
 use ferroui_desktop::AppBuilderDesktopExtensions;
 use ferroui_fonts_inter::AppBuilderExtension;
-use reader_domain::AppState;
 use reader_state::AppViewModel;
 use std::{
     cell::{Cell, RefCell},
@@ -22,7 +21,6 @@ use std::{
 
 fn main() {
     let args = std::env::args().skip(1).collect::<Vec<_>>();
-    let demo = args.iter().any(|arg| arg == "--demo");
     AppBuilder::configure::<Application>()
         .use_platform_detect()
         .with_inter_font()
@@ -35,12 +33,8 @@ fn main() {
             reader_controls::install_theme(app);
             let now = Utc::now().timestamp();
             let directory = persistence::data_directory();
-            let loaded = if demo {
-                persistence::Loaded { state: AppState::sample(now), warning: None, writable: true }
-            } else {
-                persistence::load(&directory, now)
-            };
-            let writer = Rc::new(writer::Writer::new(directory.clone(), loaded.writable, demo));
+            let loaded = persistence::load(&directory, now);
+            let writer = Rc::new(writer::Writer::new(directory.clone(), loaded.writable));
             let saving = writer.clone();
             let vm = AppViewModel::new(loaded.state, now, Rc::new(move |json| saving.submit(json)));
             let window = Window::new();
@@ -50,8 +44,10 @@ fn main() {
             window.set_min_width(360.0);
             window.set_min_height(420.0);
             services::install(&vm, &window, directory);
+            let save_failed = loaded.changed && vm.persist_initial_state().is_err();
             if let Some(warning) = loaded.warning { vm.report_error(warning); }
             window.set_content(Some(Control::boxed(&reader_ui::create_view(vm.clone()))));
+            if !save_failed { vm.refresh_initial_feeds(); }
             let layout_vm = Rc::downgrade(&vm);
             let layout_window = window.downgrade();
             window.layout_updated(move || {

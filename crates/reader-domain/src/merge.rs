@@ -59,11 +59,11 @@ impl AppState {
             ..Changes::default()
         };
         let was_sample = self.feed(id).is_some_and(|f| f.sample);
-        if was_sample {
-            // The welcome library is explicitly illustrative; replace its unread sample rows with actual publisher data.
+        if let Some(source) = self.feed(id).cloned() {
+            // A legacy backup can still contain synthetic rows. Match their
+            // exact fixture identity/content, never arbitrary publisher data.
             self.articles.retain(|a| {
-                let remove =
-                    a.feed_id == id && !a.starred && a.tags.is_empty() && a.note.is_empty();
+                let remove = a.feed_id == id && crate::legacy_samples::removable_sample(a, &source);
                 if remove {
                     changes.removed.push(a.id);
                 }

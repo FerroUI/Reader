@@ -17,14 +17,13 @@ pub struct Writer {
     state: Arc<(Mutex<Pending>, Condvar)>,
     thread: Mutex<Option<JoinHandle<()>>>,
     writable: bool,
-    demo: bool,
 }
 
 impl Writer {
-    pub fn new(directory: PathBuf, writable: bool, demo: bool) -> Self {
+    pub fn new(directory: PathBuf, writable: bool) -> Self {
         let state = Arc::new((Mutex::new(Pending::default()), Condvar::new()));
         let worker_state = state.clone();
-        let worker = if writable && !demo {
+        let worker = if writable {
             std::thread::Builder::new()
                 .name("reader-save".into())
                 .spawn(move || loop {
@@ -62,14 +61,10 @@ impl Writer {
             state,
             thread: Mutex::new(thread),
             writable,
-            demo,
         }
     }
 
     pub fn submit(&self, json: &str) -> Result<(), String> {
-        if self.demo {
-            return Ok(());
-        }
         if !self.writable {
             return Err("Saving is disabled until the original library has been backed up.".into());
         }

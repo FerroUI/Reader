@@ -53,6 +53,10 @@ pub fn finish_refresh() {
         vm.finish_refresh();
     }
 }
+#[wasm_bindgen(js_name = refreshInitialFeeds)]
+pub fn refresh_initial_feeds() -> bool {
+    vm().is_ok_and(|vm| vm.refresh_initial_feeds())
+}
 #[wasm_bindgen(js_name = importOpml)]
 pub fn import_opml(contents: &str) -> Result<u32, JsValue> {
     vm()?.import_opml(contents).map(|n| n as u32).map_err(error)

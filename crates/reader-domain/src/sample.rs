@@ -1,7 +1,7 @@
 use crate::{AppState, Article, Feed};
 
 impl AppState {
-    /// Original, clearly labelled sample articles; the first real refresh replaces them.
+    /// Deterministic test data. This module is excluded from application builds.
     pub fn sample(now: i64) -> Self {
         let mut state = Self::new();
         let feeds = [

@@ -1,6 +1,23 @@
 # Feed connections in the browser
 
-Choose **Subscribe**, enter a feed address and select **Add**. Reader accepts full HTTP/HTTPS URLs and bare website addresses such as `example.com/feed.xml`; bare addresses use HTTPS. Embedded usernames/passwords and unsupported schemes are rejected. A new subscription is created only after a successful download and feed parse.
+Choose **Subscribe**, enter a feed address and select **Add**. Reader accepts full HTTP/HTTPS URLs and bare website addresses such as `example.com/feed.xml`; bare addresses use HTTPS. Embedded usernames/passwords and unsupported schemes are rejected. When you use Subscribe, the new subscription is committed only after a successful download and feed parse.
+
+## Default subscriptions
+
+A fresh library starts with six real publisher subscriptions, grouped into three folders, and fetches their articles on first use. There are no bundled illustrative stories. The links below are the publishers' own RSS/Atom endpoints:
+
+| Folder | Publisher | Feed address |
+| --- | --- | --- |
+| Technology | [Hacker News](https://news.ycombinator.com/) | [news.ycombinator.com/rss](https://news.ycombinator.com/rss) |
+| Technology | [Ars Technica](https://arstechnica.com/rss-feeds/) | [feeds.arstechnica.com/arstechnica/index](https://feeds.arstechnica.com/arstechnica/index) |
+| Technology | [The Verge](https://www.theverge.com/) | [theverge.com/rss/index.xml](https://www.theverge.com/rss/index.xml) |
+| Development | [Rust Blog](https://blog.rust-lang.org/) | [blog.rust-lang.org/feed.xml](https://blog.rust-lang.org/feed.xml) |
+| Development | [GitHub Blog](https://github.blog/) | [github.blog/feed/](https://github.blog/feed/) |
+| News | [BBC News](https://www.bbc.com/news) | [feeds.bbci.co.uk/news/rss.xml](https://feeds.bbci.co.uk/news/rss.xml) |
+
+These are ordinary subscriptions: you can rename them, move them between folders or unsubscribe. First-use setup does not replace an established user library or re-add defaults after you intentionally empty the library. Add more sources through Subscribe, Explore or an OPML import.
+
+The initial fetch uses the same connection policy as a manual refresh. Articles appear as publishers respond; an unavailable source does not cause Reader to manufacture replacement content. If you start offline or a request fails, reconnect and choose **Refresh**. Publisher or public-service caching, availability and item limits still apply.
 
 ## Why some publishers need a relay
 

@@ -13,6 +13,7 @@ pub struct Loaded {
     pub state: AppState,
     pub warning: Option<String>,
     pub writable: bool,
+    pub changed: bool,
 }
 
 pub fn data_directory() -> PathBuf {
@@ -44,21 +45,26 @@ pub fn read_document(path: &Path) -> Result<String, String> {
     Ok(text)
 }
 
-pub fn load(directory: &Path, now: i64) -> Loaded {
+pub fn load(directory: &Path, _now: i64) -> Loaded {
     let path = directory.join("reader.json");
     if !path.exists() {
         return Loaded {
-            state: AppState::sample(now),
+            state: AppState::with_default_feeds(),
             warning: None,
             writable: true,
+            changed: true,
         };
     }
     match read_document(&path).and_then(|text| AppState::from_json(&text)) {
-        Ok(state) => Loaded {
-            state,
-            warning: None,
-            writable: true,
-        },
+        Ok(mut state) => {
+            let changed = state.migrate_legacy_samples();
+            Loaded {
+                state,
+                warning: None,
+                writable: true,
+                changed,
+            }
+        }
         Err(error) => {
             let recovery = directory.join(format!(
                 "reader-recovery-{}-{}.json",
@@ -80,6 +86,7 @@ pub fn load(directory: &Path, now: i64) -> Loaded {
                     "Could not load your saved library: {error}. {explanation}"
                 )),
                 writable: copied,
+                changed: false,
             }
         }
     }

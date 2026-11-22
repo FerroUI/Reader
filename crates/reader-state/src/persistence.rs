@@ -2,6 +2,12 @@ use crate::{history::UndoEntry, AppViewModel, HostRequest};
 use reader_domain::{Action, AppState, Changes};
 
 impl AppViewModel {
+    /// Persist first-use subscriptions or a saved-library migration before the
+    /// initial network response. In particular, an offline start stays durable.
+    pub fn persist_initial_state(&self) -> Result<(), String> {
+        self.dirty.set(true);
+        self.flush()
+    }
     /// Asynchronous hosts call this when a queued write fails after the synchronous save callback returned.
     pub fn persistence_failed(&self, message: String) {
         self.dirty.set(true);

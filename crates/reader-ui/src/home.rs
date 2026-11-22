@@ -1,3 +1,4 @@
+mod empty;
 mod preview;
 use crate::session::{Panel, Session};
 use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
@@ -86,7 +87,7 @@ fn welcome(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             }
         }
         if groups == 0 {
-            content=content.child(text_block().text("You're all caught up!").font_size(20.0)).child(paragraph("There are no unread items in your subscriptions. Refresh to check for new stories."));
+            content = content.child(empty::view(vm.clone()));
         }
     }
     content = content.child(link(
@@ -119,13 +120,12 @@ fn welcome(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         }});
     overview = overview.child(tips);
     let about = ui.clone();
-    let mut footer = stack_panel().spacing(9.0).horizontal_alignment(H::Center);
-    if vm.feeds().iter().any(|feed| feed.sample) {
-        footer=footer.child(text_block().text("This starter library contains example articles. Add subscriptions to read live feeds.").font_size(11.0).foreground("#777777").text_wrapping(TextWrapping::Wrap));
-    }
-    footer = footer.child(link("About FerroUI Reader", move || {
-        about.show(Panel::About)
-    }));
+    let footer = stack_panel()
+        .spacing(9.0)
+        .horizontal_alignment(H::Center)
+        .child(link("About FerroUI Reader", move || {
+            about.show(Panel::About)
+        }));
     overview = overview.child(
         border()
             .grid_column_span(if wide { 2 } else { 1 })
@@ -232,35 +232,24 @@ fn explore(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             ],
             10.0,
         ));
-    for (title, description, url) in [
-        (
-            "Rust Blog",
-            "Updates from the Rust programming language team.",
-            "https://blog.rust-lang.org/feed.xml",
-        ),
-        (
-            "NASA",
-            "Discoveries, missions and stories from space.",
-            "https://www.nasa.gov/feed/",
-        ),
-        (
-            "BBC World News",
-            "The latest world news.",
-            "https://feeds.bbci.co.uk/news/world/rss.xml",
-        ),
-        (
-            "GitHub Blog",
-            "Product news and stories for developers.",
-            "https://github.blog/feed/",
-        ),
-    ] {
+    for feed in reader_domain::DEFAULT_FEEDS {
+        let (title, description, url) = (feed.title, feed.description, feed.url);
         let model = vm.clone();
+        let existing = vm
+            .state()
+            .feeds
+            .iter()
+            .find(|saved| saved.url == url)
+            .map(|saved| saved.id);
         content=content.child(separator()).child(rsx!{Grid{column_definitions:if narrow{"*"}else{"*,Auto"},row_definitions:if narrow{"Auto,Auto"}else{"Auto"},column_spacing:20.0,row_spacing:8.0,
         StackPanel{spacing:6.0,
             TextBlock{text:title,font_size:16.0,font_weight:FontWeight::Bold,foreground:"#1155CC",text_wrapping:TextWrapping::Wrap}
             {paragraph(description)}
         }
-        Border{Grid.column:if narrow{0}else{1},Grid.row:if narrow{1}else{0},horizontal_alignment:if narrow{H::Left}else{H::Stretch},vertical_alignment:V::Center,{reader_controls::action("Subscribe",move||model.subscribe(url.to_string()))}}
+        Border{Grid.column:if narrow{0}else{1},Grid.row:if narrow{1}else{0},horizontal_alignment:if narrow{H::Left}else{H::Stretch},vertical_alignment:V::Center,{reader_controls::action(if existing.is_some(){"Read"}else{"Subscribe"},move||{
+            if let Some(id)=existing { model.navigate(View::Feed(id)); }
+            else { model.subscribe(url.to_string()); }
+        })}}
     }});
     }
     scroll(content.into(), narrow)

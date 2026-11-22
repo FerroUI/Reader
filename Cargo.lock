@@ -1221,6 +1221,7 @@ name = "reader-domain"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "reader-domain",
  "roxmltree",
  "serde",
  "serde_json",

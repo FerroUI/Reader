@@ -4,6 +4,7 @@ mod exports;
 mod host;
 mod input_hints;
 mod inspection;
+mod startup;
 
 use ferroui_browser::{BrowserAccessibilityMode, BrowserAppBuilder, BrowserPlatformOptions};
 use ferroui_controls::AppBuilder;
@@ -13,18 +14,12 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = runMain)]
 pub fn run_main(
-    query: &str,
     regular: Vec<u8>,
     bold: Vec<u8>,
     italic: Vec<u8>,
     bold_italic: Vec<u8>,
     serif: Vec<u8>,
 ) -> Result<(), JsValue> {
-    app::set_demo(
-        query
-            .split('&')
-            .any(|p| p.trim_start_matches('?') == "demo=1"),
-    );
     let bytes = RefCell::new(Some(vec![regular, bold, italic, bold_italic, serif]));
     let font_error = Rc::new(RefCell::new(None));
     let result = font_error.clone();

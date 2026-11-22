@@ -2,7 +2,7 @@
 
 A feed reader in Rust that recreates Google Reader's final desktop interface with **FerroUI**. The browser and desktop hosts run the same declarative `rsx!` views, Material-based control themes, ReactiveUI view model and DynamicData article projections.
 
-**Live application:** [ferroui.com/Reader](https://ferroui.com/Reader/) · [Sample library](https://ferroui.com/Reader/?demo=1) · [Pages alias](https://ferroui.github.io/Reader/) · [Build and publish](https://github.com/FerroUI/Reader/actions/workflows/pages.yml)
+**Live application:** [ferroui.com/Reader](https://ferroui.com/Reader/) · [Pages alias](https://ferroui.github.io/Reader/) · [Build and publish](https://github.com/FerroUI/Reader/actions/workflows/pages.yml)
 
 The workflow publishes successful builds from `main`; the deployment job is the source of truth for the currently published revision. This repository implements the core reading and subscription workflows. It does **not establish 100% visual or feature parity** with the retired Google service. [Fidelity and feature coverage](docs/parity.md) distinguishes the implemented experience, adaptations and remaining gaps. [Reference research](docs/reference.md) records preserved original CSS, JavaScript, screenshots and official feature announcements.
 
@@ -22,7 +22,17 @@ Actual browser verification captures: [Home](docs/screenshots/home.png) · [Expa
 - Open original articles, copy their links, invoke the browser's sharing interface where supported, open an email draft and print an article.
 - Keep a local library between launches. The browser caches the application for offline use after a complete successful installation; already saved article text remains readable offline.
 
-A first launch includes a clearly identified starter library. Its articles are examples, not newly downloaded publisher content. Add your own subscriptions or import OPML to read live feeds. `?demo=1` in the browser and `--demo` on desktop create a separate in-memory sample session that does not save over the normal library.
+### Real subscriptions on first use
+
+A fresh library starts with six real subscriptions and fetches their articles on first use. Reader does not bundle invented stories or publish an illustrative feed session.
+
+| Folder | Default subscriptions |
+| --- | --- |
+| Technology | Hacker News, Ars Technica, The Verge |
+| Development | Rust Blog, GitHub Blog |
+| News | BBC News |
+
+The articles come from each publisher through the normal feed connection. If a connection fails or you are offline, the subscription remains available to refresh when you reconnect. You can unsubscribe, move or rename any default feed, add your own subscriptions, or import OPML. First-use setup does not overwrite an established user library or refill a library you have intentionally emptied. The [default feed addresses and connection guide](docs/feed-connection.md#default-subscriptions) describe the sources and browser transport.
 
 ### Reading on a phone or tablet
 
@@ -47,7 +57,7 @@ bash scripts/build-browser.sh
 python3 -m http.server 8080 --directory target/browser/reader-browser
 ```
 
-Open [localhost:8080](http://localhost:8080/) or [localhost:8080/?demo=1](http://localhost:8080/?demo=1). Serve the output through HTTP; opening `index.html` as a local file does not provide the browser capabilities the app needs.
+Open [localhost:8080](http://localhost:8080/). Serve the output through HTTP; opening `index.html` as a local file does not provide the browser capabilities the app needs.
 
 The target is **`wasm32-unknown-emscripten`**. The pinned framework uses Rust **1.99.0**, Emscripten **6.0.10** and wasm-bindgen **0.2.129**. The setup script and checked-in toolchain select matching versions. The build wrapper delegates compilation and web runtime generation to FerroUI, copies the shared fonts, then generates a content-derived build identifier, offline manifest and `.nojekyll`.
 
@@ -94,7 +104,6 @@ Install `curl` on `PATH` for feed and image retrieval. Network work runs on a bo
 
 ```bash
 cargo run --locked -p reader-desktop --profile fast-release
-cargo run --locked -p reader-desktop --profile fast-release -- --demo
 ```
 
 The library is stored as `reader.json` under the platform application-data directory:

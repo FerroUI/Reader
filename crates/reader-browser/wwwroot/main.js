@@ -22,7 +22,7 @@ try {
     FerroExports.attach(runtime);
     attachRuntime(runtime);
     globalThis.readerApp = runtime;
-    runtime.runMain(location.search, ...fonts);
+    runtime.runMain(...fonts);
     attachInputGuard(document.getElementById("out"));
     attachNavigation(runtime);
     attachViewport(runtime, document.getElementById("out"));
@@ -31,7 +31,9 @@ try {
     document.addEventListener("visibilitychange", () => { if (document.hidden) void flush(); else update(); });
     addEventListener("pagehide", () => void flush());
     addEventListener("pageshow", update);
-    addEventListener("online", () => runtime.hostStatus("Back online. Refresh your subscriptions to get new articles."));
+    addEventListener("online", () => {
+      if (!runtime.refreshInitialFeeds()) runtime.hostStatus("Back online. Refresh your subscriptions to get new articles.");
+    });
     addEventListener("offline", () => runtime.hostStatus("You're offline. Your saved articles are still available."));
     if ("serviceWorker" in navigator && !new URLSearchParams(location.search).has("nooffline")) {
       navigator.serviceWorker.register(new URL("./app-sw.js", import.meta.url), { scope: "./" })

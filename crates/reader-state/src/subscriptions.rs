@@ -36,10 +36,20 @@ impl AppViewModel {
             connection,
         });
     }
+    /// Start only subscriptions that have never completed a download. Hosts call
+    /// this after startup and once connectivity returns; it neither adds feeds
+    /// nor follows the current stream filter, so removed defaults stay removed.
+    pub fn refresh_initial_feeds(&self) -> bool {
+        let feeds = self
+            .state()
+            .feeds
+            .iter()
+            .filter(|feed| feed.fetched_at == 0)
+            .cloned()
+            .collect();
+        self.refresh_feeds(feeds)
+    }
     pub fn refresh(&self) {
-        if self.refreshing.replace(true) {
-            return;
-        }
         let state = self.state();
         let feeds = state
             .feeds
@@ -51,6 +61,14 @@ impl AppViewModel {
             })
             .cloned()
             .collect();
+        drop(state);
+        self.refresh_feeds(feeds);
+    }
+    fn refresh_feeds(&self, feeds: Vec<reader_domain::Feed>) -> bool {
+        if feeds.is_empty() || !self.has_services.get() || self.refreshing.replace(true) {
+            return false;
+        }
+        let state = self.state();
         let proxy = state.settings.feed_proxy.clone();
         let connection = state.settings.feed_connection;
         drop(state);
@@ -60,6 +78,7 @@ impl AppViewModel {
             proxy,
             connection,
         });
+        true
     }
     pub fn finish_refresh(&self) {
         self.refreshing.set(false);

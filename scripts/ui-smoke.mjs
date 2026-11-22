@@ -5,11 +5,15 @@ import { createHarness } from "./ui/harness.mjs";
 import { mobileChecks } from "./ui/mobile.mjs";
 import { refinementChecks } from "./ui/refinement.mjs";
 import { feedNetworkChecks } from "./ui/feed-network.mjs";
+import { interceptStarterFeeds, starterChecks } from "./ui/starter.mjs";
 import { sleep } from "../FerroUI/scripts/browser/harness.mjs";
 
 const site = path.resolve(process.argv[2] || "target/browser/reader-browser");
 const output = path.resolve(process.argv[3] || "target/ui-smoke");
-const h = await createHarness(site, output);
+let starter;
+const h = await createHarness(site, output, {
+  beforeNavigate: async page => { starter = await interceptStarterFeeds(page); },
+});
 const checks = [];
 async function check(name, run) {
   const start = performance.now();
@@ -21,6 +25,7 @@ try {
   await check("native first paint", async () => { await h.ready(); await h.capture("01-home"); });
   if (process.argv.includes("--capture-only")) process.exitCode = 0;
   else {
+    await starterChecks(h, check, starter);
     await check("stream navigation and list shortcut", async () => {
       await h.clickNavigation("All items");
       await h.capture("02-expanded");
