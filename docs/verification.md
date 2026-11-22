@@ -1,110 +1,111 @@
 # Verification record
 
-The final strict browser gate **passed all 11 checks**, including a verified new-document offline reload with **10,000 saved articles**. Both build and deployment succeeded. The evidence below belongs to the tested application revision; it does not establish 100% Google Reader visual or service parity. [parity.md](parity.md) records remaining differences and [reference.md](reference.md) records the historical sources.
+The final review release passed **all 17 rendered-browser checks**, including native touch interaction, nested browser-history dismissal, subscription reordering, native input hints, keyboard-sized dialogs and a new-document offline reload with **10,000 saved articles**. Its build and deployment succeeded, and the deployed build was independently observed in Chrome. These results verify the recorded implementation and scenarios; they do not establish 100% historical visual or service parity. See [parity.md](parity.md) for boundaries and [reference.md](reference.md) for the original sources.
 
-## Final verified revision — 22 November 2026
+## Reviewed release — 22 November 2026
 
-| Field | Evidence |
+| Evidence | Observed result |
 | --- | --- |
-| Workflow run | [45034186372](https://github.com/FerroUI/Reader/actions/runs/45034186372) |
-| Application revision | `5a4985b4222c37e191b688add60bdba609981f8c` |
-| Built application identifier | `f26d4636d1bb37b3` |
-| Workflow result | Build and deploy jobs both completed successfully |
-| Browser gate | **11 passed**, recorded in the artifact's `results.json` |
-| CI behavior tests | **20 Rust domain/state tests and 9 JavaScript tests passed** in the same run |
-| Artifact | `reader-ui-verification`; extracted results, PNGs and native-control JSON inspected under `target/ui-ci-5a4985b` |
-| Application URL | [https://ferroui.com/Reader/](https://ferroui.com/Reader/); the GitHub Pages alias redirects to it |
+| Workflow | [45042481284](https://github.com/FerroUI/Reader/actions/runs/45042481284): checks, build and deploy succeeded |
+| Application revision | [`d6906685190049bac9693174fc20736cfd5f4d05`](https://github.com/FerroUI/Reader/commit/d6906685190049bac9693174fc20736cfd5f4d05) |
+| Application build identifier | `b7fd96dc173b6471` |
+| Rendered checks | **17 passed**; exact output preserved in [verification-results.json](verification-results.json) |
+| Offline manifest | **26 resources**, verified by decoded size and SHA-256 during installation |
+| Independent live check | Chrome loaded [ferroui.com/Reader/#home](https://ferroui.com/Reader/#home); its DOM build identifier matched `b7fd96dc173b6471`, with native Home controls visible |
+| Live input/navigation | Subscribe exposed URL/Go keyboard hints with capitalization/correction disabled; browser Back closed the dialog and retained Home |
+| Persistent evidence | [Screenshots](screenshots/) and [native-control snapshots](evidence/) copied from this release's CI artifact |
 
-Independent live-site verification completed in Cloud Chrome at `https://ferroui.com/Reader/#home`: the final Home layout and native controls were observed, and `data-reader-build` matched **`f26d4636d1bb37b3`** exactly. An older worker initially served its previous page; closing the old application client and opening a new tab allowed the latest version to activate normally. This was a manual observation of current-version activation, not an automated upgrade-coverage result.
+## Checks and measured scope
 
-The application uses the shared Rust/FerroUI UI in the browser. The final integrity change preserves the Rust UI from the previously inspected visual revision `b3477eb`; the final screenshots retain those corrections. Representative captures are [Home](screenshots/home.png), [expanded reading](screenshots/expanded.png) and [narrow reading](screenshots/narrow.png).
+| Check family | Verified evidence |
+| --- | --- |
+| Domain and view model | **26 tests passed in final CI**: feed identity/merge, folders and order, OPML, validation/search, read state, undo, reactive reentrancy, backup restoration and generation/busy-state transitions |
+| Native touch state | **4 motion tests passed in final CI**: tap excursion, cancellation, multiple contacts and capture loss |
+| Native network bookkeeping | **2 operation tests passed in final CI**: concurrent subscriptions and replacement-generation isolation |
+| JavaScript host/offline behavior | **18 tests passed in final CI**, including input-hint preservation and offline manifest/tampering checks |
+| Full native host compilation | Final local check passed in **2.19 seconds**; this is compilation time, not native application startup time |
+| Earlier native I/O/parser coverage | Six production native I/O tests and five article-parser/image-header tests passed in the earlier verification record; these are retained evidence, not claims that this browser run repeated them |
+| Rendered browser | **17 passed in final CI**, including actual DOM input-hint assertions while the native Search and Subscribe fields had focus |
 
-## Observed checks
+The following durations are the final release's recorded scenario times.
 
-| Check | Result | Scope |
-| --- | --- | --- |
-| Rust domain and view-model tests | **20 passed in final CI** | Feed merges, identity and base URLs, OPML/folders, document validation/search, selection/read behavior, stream preferences, startup navigation, reactive reentrancy, undo and save-error behavior |
-| JavaScript host and offline-cache tests | **9 passed in final CI** | Six host tests for transport/routing/decoding and three tests for final-byte manifests, canonical cache keys, activation ordering and tamper rollback |
-| Native host compilation | **Passed** | Final visual/API recheck completed in 1.58 seconds on Linux with upstream framework warnings |
-| Native I/O tests | **6 passed locally** | Atomic replacement, recovery, coalesced writer shutdown/failure, discovery, background wake and real localhost curl redirect/discovery |
-| Article parser and image-header tests | **5 passed locally** | Safe content projection, code/list/table text handling, URL exclusion and bounded image header/dimension handling |
-| Rendered-browser gate | **11 passed in final CI** | Actual input, rendering, feed transport, settings, fresh-document persistence, conflicting writers, narrow navigation, virtualization and offline reload |
-| Historical visual parity | **Reference-guided; complete parity not established** | Screenshots verify the implemented layouts and recorded corrections, without claiming an exhaustive pixel comparison or every original screen |
-
-The native I/O harness was compiled directly from `crates/reader-desktop/tests/io.rs` with `rustc --test`, linking the already compiled compatible domain library. It includes the actual production I/O modules. All six tests passed in 0.03 seconds, with curl 8.14.1 present, so the localhost transport test executed. A prior cold Cargo I/O test build was intentionally interrupted to avoid rebuilding the native UI dependency graph; that interrupted command is not counted as a completed test run.
-
-## Final browser results
-
-| Check | Result | Headless CI step duration |
+| Scenario | What it checks | Observed step time |
 | --- | --- | ---: |
-| Native first paint and nonempty surface | Passed | 1,882 ms |
-| Stream navigation and list-view shortcut | Passed | 1,261 ms |
-| Scan, open, star, tag and Keep unread | Passed | 886 ms |
-| Search typing without triggering reading shortcuts | Passed | 707 ms |
-| Local RSS subscription through browser transport and Rust parser | Passed | 920 ms |
-| Settings menu and Compact density | Passed | 1,396 ms |
-| IndexedDB persistence across a verified new-document reload | Passed | 900 ms |
-| Independent stale writer preserves the newer saved generation | Passed | 31 ms |
-| Narrow layout and navigation drawer | Passed | 1,155 ms |
-| Bounded native control tree for 10,000 articles | Passed | 1,342 ms |
-| Installed application and saved library reload without network | Passed | 3,239 ms |
+| Native first paint | Loaded FerroUI controls and a nonempty rendered surface | 2,087 ms |
+| Stream navigation/list shortcut | All items and the native list presentation | 1,154 ms |
+| Reading actions | Scan without marking read, open, star, tag and Keep unread | 1,241 ms |
+| Search typing | Search/Search hints, text entry and navigation without accidental article commands | 708 ms |
+| Browser modifiers/composition guard | Alt/modified shortcuts and synthetic composition-key events preserve annotations | 467 ms |
+| Feed subscription | URL/Go hints, browser transport, real local RSS document and Rust parsing | 854 ms |
+| Preferences | Native settings menu and Compact density | 1,424 ms |
+| IndexedDB reload | Saved feeds, annotations and density survive a verified new document | 762 ms |
+| Conflicting writer | A stale writer reports conflict and preserves the newer committed generation | 127 ms |
+| Phone touch reading | Actual touch scrolling, cancellation, multiple contacts, independent star and inline expansion | 4,284 ms |
+| Browser Back | Drawer, dialog and reading menu dismiss before the reading location changes | 1,018 ms |
+| Held subscription interactions | Cancelled hold, held menu, nested Back, persisted reorder and folder movement | 4,507 ms |
+| Small/landscape dialogs | Dialog, input, close, Add and Cancel remain visible and hit-testable | 1,037 ms |
+| Keyboard-sized viewport | Native viewport follows synthetic geometry while retaining dialog text and focus | 913 ms |
+| Read tracking | User scrolling marks the reading line; layout/programmatic movement do not; Keep unread remains explicit | 1,409 ms |
+| Virtualization | A 10,000-item library retains a bounded realized native tree | 1,049 ms |
+| Offline reload | Activated Reader worker, disabled network, changed document and matching build/library | 1,806 ms |
 
-These durations measure harness steps in headless CI, including readiness and capture work. In particular, **1,882 ms is the first-paint verification step**, not production network download time, general page-load latency or a cross-device performance guarantee.
+The scenario times sum to **24,847 ms**. They include harness readiness, assertions and capture work. The **2,087 ms first-paint step** is a headless CI observation, not production download latency, a memory measurement or a device-independent startup guarantee.
 
-The desktop viewport was **1363 × 936** and the narrow viewport **390 × 844**. The final stress snapshot `09-virtualized.json` records **28 realized article containers and 904 native visual-tree elements** after scrolling a 10,000-article list. These are observed snapshot counts, not peak memory or a universal bound for arbitrary article bodies.
+### Viewports and control counts
 
-### Reload and offline proof
+Desktop captures use **1363 × 936**. Touch checks use **390 × 844**, small portrait dialogs **320 × 568**, and landscape dialogs **844 × 390**. The keyboard scenario overrides the public visual-viewport values to **390 × 380**, with **offsetTop = 30** and scale 1. It verifies both the DOM host rectangle and the native dialog bounds, text and focus, then restores the viewport. This is a synthetic contract test, not a physical phone keyboard test.
 
-The final gate corrects the earlier harness's navigation race. It records `performance.timeOrigin` before navigation or reload and waits for a changed value before inspecting the new application. It also checks protocol errors and uses bounded readiness/worker-activation waits.
+The final [10,000-article stress snapshot](evidence/09-virtualized.json) contains **28 realized article containers and 939 native visual-tree elements** after scrolling. These are observed snapshot counts, not a universal bound for arbitrary article bodies or a measurement of peak memory.
 
-The offline scenario passed with all of these conditions:
+Final screenshot inspection confirmed the blue focus rectangle, fully visible desktop **All items** filter, readable mobile menu labels, reachable portrait/landscape dialog actions, and blue two-pixel subscription insertion line. The touch test also activates an article through the blank area of its date column, exercising the full row target rather than only its text glyphs.
 
-1. A newly loaded document registered Reader's own worker and obtained an activated controller.
-2. The browser network was disabled and `navigator.onLine` was confirmed false.
-3. Reload produced a **new document**, rather than satisfying assertions against the previous page.
-4. The reloaded application retained build identifier `f26d4636d1bb37b3`.
-5. The restored library contained all **10,000 saved articles**.
+| Evidence | Final release captures |
+| --- | --- |
+| Desktop appearance | [Home](screenshots/home.png), [expanded reading](screenshots/expanded.png) |
+| Phone reading/navigation | [Narrow layout](screenshots/narrow.png), [touch reading](screenshots/mobile-reading.png), [navigation drawer](screenshots/mobile-navigation.png) |
+| Constrained dialogs | [Small portrait](screenshots/mobile-small.png), [landscape](screenshots/mobile-landscape.png), [synthetic keyboard viewport](screenshots/mobile-keyboard.png) |
+| Menus and subscription interaction | [Insertion indicator](screenshots/mobile-insertion.png), [reading actions menu](screenshots/mobile-menu.png) |
 
-The result and `10-offline.png`/`10-offline.json` now supply the fresh-document evidence missing from the earlier runs. The harness's tracked runtime-error assertions also passed.
+## Fixes exercised by the review
 
-### Inspected visual corrections
+Touch activation waits for a valid release; scrolling, capture loss, movement outside the tap allowance and multiple contacts cancel pending actions. Recycled controls resolve the currently displayed article ID instead of keeping a captured ID from an earlier row. The full row remains tappable outside its visible text. Subscription movement updates the shared feed order and folder membership atomically, with an insertion indicator and undo.
 
-The captured screens verify the revised Home columns, section heading and feed-title typography; expanded-title/body alignment and card spacing; blue settings checkboxes; vector footer stars; and the narrow wordmark without the previous search-field collision. The calibrated desktop layout places the first expanded card at y = 172 and the Refresh button at y = 77.
+Native menus, dialogs and the narrow subscription drawer participate in browser history through a transient guard. Back dismisses the top layer and retains a guard while an underlying layer remains. Closing the final overlay consumes it; a new stream replaces it without an empty Back stop. The nested-menu check asserts menu disappearance, retained drawer and unchanged route rather than incorrectly requiring a permanent history-index decrease.
 
-The artifact contains Home, expanded/list reading, search, subscription, settings, Compact density, narrow reading/drawer, virtualization and offline screenshots with corresponding native-control snapshots. Branding remains a native recreation, font rasterization differs from the original browser DOM, and Home/Explore/content projection retain the documented adaptations.
+Both hosts validate a library generation before applying pending feed results. Full backup replacement and its undo invalidate earlier requests even if IDs/URLs are reused. Busy counts are generation-specific. Concurrent native subscriptions retain their results; only the latest may navigate while its starting location remains current. IndexedDB independently guards committed storage generations against stale writers. The ordinary localStorage fallback has no equivalent transactional multi-tab guarantee.
 
-## Offline-cache integrity
+The final browser-only adapter reads the focused native `TextBox`'s `TextInputOptions` on `GotFocus`, before the framework focuses its shared browser input. It updates keyboard/return/capitalization hints without polling, field-name inference, refocusing, or changing input type, text, selection or composition. Autocorrection, spellcheck and suggestions remain off for plain TextBoxes; the framework's exact-edit textarea is untouched. Search exposes **Search/Search** and Subscribe exposes **URL/Go**. The final rendered gate checks the actual DOM attributes, and focused JavaScript tests cover preservation of text, selection and composition state while the shared input changes hints.
 
-The generated manifest records `{ path, sha256, size }` for each asset's final bytes, including the stamped index. Installation fetches two assets concurrently using `cache: "reload"` and a build-specific query, checks decoded size and SHA-256, and stores verified responses under canonical URLs. Failure cancels and waits for outstanding jobs before removing only a newly created failed generation. Previous caches survive until successful activation; the worker does not call `skipWaiting`.
+## Reload, offline integrity and limits
 
-Three focused tests execute the actual generated worker handlers with Web Crypto/response streams and simulated network/CacheStorage. They verify final-byte hashes and idempotent preparation, canonical cache keys and activation ordering, and rejection of same-length tampering while preserving the previous cache. The final browser gate separately verifies installation and a real offline reload.
+Reload checks wait for a changed `performance.timeOrigin`, with bounded readiness and protocol-error checks. The offline scenario requires Reader's activated worker, `navigator.onLine === false`, a new document after reload, a matching build identifier and all **10,000 saved articles**. Runtime-error assertions are part of the gate.
 
-**A browser upgrade while an old client remains open has not been exercised end to end.** The test record also does not cover every browser, device, publisher HTML structure, native operating system or historical Google Reader screen.
+The worker verifies every cached asset's final decoded size and SHA-256 against `{ path, sha256, size }`. Two concurrent downloads bypass stale HTTP-cache entries; failure cancels and waits for outstanding work before removing only a newly created failed generation. Older caches survive until successful activation, and there is no forced `skipWaiting`. Focused tests cover final-byte manifests, canonical cache keys, activation ordering and same-length tampering rollback.
 
-## Earlier verification runs
+During independent live verification, an older duplicate Reader client initially retained the earlier `f26d4636d1bb37b3` worker. Closing all old Reader clients and opening a new tab allowed the final `b7fd96dc173b6471` build to activate normally. This is a manual lifecycle observation; **an automated upgrade while an old client remains open is not covered**.
 
-- [45031751686](https://github.com/FerroUI/Reader/actions/runs/45031751686), revision `20167c92`: ten script checks passed and exposed footer-glyph, narrow-header and layout refinements through screenshots.
-- [45033246424](https://github.com/FerroUI/Reader/actions/runs/45033246424), revision `b3477eb`: eleven script checks passed, and inspected screenshots verified those visual corrections.
+**Physical iOS/Safari keyboards and hardware gesture variation have not been checked.** Chromium's dispatched touch events and synthetic visual-viewport changes establish the host/native contract exercised here; they do not reproduce every mobile browser's keyboard, zoom or accessibility behavior. Native share/clipboard/file/print availability follows browser permissions and platform support; the test suite does not operate every OS sharing sheet or printer. External publisher images are not all cached. The narrow UI is a modern adaptation of final desktop Reader, not a verified replica of Google's separate historical mobile client. Historical pixel parity and retired Google services remain outside these verification claims.
 
-Release review found that both earlier scripts could inspect an old document immediately after requesting reload, and their service-worker readiness promise was not bounded. Their recorded visual/input evidence remains useful, but their reload/offline assertions were qualified. **The final run above supersedes those reload/offline results with explicit new-document, controller, network and build-identity checks.**
+## Earlier verification history
 
-## Reproduce the checks
+- [45041529376](https://github.com/FerroUI/Reader/actions/runs/45041529376), revision `c3779ff`: the preceding **17-check** release passed after correcting the recycled-row article identity defect exposed by `40f2f02`. The final release above adds and verifies native keyboard hints and the final visual corrections.
+- [45034186372](https://github.com/FerroUI/Reader/actions/runs/45034186372), revision `5a4985b4`: the earlier strict **11-check** gate established verified new-document offline reload with 10,000 articles.
+- [45031751686](https://github.com/FerroUI/Reader/actions/runs/45031751686), revision `20167c92`, and [45033246424](https://github.com/FerroUI/Reader/actions/runs/45033246424), revision `b3477eb`: early screenshots informed Home typography/columns, expanded spacing, checkbox/footer icons and narrow-header fixes. Their reload assertions could inspect the old document and had an unbounded worker wait. Later strict gates supersede that reload/offline evidence.
 
-For ordinary fast checks:
+## Reproduce
 
 ```bash
 cargo test --locked -p reader-domain -p reader-state
+rustc --edition=2021 --test crates/reader-ui/src/gestures/motion.rs -o target/reader-motion-tests
+target/reader-motion-tests
+rustc --edition=2021 --test crates/reader-desktop/src/operations.rs -o target/reader-operation-tests
+target/reader-operation-tests
 node --test scripts/*.test.mjs
 cargo check --locked -p reader-desktop
-```
-
-For rendered-browser verification:
-
-```bash
 bash scripts/build-browser.sh
 node scripts/ui-smoke.mjs target/browser/reader-browser target/ui-smoke
 ```
 
-Install Chrome or Chromium first; set `CHROME` to its executable if automatic discovery cannot find it. The harness serves the built site and creates a fresh isolated profile, separate from personal browser state. It writes PNG screenshots and JSON control snapshots, plus `results.json` on success or available failure evidence.
+Install Chrome/Chromium and set `CHROME` if automatic discovery needs help. The harness uses a fresh isolated profile and writes PNGs, native-control JSON and success/failure evidence. It does not use personal browser state. `[verify-ui]` in a pushed commit or `workflow_dispatch` with `verify_ui: true` enables the rendered gate; its failure blocks deployment, and its evidence artifact is retained for seven days. Ordinary source pushes retain the lean behavior-tests/build/deploy path; documentation-only pushes are excluded by the workflow's path filter.
 
-In GitHub Actions, include `[verify-ui]` in a pushed commit message or dispatch the workflow with `verify_ui: true`. The optional gate uploads `reader-ui-verification` with seven-day retention and blocks deployment if it fails. Ordinary pushes retain domain/state tests, focused JavaScript tests, the actual FerroUI browser build and deployment.
+This repository preserves the artifact's exact final [results JSON](verification-results.json), ten screenshots and five selected native-control snapshots independently of its seven-day retention period.

@@ -1,0 +1,73 @@
+{
+  "passed": 17,
+  "checks": [
+    {
+      "name": "native first paint",
+      "milliseconds": 2087
+    },
+    {
+      "name": "stream navigation and list shortcut",
+      "milliseconds": 1154
+    },
+    {
+      "name": "scan, open, star, tag, and keep unread",
+      "milliseconds": 1241
+    },
+    {
+      "name": "search typing does not trigger reading shortcuts",
+      "milliseconds": 708
+    },
+    {
+      "name": "browser modifiers and composition keys do not execute Reader commands",
+      "milliseconds": 467
+    },
+    {
+      "name": "feed subscription through the browser network host",
+      "milliseconds": 854
+    },
+    {
+      "name": "preferences menu and exact compact density",
+      "milliseconds": 1424
+    },
+    {
+      "name": "atomic IndexedDB persistence survives reload",
+      "milliseconds": 762
+    },
+    {
+      "name": "competing storage writers cannot silently overwrite a newer generation",
+      "milliseconds": 127
+    },
+    {
+      "name": "phone touch scrolling, cancellation and tap-to-expand",
+      "milliseconds": 4284
+    },
+    {
+      "name": "browser Back dismisses mobile overlays before changing streams",
+      "milliseconds": 1018
+    },
+    {
+      "name": "held subscription menus, cancellation, reordering and folder movement",
+      "milliseconds": 4507
+    },
+    {
+      "name": "small portrait and landscape dialogs keep actions reachable",
+      "milliseconds": 1037
+    },
+    {
+      "name": "visual viewport keyboard resize preserves dialog input and focus",
+      "milliseconds": 913
+    },
+    {
+      "name": "expanded read tracking follows user scrolling and preserves Keep unread",
+      "milliseconds": 1409
+    },
+    {
+      "name": "ten thousand items keep a bounded native control tree",
+      "milliseconds": 1049
+    },
+    {
+      "name": "installed application and saved library reload without network",
+      "milliseconds": 1806
+    }
+  ]
+}

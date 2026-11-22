@@ -24,6 +24,16 @@ Actual browser verification captures: [Home](docs/screenshots/home.png) · [Expa
 
 A first launch includes a clearly identified starter library. Its articles are examples, not newly downloaded publisher content. Add your own subscriptions or import OPML to read live feeds. `?demo=1` in the browser and `--demo` on desktop create a separate in-memory sample session that does not save over the normal library.
 
+### Reading on a phone or tablet
+
+The narrow layout keeps Previous, reading mode and Next along the bottom edge. Tap a headline or the blank area around its date to expand a list item in place. Stars remain independent actions. A vertical drag scrolls without opening the item where the gesture began; cancellation, a second finger or moving away and returning also cancel a pending tap.
+
+Open subscriptions with the menu button. Hold a subscription and release without moving to open its actions; move after holding to reorder it or move it to another folder. A blue line previews the insertion point, and a held drag near the sidebar edge scrolls the list. Reordering within a folder retains the subscription's other folder memberships. The order is shared across folder views.
+
+Browser Back closes a menu, dialog or subscription drawer before leaving the current stream. Menus and footer actions have larger touch targets, and dialogs fit small portrait, landscape and reduced keyboard viewports. Search advertises a Search keyboard/action; subscription URLs advertise URL entry and Go. The host supplies those hints without replacing the native editor or its composition/selection state. Browser pinch magnification remains available.
+
+These are verified Chromium interaction paths and a responsive adaptation of desktop Reader. Physical iOS keyboard behavior and the separate original Google Reader mobile application's complete visual parity have not been verified. The [verification record](docs/verification.md) gives the exact tested viewports and limits.
+
 ## Build and run the browser app
 
 Install Git, Rust through rustup, Node.js 24 with npm, Python 3 and a native C/C++ build toolchain. The canonical [FerroUI browser setup](FerroUI/scripts/browser/setup.sh) supports Linux and macOS and installs its pinned browser tools into the directory you select.
@@ -142,7 +152,7 @@ node --test scripts/*.test.mjs
 cargo check --locked -p reader-desktop
 ```
 
-The tests cover domain and view-model invariants and focused browser-host behavior. They do not certify every original screen, pixel, browser or native operating system. The ordinary Pages workflow runs the first two commands and builds one browser target, without a platform matrix or native packaging gate. [Verification status](docs/verification.md) records the final eleven-check browser pass, inspected visual corrections, measured control counts and verified new-document offline reload with 10,000 saved articles.
+The tests cover domain and view-model invariants and focused browser-host behavior. They do not certify every original screen, pixel, browser or native operating system. The ordinary Pages workflow runs the first two commands, four pure gesture checks and two native request-operation checks, then builds one browser target without a platform matrix or native packaging gate. [Verification status](docs/verification.md) records the 17-check rendered-browser gate, inspected visual corrections, measured control counts and verified new-document offline reload with 10,000 saved articles.
 
 ### Optional rendered-browser verification
 
@@ -154,7 +164,7 @@ node scripts/ui-smoke.mjs target/browser/reader-browser target/ui-smoke
 
 The harness serves the built application locally and launches a **fresh isolated Chromium profile**. It does not reuse your signed-in browser, feed library or service-worker cache. Set `CHROME` to the browser executable if automatic discovery cannot find it. Node.js 24 is sufficient; no Playwright or browser-testing package is required.
 
-The requested checks exercise first paint, actual control input, reading/annotation shortcuts, search, a local feed subscription, settings, reload persistence, conflicting storage writers, narrow navigation, a 10,000-article virtualization fixture and offline reload. PNG screenshots, control-tree JSON and a success report or failure evidence are written to `target/ui-smoke`. A passing scripted run is evidence for those exercised paths, not complete historical visual parity.
+The requested checks exercise first paint, actual control input, reading/annotation shortcuts, search and keyboard hints, a local feed subscription, settings, reload persistence, conflicting storage writers, touch scrolling/cancellation, in-place opening, held menus, subscription reordering/folder movement, browser Back, small/landscape/keyboard-sized dialogs, automatic reading state, a 10,000-article virtualization fixture and offline reload. PNG screenshots, control-tree JSON and a success report or failure evidence are written to `target/ui-smoke`. A passing scripted run is evidence for those exercised paths, not complete historical visual parity.
 
 To request this gate in GitHub Actions, include **`[verify-ui]`** in the pushed commit message or manually dispatch **Build and publish** with **`verify_ui: true`**. The workflow runs the browser script after compilation and uploads **`reader-ui-verification`** with a seven-day retention period, including available failure evidence. A failed requested gate blocks that run's deployment. Ordinary `main` pushes keep the domain/state + JavaScript checks, build and deploy path.
 

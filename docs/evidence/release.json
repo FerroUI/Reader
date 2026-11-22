@@ -1,0 +1,49 @@
+{
+  "application_revision": "d6906685190049bac9693174fc20736cfd5f4d05",
+  "build_id": "b7fd96dc173b6471",
+  "workflow_run": 45042481284,
+  "workflow_url": "https://github.com/FerroUI/Reader/actions/runs/45042481284",
+  "build_result": "success",
+  "deploy_result": "success",
+  "live_url": "https://ferroui.com/Reader/#home",
+  "live_build_id_observed": "b7fd96dc173b6471",
+  "verification_date": "2026-11-22",
+  "test_counts": {
+    "domain_state": 26,
+    "gesture_motion": 4,
+    "native_operations": 2,
+    "javascript": 18,
+    "rendered_browser": 17
+  },
+  "viewports": {
+    "desktop": [
+      1363,
+      936
+    ],
+    "phone": [
+      390,
+      844
+    ],
+    "small_portrait": [
+      320,
+      568
+    ],
+    "landscape": [
+      844,
+      390
+    ],
+    "synthetic_keyboard": {
+      "width": 390,
+      "height": 380,
+      "offset_top": 30,
+      "scale": 1
+    }
+  },
+  "virtualized_snapshot": {
+    "article_records": 10000,
+    "article_containers": 28,
+    "native_visuals": 939
+  },
+  "physical_ios_keyboard_verified": false,
+  "full_historical_parity_established": false
+}
