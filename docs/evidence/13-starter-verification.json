@@ -1,0 +1,37 @@
+{
+  "defaultUrls": [
+    "https://blog.rust-lang.org/feed.xml",
+    "https://feeds.arstechnica.com/arstechnica/index",
+    "https://feeds.bbci.co.uk/news/rss.xml",
+    "https://github.blog/feed/",
+    "https://news.ycombinator.com/rss",
+    "https://www.theverge.com/rss/index.xml"
+  ],
+  "requestedUrls": [
+    "https://news.ycombinator.com/rss",
+    "https://feeds.arstechnica.com/arstechnica/index",
+    "https://www.theverge.com/rss/index.xml",
+    "https://blog.rust-lang.org/feed.xml",
+    "https://github.blog/feed/",
+    "https://feeds.bbci.co.uk/news/rss.xml"
+  ],
+  "initialSubscriptionIds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+  ],
+  "initialArticleCount": 12,
+  "reopenedSubscriptionIds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "removedDefaultPreserved": true,
+  "annotationsPreserved": true,
+  "emptyLibraryPreserved": true
+}

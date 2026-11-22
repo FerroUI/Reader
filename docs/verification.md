@@ -1,6 +1,49 @@
 # Verification record
 
-## Current feed-connection release — 22 November 2026
+## Current real-feed startup release — 22 November 2026
+
+Fresh libraries now start with six real subscriptions: **Hacker News, Ars Technica and The Verge** in Technology; **Rust Blog and GitHub Blog** in Development; and **BBC News** in News. Production starts with **zero articles**, saves the subscriptions and fetches their publishers on first use. It does not manufacture stories. The feed addresses and connection behavior are documented in [feed-connection.md](feed-connection.md).
+
+| Evidence | Observed result |
+| --- | --- |
+| Workflow | [45071747165](https://github.com/FerroUI/Reader/actions/runs/45071747165): checks, browser build and Pages deployment succeeded |
+| Application revision | [`59fee6683af9c34a3816f04b2ae53b8c2a58a53d`](https://github.com/FerroUI/Reader/commit/59fee6683af9c34a3816f04b2ae53b8c2a58a53d); initial starter implementation in [`a15b7799ce81438edf0f96b60b718621884cd863`](https://github.com/FerroUI/Reader/commit/a15b7799ce81438edf0f96b60b718621884cd863) |
+| Build identifier | `ad7a2095a4e2e65c`, also observed in the deployed page's DOM |
+| Rust checks | **46 domain/state**, **5 tree**, **4 motion** and **2 native-operation** tests passed; the native desktop host also compiled locally |
+| JavaScript checks | **41 passed** |
+| Rendered checks | **26 passed**, with recorded scenario durations totaling **41,690ms**; exact names and durations preserved in [starter-verification-results.json](starter-verification-results.json) |
+| Offline | New-document offline reload passed with **31 verified resources** |
+| Release metadata | [starter-release.json](evidence/starter-release.json) records the revision, build, workflow, counts and live observations |
+
+### Production startup and preservation
+
+The article generator in `reader-domain` is gated behind the `test-support` feature and is excluded from normal production builds. The browser `?demo=1` and desktop `--demo` entry points have been removed. Source-level tests verify six initial subscriptions, three folders, zero initial articles, persistence before network completion and non-overlapping fetch batches. Retry coverage verifies that completed feeds are skipped and a removed default is not reintroduced.
+
+The migration tests separately cover former sample libraries, preserving real articles, annotations, customized subscriptions and settings while removing only recognized illustrative content. They also cover previously removed feeds, an intentionally empty saved library, explicit backup restoration, changed content resembling sample identifiers and identifier exhaustion. These Rust checks establish the migration cases; the rendered checks below establish the browser startup and persistence behavior.
+
+### What the starter browser fixture proves
+
+The isolated Chromium scenario intercepts the **six actual default feed URLs** and holds their responses until Reader renders its saved subscription metadata with **zero articles**. It then supplies controlled RSS documents containing **two test articles per feed**, yielding **12 deterministic test articles** parsed through the production feed pipeline. These articles exist only in the test fixture; they are not embedded production stories or evidence of public-provider availability.
+
+All six URLs are requested exactly once. After downloading, the scenario removes one default, renames another, changes density and adds a star, note and tag. A new-document reload preserves those edits and does not restore the removed subscription. A separate scenario saves an intentionally empty library and verifies that reopening keeps it empty. Their recorded durations are **1,520ms** and **1,278ms**, respectively.
+
+| Preserved evidence | Content |
+| --- | --- |
+| [Initial subscription metadata](evidence/13-starter-loading.json) | Six real URLs, `sample: false`, no completed fetches and zero articles |
+| [Loading screenshot](screenshots/13-starter-loading.png) / [control tree](evidence/13-starter-loading-view.json) | Initial native Home render before fixture responses are released; copied from this release artifact's `01-home.png` and `01-home.json` |
+| [Fetched-library screenshot](screenshots/13-starter-ready.png) / [control tree](evidence/13-starter-ready.json) | The 12 controlled articles after automatic fetch and Rust parsing |
+| [Empty-library screenshot](screenshots/13-starter-empty.png) / [control tree](evidence/13-starter-empty.json) | An intentionally empty saved library after reopening |
+| [Startup assertions](evidence/13-starter-verification.json) | Exact requested URLs, retained subscription identifiers, removed-default preservation, annotations and empty-library preservation |
+
+The preceding [45070869096](https://github.com/FerroUI/Reader/actions/runs/45070869096) gate stopped deployment when its center click landed in the blank space beside the date in a short Home preview and failed to navigate. The fix gives the preview an explicit transparent hit surface. The same assertion passed unchanged in the final 26-check gate; the failed run did not deploy.
+
+### Independent observations on the published application
+
+Chrome loaded build `ad7a2095a4e2e65c` after a normal close and reopen allowed the offline update to activate, without clearing storage or forcing service-worker activation. The existing mixed library retained all **eight subscriptions**, including its previously added BBC News and official Hacker News feeds. Its six former sample subscriptions each fetched ten real publisher articles; Home displayed real Rust, NASA, Smashing Magazine and Mozilla headlines, with the sample-library footer absent. The observed total was **167 unread articles**, including the retained BBC count of 97 and Hacker News count of 10; these are observations, not provider guarantees.
+
+Explore displayed all six current default suggestions, with Read actions for the existing Hacker News, Rust and BBC subscriptions and Subscribe actions for Ars Technica, The Verge and GitHub Blog. Choosing Hacker News's native Read control opened its existing ten-item feed, confirming subscription reuse. These live observations establish real publisher fetching and preservation in an existing library; the controlled browser fixture separately verifies the complete fresh-library bootstrap. Public-provider availability and item counts remain external dependencies.
+
+## Previous feed-connection release — revision eba78c5
 
 The browser feed fix is deployed on [GitHub Pages](https://ferroui.com/Reader/#home). The final run passed **24 rendered-browser scenarios**, including a publisher that deliberately rejects cross-origin reads, and independent live Chrome checks successfully added **BBC News** and **Hacker News** through the native Subscribe control. The connection behavior and its limits are documented in [feed-connection.md](feed-connection.md).
 

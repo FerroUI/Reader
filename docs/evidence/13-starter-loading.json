@@ -1,0 +1,89 @@
+{
+  "feeds": [
+    {
+      "id": 1,
+      "title": "Hacker News",
+      "url": "https://news.ycombinator.com/rss",
+      "site_url": "https://news.ycombinator.com/",
+      "folder": "Technology",
+      "folders": [
+        "Technology"
+      ],
+      "description": "Technology and ideas from the Hacker News community.",
+      "fetched_at": 0,
+      "error": null,
+      "sample": false
+    },
+    {
+      "id": 2,
+      "title": "Ars Technica",
+      "url": "https://feeds.arstechnica.com/arstechnica/index",
+      "site_url": "https://arstechnica.com/",
+      "folder": "Technology",
+      "folders": [
+        "Technology"
+      ],
+      "description": "Technology, science and policy reporting.",
+      "fetched_at": 0,
+      "error": null,
+      "sample": false
+    },
+    {
+      "id": 3,
+      "title": "The Verge",
+      "url": "https://www.theverge.com/rss/index.xml",
+      "site_url": "https://www.theverge.com/",
+      "folder": "Technology",
+      "folders": [
+        "Technology"
+      ],
+      "description": "Technology, products and the future of the web.",
+      "fetched_at": 0,
+      "error": null,
+      "sample": false
+    },
+    {
+      "id": 4,
+      "title": "Rust Blog",
+      "url": "https://blog.rust-lang.org/feed.xml",
+      "site_url": "https://blog.rust-lang.org/",
+      "folder": "Development",
+      "folders": [
+        "Development"
+      ],
+      "description": "Updates from the Rust programming language team.",
+      "fetched_at": 0,
+      "error": null,
+      "sample": false
+    },
+    {
+      "id": 5,
+      "title": "GitHub Blog",
+      "url": "https://github.blog/feed/",
+      "site_url": "https://github.blog/",
+      "folder": "Development",
+      "folders": [
+        "Development"
+      ],
+      "description": "Developer tools, product updates and software engineering.",
+      "fetched_at": 0,
+      "error": null,
+      "sample": false
+    },
+    {
+      "id": 6,
+      "title": "BBC News",
+      "url": "https://feeds.bbci.co.uk/news/rss.xml",
+      "site_url": "https://www.bbc.com/news",
+      "folder": "News",
+      "folders": [
+        "News"
+      ],
+      "description": "Headlines and reporting from BBC News.",
+      "fetched_at": 0,
+      "error": null,
+      "sample": false
+    }
+  ],
+  "articleCount": 0
+}

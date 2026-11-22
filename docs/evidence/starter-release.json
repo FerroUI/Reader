@@ -1,0 +1,90 @@
+{
+  "application_revision": "59fee6683af9c34a3816f04b2ae53b8c2a58a53d",
+  "starter_implementation_revision": "a15b7799ce81438edf0f96b60b718621884cd863",
+  "build_id": "ad7a2095a4e2e65c",
+  "workflow_run": 45071747165,
+  "workflow_url": "https://github.com/FerroUI/Reader/actions/runs/45071747165",
+  "build_result": "success",
+  "deploy_result": "success",
+  "live_url": "https://ferroui.com/Reader/#home",
+  "live_build_id_observed": "ad7a2095a4e2e65c",
+  "verification_date": "2026-11-22",
+  "test_counts": {
+    "domain_state": 46,
+    "subscription_tree": 5,
+    "gesture_motion": 4,
+    "native_operations": 2,
+    "javascript": 41,
+    "rendered_browser": 26
+  },
+  "scenario_time_sum_ms": 41690,
+  "offline_manifest_resources": 31,
+  "virtualized_snapshot": {
+    "article_records": 10000,
+    "article_containers": 28,
+    "native_visuals": 939
+  },
+  "default_subscription_count": 6,
+  "default_folders": [
+    "Development",
+    "News",
+    "Technology"
+  ],
+  "production_startup": {
+    "initial_article_count": 0,
+    "sample_generator_feature": "test-support",
+    "sample_generator_enabled_in_browser": false,
+    "runtime_demo_entry_points": false
+  },
+  "starter_fixture": {
+    "public_requests_intercepted_in_isolated_profile": true,
+    "initial_article_count": 12,
+    "each_default_requested_once": true,
+    "removed_default_preserved": true,
+    "renamed_feed_preserved": true,
+    "annotations_preserved": true,
+    "empty_library_preserved": true,
+    "completed_fetches_not_restarted_on_reload": true
+  },
+  "evidence_source_mapping": {
+    "13-starter-loading.png": "01-home.png",
+    "13-starter-loading-view.json": "01-home.json"
+  },
+  "live_observations": [
+    {
+      "action": "Activate the updated offline application",
+      "observed": "Normal reload initially served the previous build. Closing that Reader client and opening a new tab activated ad7a2095a4e2e65c without clearing storage or forcing service-worker activation."
+    },
+    {
+      "action": "Open the saved mixed library after upgrade",
+      "observed": "All eight chosen subscriptions remained. BBC News retained 97 unread items and the previously added official Hacker News feed retained 10. The six older starter subscriptions automatically fetched publisher articles; the rendered sidebar displayed 10 unread items in each and 167 overall."
+    },
+    {
+      "action": "Inspect Home",
+      "observed": "Real publisher headlines appeared under Rust, NASA, Smashing Magazine and Mozilla Hacks; the old illustrative Home stories and sample-library notice were absent."
+    },
+    {
+      "action": "Open Explore",
+      "observed": "All six new catalogue entries were present. Existing Hacker News, Rust Blog and BBC News offered Read; Ars Technica, The Verge and GitHub Blog offered Subscribe."
+    },
+    {
+      "action": "Activate Hacker News Read in Explore",
+      "route": "#feed/114",
+      "visible_unread": 10,
+      "observed": "Opened the existing official Hacker News subscription rather than creating another one."
+    },
+    {
+      "action": "Return Home",
+      "route": "#home",
+      "observed": "Left the verified live application open for review."
+    }
+  ],
+  "provider_item_count_guaranteed": false,
+  "physical_ios_keyboard_verified": false,
+  "full_historical_parity_established": false,
+  "prior_gate_failure": {
+    "workflow_run": 45070869096,
+    "deployment": "skipped",
+    "cause": "Fresh-start and preservation checks passed. The subsequent Home source-navigation check timed out when its unchanged center click landed beside the date in a short preview. An explicit transparent background gave the preview content a full hit surface; the unchanged check and all 26 scenarios passed in the final run."
+  }
+}
