@@ -1,3 +1,6 @@
+mod content;
+mod json;
+
 use crate::{plain_text, safe_url};
 use roxmltree::{Document, Node};
 use serde::{Deserialize, Serialize};
@@ -9,6 +12,8 @@ pub struct ParsedArticle {
     pub url: String,
     pub author: String,
     pub content: String,
+    #[serde(default)]
+    pub content_base: String,
     pub summary: String,
     pub published: i64,
 }
@@ -29,7 +34,7 @@ pub fn parse_feed(source: &str, feed_url: &str, now: i64) -> Result<ParsedFeed, 
         return Err("Enter an http or https feed URL.".into());
     }
     if source.trim_start().starts_with('{') {
-        return parse_json_feed(source, feed_url, now);
+        return json::parse(source, feed_url, now);
     }
     let document =
         Document::parse(source).map_err(|error| format!("The feed is not valid XML: {error}"))?;
@@ -48,7 +53,7 @@ pub fn parse_feed(source: &str, feed_url: &str, now: i64) -> Result<ParsedFeed, 
     let site_url = if atom {
         atom_link(channel, feed_url)
     } else {
-        text(channel, "link")
+        rss_link(channel, feed_url)
     };
     let mut feed = ParsedFeed {
         title: plain_text(&text(channel, "title")),
@@ -72,20 +77,11 @@ pub fn parse_feed(source: &str, feed_url: &str, now: i64) -> Result<ParsedFeed, 
         let url = if atom {
             atom_link(item, feed_url)
         } else {
-            text(item, "link")
+            rss_link(item, feed_url)
         };
         let url = safe_url(&url, Some(feed_url)).unwrap_or_default();
         let title = plain_text(&text(item, "title"));
-        let content = if atom {
-            atom_content(item, source).unwrap_or_else(|| text(item, "summary"))
-        } else {
-            let encoded = text(item, "encoded");
-            if encoded.is_empty() {
-                text(item, "description")
-            } else {
-                encoded
-            }
-        };
+        let (content, content_base) = content::parse(item, source, atom, feed_url);
         let summary = plain_text(&content).chars().take(400).collect();
         let author = if atom {
             item.children()
@@ -122,6 +118,7 @@ pub fn parse_feed(source: &str, feed_url: &str, now: i64) -> Result<ParsedFeed, 
             url,
             author: plain_text(&author),
             content,
+            content_base,
             summary,
             published: date,
         });
@@ -152,29 +149,32 @@ fn atom_link(node: Node<'_, '_>, base: &str) -> String {
     node.children()
         .filter(|n| named(*n, "link"))
         .find(|n| n.attribute("rel").unwrap_or("alternate") == "alternate")
-        .and_then(|n| n.attribute("href"))
-        .and_then(|url| safe_url(url, Some(base)))
+        .and_then(|n| resolve_link(n, n.attribute("href")?, base))
         .unwrap_or_default()
 }
 
-fn atom_content(node: Node<'_, '_>, source: &str) -> Option<String> {
-    let content = node.children().find(|n| named(*n, "content"))?;
-    if content.attribute("type") == Some("xhtml") {
-        let div = content.children().find(|n| n.is_element())?;
-        Some(
-            div.children()
-                .map(|n| source.get(n.range()).unwrap_or_default())
-                .collect(),
-        )
-    } else {
-        Some(
-            content
-                .descendants()
-                .filter(|n| n.is_text())
-                .filter_map(|n| n.text())
-                .collect(),
-        )
+fn rss_link(node: Node<'_, '_>, base: &str) -> String {
+    node.children()
+        .find(|n| named(*n, "link"))
+        .and_then(|n| resolve_link(n, n.text().unwrap_or_default(), base))
+        .unwrap_or_default()
+}
+
+/// XML Base values compose from outermost ancestor to the element carrying the URI.
+fn resolve_link(node: Node<'_, '_>, link: &str, document_url: &str) -> Option<String> {
+    let base = xml_base(node, document_url)?;
+    safe_url(link, Some(base.as_str()))
+}
+
+fn xml_base(node: Node<'_, '_>, document_url: &str) -> Option<url::Url> {
+    let mut base = url::Url::parse(document_url).ok()?;
+    let ancestors: Vec<_> = node.ancestors().filter(|n| n.is_element()).collect();
+    for ancestor in ancestors.into_iter().rev() {
+        if let Some(value) = ancestor.attribute(("http://www.w3.org/XML/1998/namespace", "base")) {
+            base = base.join(value.trim()).ok()?;
+        }
     }
+    Some(base)
 }
 
 fn parse_date(value: &str) -> Option<i64> {
@@ -192,57 +192,4 @@ fn parse_date(value: &str) -> Option<i64> {
                 .and_then(|d| d.and_hms_opt(0, 0, 0))
                 .map(|d| d.and_utc().timestamp())
         })
-}
-
-fn parse_json_feed(source: &str, feed_url: &str, now: i64) -> Result<ParsedFeed, String> {
-    let data: serde_json::Value = serde_json::from_str(source).map_err(|e| e.to_string())?;
-    if !data["version"]
-        .as_str()
-        .unwrap_or_default()
-        .starts_with("https://jsonfeed.org/version/")
-    {
-        return Err("This JSON document is not a JSON Feed.".into());
-    }
-    let string =
-        |value: &serde_json::Value, key: &str| value[key].as_str().unwrap_or_default().to_string();
-    let mut feed = ParsedFeed {
-        title: string(&data, "title"),
-        site_url: safe_url(&string(&data, "home_page_url"), Some(feed_url)).unwrap_or_default(),
-        description: string(&data, "description"),
-        articles: Vec::new(),
-    };
-    for item in data["items"].as_array().into_iter().flatten().take(5000) {
-        let html = string(item, "content_html");
-        let content = if html.is_empty() {
-            crate::html::escape(&string(item, "content_text"))
-        } else {
-            html
-        };
-        let url = safe_url(&string(item, "url"), Some(feed_url)).unwrap_or_default();
-        let date = parse_date(&string(item, "date_published")).unwrap_or(now);
-        let title = string(item, "title");
-        let guid = string(item, "id");
-        feed.articles.push(ParsedArticle {
-            guid: if guid.is_empty() {
-                format!("{url}:{title}:{date}")
-            } else {
-                guid
-            },
-            title: if title.is_empty() {
-                "(untitled)".into()
-            } else {
-                title
-            },
-            url,
-            author: item["authors"]
-                .as_array()
-                .and_then(|a| a.first())
-                .map(|a| string(a, "name"))
-                .unwrap_or_else(|| string(&item["author"], "name")),
-            summary: plain_text(&content).chars().take(400).collect(),
-            content,
-            published: date,
-        });
-    }
-    Ok(feed)
 }

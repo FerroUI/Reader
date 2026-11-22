@@ -2,6 +2,31 @@
 
 Reader targets the final desktop Google Reader experience. [reference.md](reference.md) records the original dimensions, colors, shortcuts and source URLs. This document defines the behavior to verify and the boundaries of a static browser application. A completed build alone does not certify every row or pixel; release claims must reflect observed behavior.
 
+## Implemented coverage and remaining differences
+
+The following describes the checked-in implementation. It is a source-level feature inventory, not certification of every interaction on every browser or operating system.
+
+| Area | Present implementation | Remaining difference |
+| --- | --- | --- |
+| Main interface | Final-era fallback white header with a combined Google Reader wordmark, red Subscribe button, subscription tree, reading toolbar, stream title and all three density choices | Font rasterization, vector branding, menus and dialogs need reference-image comparison; 100% pixel parity is not established |
+| Streams | Home, All items, Starred, feed, folder, tag, search, Trends and Explore destinations | Home uses a local overview and Explore a four-feed starter catalog; these are not the original server-generated pages |
+| Reading | Expanded/list modes, inline row opening, cursor navigation, read/unread, sticky Keep unread, stars, tags and private notes | Historical Google+ actions and original social interactions are not available |
+| Article body | Selectable text, simple formatting, links, headings, lists, quotes, code and fetched images | Constrained HTML projection; no publisher CSS engine, embedded media players or complete HTML/table layout |
+| Stream controls | All/unread, newest/oldest, previous/next, age-based mark-read, per-stream display preferences | No Google's magic ranking, translation or global subscription statistics |
+| Subscriptions | RSS/Atom/JSON Feed, accessible-page discovery, refresh, rename, multiple folder labels, reorder/drag, filter and unsubscribe | No Google feed index, search-by-keyword directory, server crawler or historical archive |
+| Folder management | Create/rename/delete folders, assign memberships, collapse/expand, move feeds | The complete original tree/context-menu command surface is not implemented |
+| Search | Local text and field operators, quoted phrases and exclusions; scoped local searches | Searches saved articles only, without Google's historical corpus |
+| Trends | Local totals, 30-day reading chart and per-feed totals/read percentages | Original hour/day charts, subscriber-based statistics and inactive/obscure subscription analytics are not fully reproduced |
+| Import/export | OPML merge/export with multiple memberships; validated complete JSON backup/restore; recent-change undo | Google Takeout social JSON and account recovery are not supported; undo is session-only |
+| Preferences | Density, text size, start page, automatic read tracking, bulk-read confirmation, all/updated subscriptions, proxy | No localization, complete historical settings tabs or custom Send to services |
+| Keyboard | Core article/stream/share/view keys, timed `g` prefix, subscription/tag jump dialogs, `g Shift+t` Trends, text-size keys and input exclusions | Original folder-tree cursor/toggle semantics are incomplete; subscription traversal opens feeds directly |
+| Browser integration | History, downloads/uploads, clipboard, supported native sharing, email drafts, sanitized print document | Availability follows browser permissions and platform capabilities; no account, social or server email delivery |
+| Browser persistence | IndexedDB transactions with generation checks; localStorage fallback; recovery handling; offline application snapshot | No cross-device synchronization; fallback storage lacks transactional multi-tab conflict protection |
+| Desktop integration | Shared UI, native pickers/clipboard/launcher, asynchronous curl, coalesced atomic file writes | Requires curl; feed decoder currently UTF-8-only; share copies text, print opens a text preview, and one process should use a data directory |
+| Narrow screen | Overlay subscriptions, compact toolbar and responsive article widths | A new adaptation of the desktop design; not a reproduction of Google's separate original mobile UI |
+
+The app is an independent local reader built from the historical design. It must not be advertised as an operational replacement for every retired Google backend, nor as a fully validated pixel-perfect replica.
+
 ## Architecture contract
 
 | Layer | Responsibility |
@@ -10,6 +35,7 @@ Reader targets the final desktop Google Reader experience. [reference.md](refere
 | `reader-state` | MVVM state, commands, reactive projections, filtering, sorting, selection and read/star/tag transitions |
 | `reader-controls` | Material-based Reader resources, reusable templated controls and state visuals |
 | `reader-ui` | Small RSX view modules, navigation, reading layouts, dialogs and command bindings |
+| `reader-fonts` | Shared font registration, browser font files and optional native embedding |
 | `reader-browser` | FerroUI browser lifetime, browser persistence/network/storage integration and static host |
 | `reader-desktop` | Native lifetime using the same controls, view models and domain behavior |
 
@@ -30,7 +56,7 @@ UI state belongs in view models. Reusable controls render properties and command
 | Sort and filter | Newest/oldest, all/unread; deterministic stable order for equal dates |
 | Search | Titles and article text; case-insensitive input; meaningful empty results; scope respected |
 | Subscribe | RSS/Atom URL parsing, duplicate handling, loading/error state and a real resulting feed |
-| Refresh | Bounded concurrent work; no duplicate articles; cancellation or stale-result rejection after navigation |
+| Refresh | Bounded concurrent work; no duplicate articles; no navigation on background completion; results cannot recreate an unsubscribed source |
 | Folders | Create, rename, membership changes, collapse/expand, delete and move/reorder semantics |
 | Manage subscriptions | Searchable list, rename, unsubscribe, folder changes and coherent active selection |
 | Import/export | OPML preserves folder membership; malformed input is reported without erasing saved state |
@@ -88,6 +114,6 @@ GitHub Pages serves static files and cannot execute a server-side RSS proxy. A c
 
 ## Build and release verification
 
-The lean Pages workflow runs domain/state tests, builds one production browser module using the pinned FerroUI toolchain and deploys that output from `main`. Framework dependencies and browser tools are cached; it does not launch a browser screenshot suite on every commit.
+The lean Pages workflow runs domain/state and focused JavaScript host tests, builds one production browser module using the pinned FerroUI toolchain and deploys that output from `main`. Framework dependencies and browser tools are cached; it does not launch a browser screenshot suite on every commit.
 
 Before claiming a release has visual and interaction parity, check the built app in a real browser at desktop and narrow widths: add/import feeds, navigate, open articles, star/tag/mark unread, search, change density/mode, reload, export and exercise keyboard commands. Check actual screenshots against the reference and record any unsupported original-service features explicitly. A first cold WebAssembly build is heavier than a cached rebuild; the CI workflow keeps this compilation out of repeated setup work.

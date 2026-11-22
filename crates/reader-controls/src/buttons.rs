@@ -53,7 +53,7 @@ pub fn icon_action(kind: Icon, label: &str, on_click: impl Fn() + 'static) -> El
 pub fn toolbar_icon(kind: Icon, label: &str) -> El<Button> {
     button()
         .class("reader-button")
-        .width(36.0)
+        .width(35.0)
         .height(29.0)
         .padding(8.0)
         .automation_properties_name(label)
@@ -74,6 +74,9 @@ pub fn input(label: &str) -> El<TextBox> {
         .font_size(13.0)
         .height(29.0)
         .min_height(0.0)
+        .min_width(0.0)
+        .line_height(18.0)
+        .letter_spacing(0.0)
         .padding((7.0, 4.0))
         .automation_properties_name(label)
 }

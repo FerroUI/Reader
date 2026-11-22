@@ -86,7 +86,7 @@ export async function refreshFeeds(feeds, proxy, receive, failure) {
   await Promise.all(Array.from({ length: Math.min(4, feeds.length) }, async () => {
     while (cursor < feeds.length) {
       const feed = feeds[cursor++];
-      try { const result = await fetchFeed(feed.url, proxy); receive(feed.url, result.contents, feed.id); }
+      try { const result = await fetchFeed(feed.url, proxy); receive(feed.url, result.contents, feed.id, result.url); }
       catch (error) { failure(feed.url, error.message); }
     }
   }));

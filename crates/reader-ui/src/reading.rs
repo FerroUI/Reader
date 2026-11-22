@@ -55,10 +55,12 @@ pub fn attach(list: &Ref<ListBox>, vm: Rc<AppViewModel>, ui: Rc<Session>) {
                     let Some(control) = visual.cast::<Control>() else {
                         continue;
                     };
-                    let Some(id) = control.name().and_then(|name| {
-                        name.strip_prefix("Article-")
-                            .and_then(|id| id.parse::<u64>().ok())
-                    }) else {
+                    let Some(id) = control
+                        .has_name("ArticleEntry")
+                        .then(|| control.tag())
+                        .flatten()
+                        .and_then(|value| value.downcast_ref::<u64>().copied())
+                    else {
                         continue;
                     };
                     let Some(position) = control.translate_point(Point::new(0.0, 0.0), &list)

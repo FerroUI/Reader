@@ -52,8 +52,18 @@ impl AppViewModel {
         self.notify();
     }
     pub fn receive_feed(&self, url: &str, source: &str) -> Result<Id, String> {
-        let url = reader_domain::safe_url(url, None).ok_or("Invalid feed URL.")?;
-        let parsed = reader_domain::parse_feed(source, &url, self.now())?;
+        self.receive_feed_from(url, source, url)
+    }
+    /// A redirect changes the document's link base, while the subscription retains its identity.
+    pub fn receive_feed_from(
+        &self,
+        identity_url: &str,
+        source: &str,
+        base_url: &str,
+    ) -> Result<Id, String> {
+        let url = reader_domain::safe_url(identity_url, None).ok_or("Invalid feed URL.")?;
+        let base = reader_domain::safe_url(base_url, None).ok_or("Invalid feed base URL.")?;
+        let parsed = reader_domain::parse_feed(source, &base, self.now())?;
         self.dispatch(Action::MergeFeed {
             url: url.clone(),
             feed: parsed,

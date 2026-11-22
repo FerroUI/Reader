@@ -85,7 +85,10 @@ impl AppViewModel {
     }
     pub fn select_from_scroll(&self, id: Id) {
         let needs_update = self.selected() != Some(id)
-            || self.state().article(id).is_some_and(|article| !article.read);
+            || self
+                .state()
+                .article(id)
+                .is_some_and(|article| !article.read);
         if needs_update && self.state().settings.mark_read_on_scroll && !self.is_kept_unread(id) {
             self.select(Some(id));
         }

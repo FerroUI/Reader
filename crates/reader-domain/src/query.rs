@@ -28,6 +28,14 @@ pub fn search_matches(article: &Article, state: &AppState, query: &str) -> bool 
                 "starred" | "star" => article.starred,
                 _ => false,
             }
+        } else if let Some(value) = lower.strip_prefix("feed-id:") {
+            value.parse::<crate::Id>().ok() == Some(article.feed_id)
+        } else if let Some(value) = lower.strip_prefix("folder:") {
+            state.feed(article.feed_id).is_some_and(|feed| {
+                feed.folder_names()
+                    .iter()
+                    .any(|folder| folder.to_lowercase() == value)
+            })
         } else if let Some(value) = lower
             .strip_prefix("tag:")
             .or_else(|| lower.strip_prefix("label:"))

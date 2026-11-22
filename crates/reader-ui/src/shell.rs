@@ -13,6 +13,7 @@ use reader_state::AppViewModel;
 use std::rc::Rc;
 
 pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
+    retain_route_scroll(vm.clone(), ui.clone(), rows.clone());
     let narrow = vm.viewport() < 700.0;
     let focus = ui.focus_mode.get();
     let show_sidebar = !narrow && ui.desktop_sidebar.get() && !focus;
@@ -36,16 +37,24 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
     if !focus {
         root = root.child(header::view(vm.clone(), ui.clone()));
     }
-    let mut layout = grid().grid_row(1).column_definitions(&format!("{width},*"));
+    let mut layout = grid()
+        .key("layout")
+        .grid_row(1)
+        .column_definitions(&format!("{width},*"));
     if show_sidebar {
         layout = layout.child(sidebar::view(vm.clone(), ui.clone()));
     }
-    let mut main = grid().grid_column(1).row_definitions("Auto,*,Auto");
-    let mut top = grid().column_definitions(if narrow || !show_sidebar {
-        "40,*"
-    } else {
-        "0,*"
-    });
+    let mut main = grid()
+        .key("main")
+        .grid_column(1)
+        .row_definitions("Auto,*,Auto");
+    let mut top = grid()
+        .key("viewer-header")
+        .column_definitions(if narrow || !show_sidebar {
+            "40,*"
+        } else {
+            "0,*"
+        });
     if narrow || !show_sidebar {
         let side = ui.clone();
         top = top.child(
@@ -71,19 +80,27 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
     ));
     main = main.child(top);
     if matches!(vm.view(), View::Home | View::Trends | View::Explore) {
-        main = main.child(grid().grid_row(1).child(home::view(vm.clone(), ui.clone())));
+        main = main.child(
+            grid()
+                .key("overview")
+                .grid_row(1)
+                .child(home::view(vm.clone(), ui.clone())),
+        );
     } else if vm.view() == View::Settings {
         main = main.child(
             grid()
+                .key("settings-view")
                 .grid_row(1)
                 .child(crate::settings::preferences(vm.clone(), ui.clone())),
         );
     } else {
         let reading_vm = vm.clone();
         let reading_ui = ui.clone();
-        let mut stream = grid().grid_row(1).clip_to_bounds(true).child(
+        let mut stream = grid().key("stream").grid_row(1).clip_to_bounds(true).child(
             list_box()
                 .name("ArticleList")
+                .focusable(true)
+                .is_tab_stop(false)
                 .with(move |list| {
                     crate::reading::attach(list, reading_vm.clone(), reading_ui.clone())
                 })
@@ -122,13 +139,50 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
     root = root.child(layout);
     if narrow && vm.sidebar_open() {
         let dismiss = vm.clone();
-        root=root.child(rsx!{Grid{Grid.row:1,
+        root=root.child(rsx!{Grid{key:"mobile-navigation",Grid.row:1,
         Button{class:"reader-flat",background:"#55000000",horizontal_alignment:H::Stretch,vertical_alignment:V::Stretch,automation_properties_name:"Close subscriptions",on_click:move |_|dismiss.set_sidebar_open(false)}
         Border{width:264.0,horizontal_alignment:H::Left,background:"White",{sidebar::view(vm.clone(),ui.clone())}}
     }});
     }
     if ui.panel.get() != Panel::None {
-        root = root.child(grid().grid_row_span(2).child(dialogs::view(vm, ui)));
+        root = root.child(
+            grid()
+                .key("dialog")
+                .grid_row_span(2)
+                .child(dialogs::view(vm, ui)),
+        );
     }
     root.into()
+}
+
+/// Route changes start at the first entry, while property-only revisions retain the
+/// same native ListBox, ScrollViewer and recycling collection (including its offset).
+fn retain_route_scroll(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) {
+    let route = vm.view();
+    if ui.last_view.borrow().as_ref() == Some(&route) {
+        return;
+    }
+    *ui.last_view.borrow_mut() = Some(route.clone());
+    ferroui_base::threading::Dispatcher::ui_thread().post_local(
+        move || {
+            if vm.view() != route {
+                return;
+            }
+            let Some(list) = ui.article_list.get_untracked() else {
+                return;
+            };
+            ui.programmatic_scroll.set(Some(std::time::Instant::now()));
+            if let Some(index) = vm.cursor().or(vm.selected()).and_then(|id| rows.index(id)) {
+                list.scroll_into_view(index);
+            } else if let Some(scroll) = list
+                .scroll()
+                .and_then(|scroll| scroll.cast::<ferroui_controls::ScrollViewer>())
+            {
+                scroll.scroll_to_home();
+            } else if rows.len() > 0 {
+                list.scroll_into_view(0);
+            }
+        },
+        ferroui_base::threading::DispatcherPriority::BACKGROUND,
+    );
 }

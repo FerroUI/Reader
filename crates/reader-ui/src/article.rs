@@ -23,6 +23,8 @@ fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
     let selected = row.selected;
     let star = vm.clone();
     let open = vm.clone();
+    let source_open = vm.clone();
+    let date_open = vm.clone();
     let height = match row.density {
         Density::Comfortable => 37.0,
         Density::Cozy => 31.0,
@@ -30,7 +32,8 @@ fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
     };
     let source_width = if row.narrow { "0" } else { "165" };
     let mut line = grid()
-        .name(format!("Article-{id}"))
+        .name("ArticleRow")
+        .tag(Some(Rc::new(id) as ferroui_base::BoxedValue))
         .column_definitions(&format!("28,{source_width},*,70"))
         .height(height)
         .background(if selected {
@@ -72,6 +75,7 @@ fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
         line = line.child(
             text_block()
                 .grid_column(1)
+                .on_pointer_pressed(move |_| source_open.select(Some(id)))
                 .text(row.source.to_string())
                 .font_size(11.0)
                 .foreground("#666666")
@@ -90,6 +94,7 @@ fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
     line = line.child(
         text_block()
             .grid_column(3)
+            .on_pointer_pressed(move |_| date_open.select(Some(id)))
             .text(date(row.article.published))
             .font_size(11.0)
             .foreground("#666666")
@@ -118,8 +123,8 @@ fn expanded(vm: Rc<AppViewModel>, ui: Rc<Session>, row: Row) -> Element {
     let title = row.article.title.clone();
     let body = content::view(vm.clone(), &row.article, row.font_size);
     let mut card = grid()
-        .name(format!("Article-{id}"))
-        .key(id as i64)
+        .name("ArticleEntry")
+        .tag(Some(Rc::new(id) as ferroui_base::BoxedValue))
         .row_definitions("Auto,Auto,Auto")
         .background("White");
     let mut header = grid()

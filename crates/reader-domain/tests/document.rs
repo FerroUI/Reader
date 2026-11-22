@@ -61,3 +61,26 @@ fn delete_folder_preserves_subscriptions_and_article_data() {
     assert_eq!(state.feeds.len(), subscriptions);
     assert!(!state.folders().contains(&"Design".into()));
 }
+
+#[test]
+fn scoped_search_matches_folder_membership_and_feed_identity() {
+    let mut state = AppState::sample(1000);
+    let article = state.articles[0].clone();
+    state
+        .apply(
+            Action::SetFeedFolders {
+                id: article.feed_id,
+                folders: vec!["Daily reading".into(), "Technology".into()],
+            },
+            1000,
+        )
+        .unwrap();
+    assert!(search_matches(
+        &article,
+        &state,
+        &format!("folder:\"Daily reading\" feed-id:{}", article.feed_id)
+    ));
+    assert!(search_matches(&article, &state, "folder:TECHNOLOGY"));
+    assert!(!search_matches(&article, &state, "feed-id:9999"));
+    assert!(!search_matches(&article, &state, "-folder:technology"));
+}

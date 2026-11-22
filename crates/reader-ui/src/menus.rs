@@ -4,6 +4,7 @@ use ferroui_view::prelude::*;
 
 pub fn item(label: &str, action: impl Fn() + 'static) -> Element {
     menu_item()
+        .class("reader-menu")
         .header(label)
         .automation_properties_name(label)
         .on_click(move |e| {
@@ -14,6 +15,7 @@ pub fn item(label: &str, action: impl Fn() + 'static) -> Element {
 }
 pub fn checked(label: &str, value: bool, action: impl Fn() + 'static) -> Element {
     menu_item()
+        .class("reader-menu")
         .header(label)
         .toggle_type(ferroui_controls::MenuItemToggleType::CheckBox)
         .is_checked(value)
@@ -27,7 +29,10 @@ pub fn separator() -> Element {
     ferroui_view::prelude::separator().into_element()
 }
 pub fn button(label: &str, items: Vec<Element>) -> Element {
-    let mut menu = context_menu().min_width(205.0).font_size(13.0);
+    let mut menu = context_menu()
+        .placement(ferroui_controls::PlacementMode::BottomEdgeAlignedLeft)
+        .min_width(205.0)
+        .font_size(13.0);
     for item in items {
         menu = menu.child(item);
     }
@@ -42,7 +47,9 @@ pub fn button(label: &str, items: Vec<Element>) -> Element {
         .into()
 }
 pub fn attach(element: El<Button>, items: Vec<Element>) -> Element {
-    let mut menu = context_menu().min_width(200.0);
+    let mut menu = context_menu()
+        .placement(ferroui_controls::PlacementMode::BottomEdgeAlignedLeft)
+        .min_width(200.0);
     for item in items {
         menu = menu.child(item);
     }

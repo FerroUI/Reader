@@ -21,64 +21,98 @@ fn welcome(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let shortcuts = ui.clone();
     let imports = ui.clone();
     let unread = vm.count(&View::All);
-    let mut content=stack_panel().spacing(18.0).max_width(900.0).horizontal_alignment(H::Left)
-        .child(text_block().text("A look at what's new").font_size(22.0).foreground("#333333"))
-        .child(rsx! {StackPanel{orientation:Orientation::Horizontal,spacing:5.0,
-            TextBlock{text:format!("You have {unread} unread items."),font_size:13.0,vertical_alignment:V::Center}
-            {link("View all items »",move||all.navigate(View::All))}
-        }});
+    let mut content = stack_panel().spacing(18.0).horizontal_alignment(H::Stretch);
     if vm.feeds().is_empty() {
-        content=content.child(paragraph("Keep up with your favorite websites. Reader brings their latest updates together in one place."))
+        content=content.child(text_block().text("Welcome to Google Reader").font_size(22.0))
+            .child(paragraph("Keep up with your favorite websites. Reader brings their latest updates together in one place."))
             .child(reader_controls::primary("Add a subscription",move||add.show(Panel::Subscribe)))
             .child(link("Import your subscriptions",move||imports.show(Panel::ImportExport)));
     } else {
-        for feed in vm.feeds().into_iter().take(4) {
-            let navigate = vm.clone();
-            let id = feed.id;
-            let articles: Vec<_> = vm
-                .state()
+        let state = vm.state();
+        let mut groups = 0;
+        for feed in &state.feeds {
+            let articles: Vec<_> = state
                 .articles
                 .iter()
-                .filter(|a| a.feed_id == id && !a.read)
+                .filter(|article| article.feed_id == feed.id && !article.read)
                 .take(2)
-                .cloned()
                 .collect();
             if articles.is_empty() {
                 continue;
             }
+            let navigate = vm.clone();
+            let id = feed.id;
             let mut group = stack_panel()
-                .spacing(9.0)
-                .margin((0.0, 5.0, 0.0, 20.0))
+                .key(format!("overview-feed:{id}"))
+                .spacing(10.0)
+                .margin((0.0, 0.0, 0.0, 16.0))
                 .child(
                     button()
                         .class("reader-link")
                         .font_size(20.0)
-                        .font_weight(FontWeight::Bold)
+                        .font_weight(FontWeight::Normal)
                         .content(feed.title.clone())
                         .on_click(move |_| navigate.navigate(View::Feed(id))),
                 );
             for article in articles {
                 let model = vm.clone();
                 let id = article.id;
-                group=group.child(rsx! {StackPanel{spacing:4.0,
+                group=group.child(rsx!{StackPanel{key:format!("overview-entry:{id}"),spacing:4.0,
                     Button{class:"reader-link",horizontal_content_alignment:H::Stretch,on_click:move |_|{model.navigate(View::All);model.select(Some(id));},
-                        TextBlock{text:article.title,font_size:13.5,font_weight:FontWeight::Bold,foreground:"#444444",text_wrapping:TextWrapping::Wrap}
+                        TextBlock{text:article.title.clone(),font_size:13.5,font_weight:FontWeight::Bold,foreground:"#444444",text_wrapping:TextWrapping::Wrap}
                     }
-                    TextBlock{text:article.summary,font_size:13.0,foreground:"#555555",text_wrapping:TextWrapping::Wrap,line_height:19.0}
+                    TextBlock{text:article.summary.clone(),font_size:13.0,foreground:"#555555",text_wrapping:TextWrapping::Wrap,line_height:18.0}
                 }});
             }
             content = content.child(group);
+            groups += 1;
+            if groups == 4 {
+                break;
+            }
+        }
+        if groups == 0 {
+            content=content.child(text_block().text("You're all caught up!").font_size(20.0)).child(paragraph("There are no unread items in your subscriptions. Refresh to check for new stories."));
         }
     }
-    content = content
-        .child(separator())
-        .child(link("Read faster with keyboard shortcuts", move || {
-            shortcuts.show(Panel::Shortcuts)
-        }));
+    content = content.child(link(
+        &format!("View all {unread} unread items »"),
+        move || all.navigate(View::All),
+    ));
+    let wide = vm.viewport() > 1050.0;
+    let mut overview = grid()
+        .column_definitions(if wide { "*,270" } else { "*" })
+        .row_definitions(if wide { "*,Auto" } else { "Auto,Auto,Auto" })
+        .column_spacing(36.0)
+        .row_spacing(24.0)
+        .child(content);
+    let tip_add = ui.clone();
+    let tip_import = ui.clone();
+    let tips=border().background("#F9F9F9").border_brush("#DDDDDD").border_thickness(1.0).padding(16.0).vertical_alignment(V::Top)
+        .grid_column(if wide{1}else{0}).grid_row(if wide{0}else{1}).child(rsx!{StackPanel{spacing:14.0,
+            TextBlock{text:"Tips and tricks",font_size:14.0,font_weight:FontWeight::Bold,foreground:"#333333"}
+            {paragraph("Read the web in one place. Subscribe to your favorite sites and get their latest posts in Reader.")}
+            {link("Add a subscription",move||tip_add.show(Panel::Subscribe))}
+            {paragraph("Use j and k to move between items, and s to star something you want to keep.")}
+            {link("Learn more keyboard shortcuts »",move||shortcuts.show(Panel::Shortcuts))}
+            {link("Import your subscriptions »",move||tip_import.show(Panel::ImportExport))}
+        }});
+    overview = overview.child(tips);
+    let about = ui.clone();
+    let mut footer = stack_panel().spacing(9.0).horizontal_alignment(H::Center);
     if vm.feeds().iter().any(|feed| feed.sample) {
-        content=content.child(text_block().text("Your starter library contains example articles. Add your own subscriptions to start reading live feeds.").font_size(11.0).foreground("#777777").text_wrapping(TextWrapping::Wrap));
+        footer=footer.child(text_block().text("This starter library contains example articles. Add subscriptions to read live feeds.").font_size(11.0).foreground("#777777").text_wrapping(TextWrapping::Wrap));
     }
-    scroll(content)
+    footer = footer.child(link("About FerroUI Reader", move || {
+        about.show(Panel::About)
+    }));
+    overview = overview.child(
+        border()
+            .grid_column_span(if wide { 2 } else { 1 })
+            .grid_row(if wide { 1 } else { 2 })
+            .margin((0.0, 18.0, 0.0, 0.0))
+            .child(footer),
+    );
+    scroll(overview.into())
 }
 fn trends(vm: Rc<AppViewModel>) -> Element {
     let data = vm.trends();
@@ -138,7 +172,7 @@ fn trends(vm: Rc<AppViewModel>) -> Element {
             TextBlock{Grid.column:3,text:format!("{:.0}%",feed.percent)}
         }});
     }
-    scroll(content)
+    scroll(content.into())
 }
 fn explore(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let subscribe = ui.clone();
@@ -181,9 +215,9 @@ fn explore(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         Border{Grid.column:1,vertical_alignment:V::Center,{reader_controls::action("Subscribe",move||model.subscribe(url.to_string()))}}
     }});
     }
-    scroll(content)
+    scroll(content.into())
 }
-fn scroll(content: El<StackPanel>) -> Element {
+fn scroll(content: Element) -> Element {
     scroll_viewer()
         .horizontal_scroll_bar_visibility(ScrollBarVisibility::Disabled)
         .vertical_scroll_bar_visibility(ScrollBarVisibility::Auto)

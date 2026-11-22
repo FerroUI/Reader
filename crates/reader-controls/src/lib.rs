@@ -2,6 +2,7 @@
 //! Native control templates retain keyboard, focus, automation and input semantics.
 mod buttons;
 mod icons;
+mod menus;
 mod templates;
 mod theme;
 pub use buttons::*;

@@ -35,6 +35,10 @@ pub(super) fn reconcile(
         items.remove_range(start, end - start);
         end = start;
     }
+    if previous.is_empty() {
+        items.add_range(next.iter().map(Row::boxed));
+        return;
+    }
     let displaced = previous
         .iter()
         .zip(next)

@@ -1,3 +1,4 @@
+mod html;
 mod parser;
 use ferroui_base::layout::HorizontalAlignment as H;
 use ferroui_base::media::{FontFamily, FontStyle, FontWeight, TextWrapping};
@@ -13,8 +14,9 @@ use std::{
 pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64) -> Element {
     let mut hash = std::collections::hash_map::DefaultHasher::new();
     article.content.hash(&mut hash);
+    article.content_base_url().hash(&mut hash);
     let content_hash = hash.finish();
-    let blocks = parser::parse(&article.content, &article.url);
+    let blocks = parser::parse(&article.content, article.content_base_url());
     let mut body = stack_panel()
         .max_width(650.0)
         .horizontal_alignment(H::Left)

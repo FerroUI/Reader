@@ -1,5 +1,6 @@
 //! A non-executing HTML projection. It preserves text, formatting, links and images;
 //! scripts, embeds and remote style sheets never become controls or browser DOM.
+use super::html::{attr, tag_end};
 #[derive(Clone, Default)]
 pub struct Span {
     pub text: String,
@@ -29,6 +30,9 @@ pub fn parse(html: &str, base: &str) -> Vec<Block> {
     let mut italic = 0u32;
     let mut code = 0u32;
     let mut href = None;
+    let mut lists: Vec<Option<i64>> = Vec::new();
+    let mut pre_depth = 0u32;
+    let mut quote_depth = 0u32;
     let mut suppressed = String::new();
     while pos < html.len() {
         let rest = &html[pos..];
@@ -100,21 +104,76 @@ pub fn parse(html: &str, base: &str) -> Vec<Block> {
                         flush(&mut block, &mut output);
                     }
                 }
-                "p" | "div" | "section" | "article" | "hr" | "ul" | "ol" | "li" | "blockquote"
-                | "pre" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => {
+                "ol" | "ul" => {
+                    flush(&mut block, &mut output);
+                    if closing {
+                        lists.pop();
+                    } else {
+                        lists.push(if name == "ol" {
+                            Some(
+                                attr(raw, "start")
+                                    .and_then(|value| value.parse().ok())
+                                    .unwrap_or(1),
+                            )
+                        } else {
+                            None
+                        });
+                    }
+                }
+                "li" => {
                     flush(&mut block, &mut output);
                     if !closing {
-                        if name.starts_with('h') && name.len() == 2 {
-                            block.heading = name.as_bytes()[1].saturating_sub(b'0');
-                        }
-                        block.quote = name == "blockquote";
-                        block.pre = name == "pre";
-                        if name == "li" {
-                            block.spans.push(Span {
-                                text: "•  ".into(),
-                                ..Default::default()
-                            });
-                        }
+                        let marker = if let Some(Some(number)) = lists.last_mut() {
+                            if let Some(value) =
+                                attr(raw, "value").and_then(|value| value.parse().ok())
+                            {
+                                *number = value;
+                            }
+                            let marker = format!("{number}.  ");
+                            *number = number.saturating_add(1);
+                            marker
+                        } else {
+                            "•  ".to_owned()
+                        };
+                        block.spans.push(Span {
+                            text: marker,
+                            ..Default::default()
+                        });
+                    }
+                }
+                "blockquote" | "pre" => {
+                    flush(&mut block, &mut output);
+                    let depth = if name == "pre" {
+                        &mut pre_depth
+                    } else {
+                        &mut quote_depth
+                    };
+                    *depth = if closing {
+                        depth.saturating_sub(1)
+                    } else {
+                        depth.saturating_add(1)
+                    };
+                }
+                "td" | "th" => {
+                    if name == "th" {
+                        bold = if closing {
+                            bold.saturating_sub(1)
+                        } else {
+                            bold + 1
+                        };
+                    }
+                    if closing {
+                        block.spans.push(Span {
+                            text: "    ".into(),
+                            ..Default::default()
+                        });
+                    }
+                }
+                "p" | "div" | "section" | "article" | "hr" | "table" | "tr" | "h1" | "h2"
+                | "h3" | "h4" | "h5" | "h6" => {
+                    flush(&mut block, &mut output);
+                    if !closing && name.starts_with('h') && name.len() == 2 {
+                        block.heading = name.as_bytes()[1].saturating_sub(b'0');
                     }
                 }
                 _ => {}
@@ -126,7 +185,9 @@ pub fn parse(html: &str, base: &str) -> Vec<Block> {
             if !suppressed.is_empty() {
                 continue;
             }
-            let decoded = reader_domain::plain_text(raw);
+            block.pre = pre_depth > 0;
+            block.quote = quote_depth > 0;
+            let decoded = super::html::text(raw, block.pre);
             if decoded.is_empty() {
                 if !block.spans.is_empty() {
                     block.spans.push(Span {
@@ -137,11 +198,11 @@ pub fn parse(html: &str, base: &str) -> Vec<Block> {
                 continue;
             }
             let mut text = String::new();
-            if raw.starts_with(char::is_whitespace) {
+            if !block.pre && raw.starts_with(char::is_whitespace) {
                 text.push(' ');
             }
             text.push_str(&decoded);
-            if raw.ends_with(char::is_whitespace) {
+            if !block.pre && raw.ends_with(char::is_whitespace) {
                 text.push(' ');
             }
             block.spans.push(Span {
@@ -156,101 +217,5 @@ pub fn parse(html: &str, base: &str) -> Vec<Block> {
     flush(&mut block, &mut output);
     output
 }
-fn tag_end(text: &str) -> Option<usize> {
-    let mut quote = None;
-    for (i, c) in text.char_indices().skip(1) {
-        if let Some(q) = quote {
-            if c == q {
-                quote = None;
-            }
-        } else if c == '\'' || c == '"' {
-            quote = Some(c);
-        } else if c == '>' {
-            return Some(i);
-        }
-    }
-    None
-}
-fn attr(tag: &str, wanted: &str) -> Option<String> {
-    let mut chars = tag.char_indices().peekable();
-    while let Some((_, c)) = chars.peek() {
-        if c.is_ascii_whitespace() {
-            break;
-        }
-        chars.next();
-    }
-    while let Some((start, c)) = chars.next() {
-        if c.is_ascii_whitespace() || c == '/' {
-            continue;
-        }
-        let mut end = start + c.len_utf8();
-        while let Some((i, c)) = chars.peek() {
-            if *c == '=' || c.is_ascii_whitespace() {
-                break;
-            }
-            end = *i + c.len_utf8();
-            chars.next();
-        }
-        let name = &tag[start..end];
-        while chars.peek().is_some_and(|(_, c)| c.is_ascii_whitespace()) {
-            chars.next();
-        }
-        if !chars.peek().is_some_and(|(_, c)| *c == '=') {
-            continue;
-        }
-        chars.next();
-        while chars.peek().is_some_and(|(_, c)| c.is_ascii_whitespace()) {
-            chars.next();
-        }
-        let Some((start, first)) = chars.next() else {
-            break;
-        };
-        let (value_start, mut value_end) = if first == '\'' || first == '"' {
-            (start + 1, start + 1)
-        } else {
-            (start, start + first.len_utf8())
-        };
-        while let Some((i, c)) = chars.peek() {
-            if (first == '\'' || first == '"') && *c == first {
-                chars.next();
-                break;
-            }
-            if first != '\'' && first != '"' && c.is_ascii_whitespace() {
-                break;
-            }
-            value_end = *i + c.len_utf8();
-            chars.next();
-        }
-        if name.eq_ignore_ascii_case(wanted) {
-            return Some(reader_domain::plain_text(&tag[value_start..value_end]));
-        }
-    }
-    None
-}
 #[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn projects_safe_content_and_formatting() {
-        let blocks=parse("<p>Hello <strong>world</strong> <a href='/more'>read more</a></p><script>bad()</script><img src='/photo.jpg' alt='Photo'>","https://example.org/feed");
-        assert_eq!(blocks.len(), 2);
-        assert!(blocks[0].spans.iter().any(|s| s.bold && s.text == "world"));
-        assert!(blocks[0]
-            .spans
-            .iter()
-            .any(|s| s.href.as_deref() == Some("https://example.org/more")));
-        assert_eq!(
-            blocks[1].image.as_ref().unwrap().0,
-            "https://example.org/photo.jpg"
-        );
-    }
-    #[test]
-    fn discards_active_urls() {
-        let blocks = parse(
-            "<p><a href='javascript:bad()'>safe text</a></p><img src='data:x'>",
-            "https://example.org",
-        );
-        assert_eq!(blocks.len(), 1);
-        assert!(blocks[0].spans.iter().all(|s| s.href.is_none()));
-    }
-}
+mod tests;

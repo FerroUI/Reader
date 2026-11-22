@@ -61,6 +61,11 @@ fn clear(route: &RefCell<Option<(WeakRef<TopLevel>, RoutedEventHandlerToken)>>) 
 }
 fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
     if event.key == Key::Escape {
+        if ui.panel.get_untracked() != Panel::None {
+            ui.close();
+            event.set_handled(true);
+            return;
+        }
         ui.close();
         if vm.sidebar_open() {
             vm.set_sidebar_open(false);
@@ -99,18 +104,33 @@ fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
             .get()
             .is_some_and(|at| at.elapsed().as_secs_f64() < 1.5)
     {
+        if event.key == Key::T && !shift {
+            ui.show(Panel::GoToTag);
+            event.set_handled(true);
+            return;
+        }
+        if event.key == Key::U {
+            ui.show(Panel::GoToSubscription);
+            event.set_handled(true);
+            return;
+        }
         let view = match event.key {
             Key::H => Some(View::Home),
             Key::A => Some(View::All),
             Key::S => Some(View::Starred),
-            Key::T => Some(View::Trends),
-            Key::D => Some(View::Explore),
+            Key::T if shift => Some(View::Trends),
+            Key::D | Key::E => Some(View::Explore),
             _ => None,
         };
         if let Some(view) = view {
             vm.navigate(view);
             event.set_handled(true);
             return;
+        }
+    }
+    if !shift && matches!(event.key, Key::J | Key::K | Key::N | Key::P) {
+        if let Some(list) = ui.article_list.get_untracked() {
+            list.focus();
         }
     }
     match event.key {
@@ -139,39 +159,46 @@ fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
             vm.navigate(View::Feed(feeds[index].id));
         }
         Key::S if shift => {
-            if let Some(id) = vm.selected().or(vm.cursor()) {
+            if let Some(id) = vm.cursor().or(vm.selected()) {
                 vm.share_article(id);
             }
         }
         Key::T if shift => {
-            if let Some(id) = vm.selected().or(vm.cursor()) {
+            if let Some(id) = vm.cursor().or(vm.selected()) {
                 vm.share_article(id);
             }
         }
         Key::S => {
-            if let Some(id) = vm.selected() {
+            if let Some(id) = vm.cursor().or(vm.selected()) {
                 vm.toggle_star(id);
             }
         }
         Key::M => {
-            if let Some(id) = vm.selected() {
+            if let Some(id) = vm.cursor().or(vm.selected()) {
                 vm.toggle_read(id);
             }
         }
         Key::V => {
-            if let Some(id) = vm.selected() {
+            if let Some(id) = vm.cursor().or(vm.selected()) {
                 vm.open_article(id);
             }
         }
         Key::E => {
-            if let Some(id) = vm.selected() {
+            if let Some(id) = vm.cursor().or(vm.selected()) {
                 vm.email_article(id);
             }
         }
         Key::T => {
-            if let Some(id) = vm.selected() {
+            if let Some(id) = vm.cursor().or(vm.selected()) {
                 ui.show(Panel::Tags(id));
             }
+        }
+        Key::OemPlus | Key::Add | Key::OemMinus | Key::Subtract => {
+            let mut settings = vm.state().settings.clone();
+            let larger = matches!(event.key, Key::OemPlus | Key::Add);
+            settings.font_size =
+                (settings.font_size + if larger { 1.0 } else { -1.0 }).clamp(11.0, 24.0);
+            vm.set_settings(settings);
         }
         Key::R => vm.refresh(),
         Key::A if shift => {

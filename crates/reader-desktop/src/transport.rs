@@ -8,6 +8,7 @@ const FEED_LIMIT: usize = 8 * 1024 * 1024;
 const IMAGE_LIMIT: usize = 8 * 1024 * 1024;
 const EFFECTIVE_URL: &[u8] = b"\nREADER_EFFECTIVE_URL:";
 pub struct FeedResponse {
+    /// Subscription identity. Redirects change the parse base, not this address.
     pub url: String,
     pub feed: ParsedFeed,
 }
@@ -102,6 +103,8 @@ pub fn feed(url: String, now: i64, discover: bool) -> Result<FeedResponse, Strin
     let response = download(&url, FEED_LIMIT)?;
     let source =
         String::from_utf8(response.bytes).map_err(|_| "The feed must use UTF-8 text encoding.")?;
+    // Resolve publisher links against curl's final response URL before crossing
+    // back to the UI thread. MergeFeed retains `url` as the subscription identity.
     match reader_domain::parse_feed(&source, &response.url, now) {
         Ok(feed) => Ok(FeedResponse { url, feed }),
         Err(original_error) if discover => {

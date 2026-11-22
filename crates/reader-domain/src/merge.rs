@@ -83,12 +83,14 @@ impl AppState {
                 let article = self.article_mut(article_id).unwrap();
                 if article.title != item.title
                     || article.content != item.content
+                    || article.content_base != item.content_base
                     || article.published != item.published
                     || article.url != item.url
                     || article.author != item.author
                 {
                     article.title = item.title;
                     article.content = item.content;
+                    article.content_base = item.content_base;
                     article.summary = item.summary;
                     article.published = item.published;
                     article.url = item.url;
@@ -106,6 +108,7 @@ impl AppState {
                     url: item.url,
                     author: item.author,
                     content: item.content,
+                    content_base: item.content_base,
                     summary: item.summary,
                     published: item.published,
                     ..Article::default()

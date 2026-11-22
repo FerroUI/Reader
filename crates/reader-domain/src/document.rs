@@ -93,6 +93,7 @@ impl AppState {
                 return Err("The backup contains duplicate article GUIDs.".into());
             }
             article.url = crate::safe_url(&article.url, None).unwrap_or_default();
+            article.content_base = crate::safe_url(&article.content_base, None).unwrap_or_default();
             article.tags = clean_names(std::mem::take(&mut article.tags));
             article.rebuild_search();
         }
@@ -100,7 +101,7 @@ impl AppState {
         self.settings.font_size = if self.settings.font_size.is_finite() {
             self.settings.font_size.clamp(11.0, 26.0)
         } else {
-            14.0
+            13.0
         };
         self.next_id = self.next_id.max(
             used.last()

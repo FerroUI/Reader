@@ -11,8 +11,19 @@ use std::{cell::RefCell, rc::Rc};
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen(js_name = runMain)]
-pub fn run_main(query: &str, regular: Vec<u8>, bold: Vec<u8>, italic: Vec<u8>, bold_italic: Vec<u8>, serif: Vec<u8>) -> Result<(), JsValue> {
-    app::set_demo(query.split('&').any(|p| p.trim_start_matches('?') == "demo=1"));
+pub fn run_main(
+    query: &str,
+    regular: Vec<u8>,
+    bold: Vec<u8>,
+    italic: Vec<u8>,
+    bold_italic: Vec<u8>,
+    serif: Vec<u8>,
+) -> Result<(), JsValue> {
+    app::set_demo(
+        query
+            .split('&')
+            .any(|p| p.trim_start_matches('?') == "demo=1"),
+    );
     let bytes = RefCell::new(Some(vec![regular, bold, italic, bold_italic, serif]));
     let font_error = Rc::new(RefCell::new(None));
     let result = font_error.clone();
@@ -25,13 +36,18 @@ pub fn run_main(query: &str, regular: Vec<u8>, bold: Vec<u8>, italic: Vec<u8>, b
                 *result.borrow_mut() = reader_fonts::install_fonts(manager, &fonts).err();
             }
         })
-        .start_browser_app("out", Some(BrowserPlatformOptions {
-            accessibility: BrowserAccessibilityMode::Enabled,
-            ..Default::default()
-        }));
+        .start_browser_app(
+            "out",
+            Some(BrowserPlatformOptions {
+                accessibility: BrowserAccessibilityMode::Enabled,
+                ..Default::default()
+            }),
+        );
     let error = font_error.borrow_mut().take();
     error.map_or(Ok(()), |e| Err(JsValue::from_str(&e)))
 }
 
 #[cfg(not(target_os = "emscripten"))]
-fn main() { println!("Build Reader for the browser with scripts/build-browser.sh"); }
+fn main() {
+    println!("Build Reader for the browser with scripts/build-browser.sh");
+}

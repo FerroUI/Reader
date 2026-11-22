@@ -41,7 +41,7 @@ function stampIndex(source, version) {
 export async function prepareSite(root, template) {
   const names = await siteFiles(root);
   const contents = new Map(await Promise.all(names.map(async name => [name, await readFile(path.join(root, name))])));
-  for (const name of ["index.html", "main.js", "reader-browser.js", "reader_browser.wasm", "ferroui.js", "ferroui-loader.js"]) {
+  for (const name of ["index.html", "main.js", "reader-storage.js", "reader-browser.js", "reader_browser.wasm", "ferroui.js", "ferroui-loader.js"]) {
     if (!contents.has(name)) throw new Error(`The built site is missing ${name}.`);
   }
   const worker = template ?? await readFile(workerTemplate, "utf8");

@@ -1,3 +1,5 @@
+mod folders;
+mod navigate;
 mod shortcuts;
 use crate::{
     session::{Panel, Session},
@@ -17,6 +19,19 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     if panel == Panel::None {
         return Element::Empty;
     }
+    if panel == Panel::Shortcuts {
+        return shortcuts::overlay(ui, vm.viewport());
+    }
+    let focus_dialog = matches!(
+        panel,
+        Panel::Preferences
+            | Panel::Subscriptions
+            | Panel::ImportExport
+            | Panel::About
+            | Panel::MarkAll
+            | Panel::Unsubscribe(_)
+    );
+    let dialog_key = format!("dialog:{panel:?}");
     let close = ui.clone();
     let close_key = ui.clone();
     let title = match panel {
@@ -24,10 +39,13 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         Panel::Shortcuts => "Keyboard shortcuts",
         Panel::Preferences => "Reader settings",
         Panel::Subscriptions => "Subscriptions",
+        Panel::GoToSubscription => "Go to a subscription",
+        Panel::GoToTag => "Go to a tag or folder",
         Panel::ImportExport => "Import/Export",
         Panel::Tags(_) => "Edit tags",
         Panel::Note(_) => "Add a note",
         Panel::Rename(_) => "Rename subscription",
+        Panel::RenameFolder(_) => "Rename folder",
         Panel::Move(_) => "Change folders",
         Panel::Unsubscribe(_) => "Unsubscribe",
         Panel::NewFolder => "Create a new folder",
@@ -44,20 +62,23 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         510.0
     };
     let content = match panel.clone() {
-        Panel::Shortcuts => shortcuts::view(),
+        Panel::Shortcuts => unreachable!(),
         Panel::Subscriptions => settings::subscriptions(vm.clone(), ui.clone()),
         Panel::Preferences => settings::preferences(vm.clone(), ui.clone()),
         Panel::ImportExport => settings::import_export(vm.clone()),
         Panel::About => about(),
+        Panel::GoToSubscription => navigate::view(vm.clone(), ui.clone(), false),
+        Panel::GoToTag => navigate::view(vm.clone(), ui.clone(), true),
+        Panel::Move(id) => folders::view(vm.clone(), ui.clone(), id),
         Panel::MarkAll | Panel::Unsubscribe(_) => {
             confirmation(vm.clone(), ui.clone(), panel.clone())
         }
         _ => form(vm.clone(), ui.clone(), panel.clone()),
     };
     rsx! {
-        Grid {name:"DialogOverlay",background:"#66000000",keyboard_navigation_tab_navigation:KeyboardNavigationMode::Cycle,
+        Grid {key:dialog_key,name:"DialogOverlay",background:"#66000000",keyboard_navigation_tab_navigation:KeyboardNavigationMode::Cycle,
             on_key_down:move |e|{if e.key==Key::Escape{close_key.close();e.set_handled(true);}},
-            Border {name:"ReaderDialog",background:"White",border_brush:"#888888",border_thickness:1.0,width:width.min((vm.viewport()-32.0).max(280.0)),max_height:650.0,padding:26.0,horizontal_alignment:H::Center,vertical_alignment:V::Center,
+            Border {name:"ReaderDialog",focusable:true,is_tab_stop:false,on_loaded:move |event|{if focus_dialog{if let Some(control)=event.source().and_then(|source|source.cast::<ferroui_controls::Control>()){control.focus();}}},background:"White",border_brush:"#888888",border_thickness:1.0,width:width.min((vm.viewport()-32.0).max(280.0)),max_height:650.0,padding:26.0,horizontal_alignment:H::Center,vertical_alignment:V::Center,
                 Grid {row_definitions:"Auto,*",row_spacing:20.0,
                     Grid {column_definitions:"*,Auto",
                         TextBlock {text:title,font_size:20.0,foreground:"#222222",vertical_alignment:V::Center}
@@ -75,7 +96,7 @@ fn form(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Element {
     if ui.form_for.borrow().as_ref() != Some(&panel) {
         let value = match &panel {
             Panel::Rename(id) => vm.feed(*id).map(|f| f.title).unwrap_or_default(),
-            Panel::Move(id) => vm.feed(*id).map(|f| f.folder).unwrap_or_default(),
+            Panel::RenameFolder(name) => name.clone(),
             Panel::Tags(id) => vm
                 .article(*id)
                 .map(|a| a.tags.join(", "))
@@ -113,6 +134,7 @@ fn form(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Element {
         match save_panel {
             Panel::Subscribe => save_vm.subscribe(value),
             Panel::Rename(id) => save_vm.rename_feed(id, value),
+            Panel::RenameFolder(ref name) => save_vm.rename_folder(name.clone(), value),
             Panel::Move(id) => save_vm.move_feed(id, value),
             Panel::Tags(id) => save_vm.set_tags(
                 id,
@@ -162,17 +184,6 @@ fn form(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Element {
         .child(input);
     if matches!(panel, Panel::Subscribe) {
         form=form.child(paragraph("Follow your favorite websites in one place. Paste an RSS or Atom feed address, or a website that advertises one."));
-    }
-    if matches!(panel, Panel::Move(_)) {
-        let mut folders = wrap_panel().orientation(Orientation::Horizontal);
-        for folder in vm.folders() {
-            let ui = ui.clone();
-            let value = folder.clone();
-            folders = folders.child(reader_controls::link(&format!("{folder}  "), move || {
-                ui.entry.set(value.clone())
-            }));
-        }
-        form = form.child(folders);
     }
     form.child(
         stack_panel()

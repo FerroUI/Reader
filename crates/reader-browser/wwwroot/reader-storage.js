@@ -1,3 +1,4 @@
+// App storage is distinct from FerroUI's storage.js platform module.
 // IndexedDB writes are atomic. A generation check prevents two tabs overwriting each other.
 const KEY = "library", FALLBACK = "ferroui.reader.v1", RECOVERY = "ferroui.reader.recovery";
 let db, contents = "", generation = 0, queue = Promise.resolve(), failure = null;

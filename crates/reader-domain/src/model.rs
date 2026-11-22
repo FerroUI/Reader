@@ -29,6 +29,8 @@ pub struct Article {
     pub url: String,
     pub author: String,
     pub content: String,
+    /// Effective document/XML Base for relative URLs inside the article body.
+    pub content_base: String,
     pub summary: String,
     pub published: i64,
     pub read: bool,
@@ -42,6 +44,13 @@ pub struct Article {
 }
 
 impl Article {
+    pub fn content_base_url(&self) -> &str {
+        if self.content_base.is_empty() {
+            &self.url
+        } else {
+            &self.content_base
+        }
+    }
     pub fn rebuild_search(&mut self) {
         self.search_text = format!(
             "{} {} {} {} {}",
@@ -117,7 +126,7 @@ impl Default for Settings {
             show_all_subscriptions: true,
             mark_read_on_scroll: true,
             confirm_mark_all: true,
-            font_size: 14.0,
+            font_size: 13.0,
             density: Density::Comfortable,
             start_page: View::Home,
             feed_proxy: String::new(),

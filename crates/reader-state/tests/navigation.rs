@@ -90,6 +90,37 @@ fn start_page_is_honored_and_background_feed_updates_do_not_navigate() {
     let mut settings = vm.state().settings.clone();
     settings.start_page = View::Feed(999_999);
     vm.set_settings(settings);
-    let restored = AppViewModel::new(AppState::from_json(&vm.export_json().unwrap()).unwrap(), 1000, Rc::new(|_| Ok(())));
+    let restored = AppViewModel::new(
+        AppState::from_json(&vm.export_json().unwrap()).unwrap(),
+        1000,
+        Rc::new(|_| Ok(())),
+    );
     assert_eq!(restored.view(), View::Home);
+}
+
+#[test]
+fn redirected_feed_links_use_effective_url_without_changing_subscription_identity() {
+    let vm = AppViewModel::new(AppState::new(), 1000, Rc::new(|_| Ok(())));
+    let original = "https://example.com/feed";
+    let xml = "<rss><channel><title>Feed</title><link>../</link><item><guid>one</guid><title>One</title><link>posts/one</link></item></channel></rss>";
+    let id = vm.receive_feed(original, xml).unwrap();
+    let refreshed = vm
+        .receive_feed_from(original, xml, "https://cdn.example.org/news/rss.xml")
+        .unwrap();
+    assert_eq!(refreshed, id);
+    assert_eq!(vm.feed(id).unwrap().url, original);
+    assert_eq!(vm.state().articles.len(), 1);
+    assert_eq!(
+        vm.state().articles[0].url,
+        "https://cdn.example.org/news/posts/one"
+    );
+    assert_eq!(
+        vm.state().articles[0].content_base,
+        "https://cdn.example.org/news/rss.xml"
+    );
+    assert_eq!(vm.view(), View::Home);
+    assert!(vm
+        .receive_feed_from(original, xml, "javascript:unsafe")
+        .is_err());
+    assert_eq!(vm.state().articles.len(), 1);
 }

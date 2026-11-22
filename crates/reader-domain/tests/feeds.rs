@@ -63,6 +63,85 @@ fn atom_xhtml_relative_links_and_dates_are_supported() {
 }
 
 #[test]
+fn nested_xml_base_resolves_feed_entry_and_link_references() {
+    let atom = r#"<feed xmlns="http://www.w3.org/2005/Atom" xml:base="../journal/"><title>Atom</title><link href="./"/><entry xml:base="2026/"><id>entry:one</id><title>One</title><link xml:base="../posts/" href="one"/></entry><entry xml:base="javascript:unsafe"><id>entry:two</id><link href="relative"/></entry></feed>"#;
+    let parsed = parse_feed(atom, "https://example.com/redirect/feed.xml", 42).unwrap();
+    assert_eq!(parsed.site_url, "https://example.com/journal/");
+    assert_eq!(
+        parsed.articles[0].url,
+        "https://example.com/journal/posts/one"
+    );
+    assert!(parsed.articles[1].url.is_empty());
+    let rss = r#"<rss xml:base="https://publisher.example/"><channel><link>home</link><item xml:base="posts/"><guid>one</guid><link>one</link></item></channel></rss>"#;
+    let parsed = parse_feed(rss, "https://proxy.example/feed.xml", 42).unwrap();
+    assert_eq!(parsed.site_url, "https://publisher.example/home");
+    assert_eq!(
+        parsed.articles[0].url,
+        "https://publisher.example/posts/one"
+    );
+}
+
+#[test]
+fn content_base_is_independent_of_article_link_and_round_trips_with_legacy_fallback() {
+    let atom = r#"<feed xmlns="http://www.w3.org/2005/Atom" xml:base="https://assets.example/root/"><title>Atom</title><entry xml:base="../posts/"><id>entry:one</id><link href="https://publisher.example/story/one"/><content type="xhtml" xml:base="assets/"><div xmlns="http://www.w3.org/1999/xhtml" xml:base="../images/"><p><img src="one.png"/></p></div></content></entry><entry><id>entry:two</id><summary type="html" xml:base="../summaries/">&lt;a href="more"&gt;More&lt;/a&gt;</summary></entry></feed>"#;
+    let parsed = parse_feed(atom, "https://redirect.example/feed.xml", 42).unwrap();
+    assert_eq!(
+        parsed.articles[0].url,
+        "https://publisher.example/story/one"
+    );
+    assert_eq!(
+        parsed.articles[0].content_base,
+        "https://assets.example/posts/images/"
+    );
+    assert_eq!(
+        parsed.articles[1].content_base,
+        "https://assets.example/summaries/"
+    );
+    let mut state = AppState::new();
+    state
+        .apply(
+            Action::MergeFeed {
+                url: "https://original.example/feed".into(),
+                feed: parsed.clone(),
+            },
+            42,
+        )
+        .unwrap();
+    let id = state.articles[0].id;
+    let mut updated = parsed;
+    updated.articles[0].content_base = "https://assets.example/new-images/".into();
+    let changes = state
+        .apply(
+            Action::MergeFeed {
+                url: "https://original.example/feed".into(),
+                feed: updated,
+            },
+            43,
+        )
+        .unwrap();
+    assert!(changes.articles.contains(&id));
+    let restored = AppState::from_json(&state.to_json().unwrap()).unwrap();
+    assert_eq!(
+        restored.article(id).unwrap().content_base_url(),
+        "https://assets.example/new-images/"
+    );
+    let mut legacy = serde_json::to_value(&state).unwrap();
+    for article in legacy["articles"].as_array_mut().unwrap() {
+        article.as_object_mut().unwrap().remove("content_base");
+    }
+    let restored = AppState::from_json(&legacy.to_string()).unwrap();
+    assert_eq!(
+        restored.article(id).unwrap().content_base_url(),
+        "https://publisher.example/story/one"
+    );
+    let rss = parse_feed("<rss><channel><item><guid>one</guid><link>https://publisher.example/story</link><description>&lt;img src=\"image.png\"/&gt;</description></item></channel></rss>", "https://redirect.example/latest/rss.xml", 42).unwrap();
+    assert_eq!(
+        rss.articles[0].content_base,
+        "https://redirect.example/latest/rss.xml"
+    );
+}
+
+#[test]
 fn json_feed_and_untrusted_url_boundaries() {
     let json = r#"{"version":"https://jsonfeed.org/version/1.1","title":"JSON","items":[{"id":"1","title":"Item","url":"javascript:alert(1)","content_text":"<not markup>"}]}"#;
     let parsed = parse_feed(json, "https://example.com/feed", 42).unwrap();

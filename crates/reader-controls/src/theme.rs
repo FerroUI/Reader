@@ -8,7 +8,9 @@ use ferroui_base::media::{
 use ferroui_base::styling::ThemeVariant;
 use ferroui_base::{RelativePoint, StyledElement, Visual};
 use ferroui_controls::primitives::{ScrollBarVisibility, TemplatedControl};
-use ferroui_controls::{Application, ContentControl, ItemsControl, ScrollViewer, TextBlock};
+use ferroui_controls::{
+    documents::TextElement, Application, ContentControl, ItemsControl, ScrollViewer,
+};
 use ferroui_view::style;
 use std::rc::Rc;
 
@@ -17,13 +19,13 @@ pub fn install_theme(app: &Application) {
     app.styles()
         .add(ferroui_themes_material::MaterialTheme::with_parts(None, THEME_PARTS).as_style());
     app.styles().add(
-        style("TextBlock")
+        style("Grid#ReaderApp")
             .set(
-                TextBlock::font_family_property(),
+                TextElement::font_family_property(),
                 FontFamily::new("fonts:Reader#Liberation Sans"),
             )
-            .set(TextBlock::font_size_property(), 13.0)
-            .set(TextBlock::foreground_property(), "#333333")
+            .set(TextElement::font_size_property(), 13.0)
+            .set(TextElement::foreground_property(), "#333333")
             .build(),
     );
     for selector in [
@@ -171,6 +173,7 @@ pub fn install_theme(app: &Application) {
             .build(),
     );
     install_list(app);
+    crate::menus::install(app);
 }
 fn install_list(app: &Application) {
     app.styles().add(

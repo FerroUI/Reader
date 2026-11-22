@@ -1,7 +1,7 @@
 import { FerroExports } from "./ferroui.js";
 import { loadModule } from "./ferroui-loader.js";
 import { attachRuntime, width, now, flush, reportError } from "./host.js";
-import { prepareStorage } from "./storage.js";
+import { prepareStorage } from "./reader-storage.js";
 import { attachNavigation } from "./navigation.js";
 
 const fontNames = ["LiberationSans-Regular.ttf", "LiberationSans-Bold.ttf", "LiberationSans-Italic.ttf", "LiberationSans-BoldItalic.ttf", "LiberationSerif-Regular.ttf"];

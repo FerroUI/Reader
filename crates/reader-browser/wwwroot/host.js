@@ -1,11 +1,14 @@
-import { load, save, preserveRecovery, flushStorage, setStorageReporter } from "./storage.js";
+import { load, save, preserveRecovery, flushStorage, setStorageReporter } from "./reader-storage.js";
 import { fetchFeed, fetchImage, refreshFeeds } from "./feeds.js";
 import { downloadFile, pickFile, openUrl, copyText, share, email, printArticle } from "./transfers.js";
 export { load, save, preserveRecovery };
 export const now = () => Math.floor(Date.now() / 1000);
 export const width = () => document.getElementById("out").getBoundingClientRect().width;
 let runtime, saveTimer, pendingOperations = 0, latestSubscription = 0;
-export function attachRuntime(value) { runtime = value; setStorageReporter(reportError); }
+export function attachRuntime(value) {
+  runtime = value;
+  setStorageReporter(error => runtime.storageError(error?.message || String(error)));
+}
 export function reportError(error) { runtime?.hostError(error?.message || String(error)); }
 export function flush() {
   clearTimeout(saveTimer);
@@ -35,7 +38,7 @@ async function perform(message) {
       pendingOperations++;
       try {
         const result = await fetchFeed(message.url, message.proxy);
-        runtime.receiveFeed(result.url, result.contents, subscription === latestSubscription, 0);
+        runtime.receiveFeed(result.url, result.contents, subscription === latestSubscription, 0, result.url);
       } catch (error) { runtime.feedError(message.url, error.message); }
       finally { if (--pendingOperations === 0) runtime.finishRefresh(); }
       break;
@@ -43,7 +46,7 @@ async function perform(message) {
     case "refresh":
       pendingOperations++;
       try { await refreshFeeds(message.feeds, message.proxy,
-        (url, xml, id) => runtime.receiveFeed(url, xml, false, id), (url, error) => runtime.feedError(url, error)); }
+        (url, xml, id, base) => runtime.receiveFeed(url, xml, false, id, base), (url, error) => runtime.feedError(url, error)); }
       finally { if (--pendingOperations === 0) runtime.finishRefresh(); }
       break;
     case "fetchImage":

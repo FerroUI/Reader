@@ -3,7 +3,7 @@ use ferroui_base::layout::{Orientation, VerticalAlignment as V};
 use ferroui_base::media::{FontWeight, TextWrapping};
 use ferroui_view::prelude::*;
 use reader_controls::{action, link, paragraph, separator};
-use reader_domain::Density;
+use reader_domain::{Density, View};
 use reader_state::AppViewModel;
 use std::rc::Rc;
 
@@ -48,6 +48,45 @@ pub fn preferences(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
                 }),
         );
     }
+    let mut starts = vec![
+        ("Home".to_owned(), View::Home),
+        ("All items".to_owned(), View::All),
+        ("Starred items".to_owned(), View::Starred),
+        ("Trends".to_owned(), View::Trends),
+        ("Explore".to_owned(), View::Explore),
+    ];
+    starts.extend(
+        vm.folders()
+            .into_iter()
+            .map(|name| (name.clone(), View::Folder(name))),
+    );
+    starts.extend(
+        vm.feeds()
+            .into_iter()
+            .map(|feed| (feed.title, View::Feed(feed.id))),
+    );
+    let start_label = starts
+        .iter()
+        .find(|(_, view)| view == &settings.start_page)
+        .map(|(label, _)| label.clone())
+        .unwrap_or_else(|| "Home".into());
+    let mut start_items = Vec::new();
+    for (label, view) in starts {
+        let model = vm.clone();
+        let selected = settings.start_page == view;
+        start_items.push(crate::menus::checked(&label, selected, move || {
+            let mut settings = model.state().settings.clone();
+            settings.start_page = view.clone();
+            model.set_settings(settings);
+        }));
+    }
+    form = form
+        .child(
+            text_block()
+                .text("Start page")
+                .font_weight(FontWeight::Bold),
+        )
+        .child(crate::menus::button(&start_label, start_items));
     form = form.child(separator()).child(
         text_block()
             .text("Display density")
@@ -143,9 +182,14 @@ pub fn subscriptions(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let filter = ui.subscription_filter.get().to_lowercase();
     let feeds = vm.feeds();
     for feed in feeds.iter().filter(|feed| {
-        format!("{} {} {}", feed.title, feed.url, feed.folder)
-            .to_lowercase()
-            .contains(&filter)
+        format!(
+            "{} {} {}",
+            feed.title,
+            feed.url,
+            feed.folder_names().join(" ")
+        )
+        .to_lowercase()
+        .contains(&filter)
     }) {
         let id = feed.id;
         let rename = ui.clone();
@@ -157,7 +201,7 @@ pub fn subscriptions(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
                 TextBlock {text:feed.url.clone(),font_size:11.0,foreground:"#777777",text_wrapping:TextWrapping::Wrap}
                 StackPanel {orientation:Orientation::Horizontal,spacing:16.0,
                     {link("Rename",move||rename.show(Panel::Rename(id)))}
-                    {link(&if feed.folder.is_empty(){"Change folders".to_string()}else{format!("Folder: {}",feed.folder)},move||folders.show(Panel::Move(id)))}
+                    {link(&if feed.folder_names().is_empty(){"Change folders".to_string()}else{format!("Folders: {}",feed.folder_names().join(", "))},move||folders.show(Panel::Move(id)))}
                     {link("Unsubscribe",move||remove.show(Panel::Unsubscribe(id)))}
                 }
                 if let Some(error)=feed.error.clone(){TextBlock{text:error,foreground:"#B3261E",text_wrapping:TextWrapping::Wrap,font_size:12.0}}
@@ -175,9 +219,12 @@ pub fn subscriptions(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         for folder in folders {
             let model = vm.clone();
             let name = folder.clone();
-            page=page.child(rsx!{Grid{column_definitions:"*,Auto",
+            let rename_name = folder.clone();
+            let rename_ui = ui.clone();
+            page=page.child(rsx!{Grid{column_definitions:"*,Auto,Auto",column_spacing:16.0,
             TextBlock{text:folder,vertical_alignment:V::Center}
-            Border{Grid.column:1,{link("Remove folder",move||model.delete_folder(name.clone()))}}
+            Border{Grid.column:1,{link("Rename",move||rename_ui.show(Panel::RenameFolder(rename_name.clone())))}}
+            Border{Grid.column:2,{link("Remove folder",move||model.delete_folder(name.clone()))}}
         }});
         }
     }

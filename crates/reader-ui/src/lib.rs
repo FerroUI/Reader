@@ -2,6 +2,8 @@
 mod article;
 mod content;
 mod dialogs;
+mod drag;
+mod format;
 mod header;
 mod home;
 mod images;

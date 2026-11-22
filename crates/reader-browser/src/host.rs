@@ -14,5 +14,7 @@ extern "C" {
 }
 
 pub fn error_message(error: JsValue) -> String {
-    error.as_string().unwrap_or_else(|| "Browser storage is unavailable. Export a backup to keep your library.".into())
+    error.as_string().unwrap_or_else(|| {
+        "Browser storage is unavailable. Export a backup to keep your library.".into()
+    })
 }

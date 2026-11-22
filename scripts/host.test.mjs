@@ -60,3 +60,19 @@ test("direct cross-origin failure uses only the explicitly configured proxy", as
     assert(calls[1].startsWith("https://proxy.example/"));
   } finally { globalThis.fetch = previous; }
 });
+
+test("redirected refresh preserves subscription identity and the document base URL", async () => {
+  const previous = globalThis.fetch;
+  globalThis.fetch = async () => {
+    const response = new Response('<feed xmlns="http://www.w3.org/2005/Atom"><title>Moved</title></feed>');
+    Object.defineProperty(response, "url", { value: "https://new.example/blog/feed.xml" });
+    return response;
+  };
+  try {
+    let result;
+    await refreshFeeds([{ id: 17, url: "https://old.example/feed" }], "", (...args) => { result = args; }, assert.fail);
+    assert.equal(result[0], "https://old.example/feed");
+    assert.equal(result[2], 17);
+    assert.equal(result[3], "https://new.example/blog/feed.xml");
+  } finally { globalThis.fetch = previous; }
+});

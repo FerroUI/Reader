@@ -2,6 +2,13 @@ use crate::{history::UndoEntry, AppViewModel, HostRequest};
 use reader_domain::{Action, AppState, Changes};
 
 impl AppViewModel {
+    /// Asynchronous hosts call this when a queued write fails after the synchronous save callback returned.
+    pub fn persistence_failed(&self, message: String) {
+        self.dirty.set(true);
+        self.report_error(format!(
+            "Could not save your library: {message}. Export a backup before closing this page."
+        ));
+    }
     pub(crate) fn schedule_save(&self) {
         self.dirty.set(true);
         if self.has_services.get() {

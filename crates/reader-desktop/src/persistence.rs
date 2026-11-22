@@ -4,6 +4,7 @@ use std::{
     io::{Read, Write},
     path::{Path, PathBuf},
     sync::atomic::{AtomicU64, Ordering},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 const DOCUMENT_LIMIT: u64 = 64 * 1024 * 1024;
@@ -62,7 +63,10 @@ pub fn load(directory: &Path, now: i64) -> Loaded {
             let recovery = directory.join(format!(
                 "reader-recovery-{}-{}.json",
                 std::process::id(),
-                chrono::Utc::now().timestamp_millis()
+                SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis()
             ));
             let copied = std::fs::copy(&path, &recovery).is_ok();
             let explanation = if copied {

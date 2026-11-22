@@ -21,7 +21,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let count = vm.count(&vm.view());
     let title = vm.title();
     let title = if count > 0 {
-        format!("{title} ({count})")
+        format!("{title} {}", crate::format::unread_badge(count))
     } else {
         title
     };
@@ -32,20 +32,23 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         } else {
             57.0
         })
-        .margin((5.0, 0.0, 24.0, 0.0));
+        .margin((3.0, 0.0, 38.0, 0.0));
     let mut actions = stack_panel()
         .orientation(Orientation::Horizontal)
-        .spacing(if compact { 4.0 } else { 16.0 })
+        .spacing(if compact { 4.0 } else { 18.0 })
         .vertical_alignment(V::Center)
-        .child(icon_action(
-            Icon::Refresh,
-            if vm.is_refreshing() {
-                "Refreshing feeds"
-            } else {
-                "Refresh"
-            },
-            move || refresh.refresh(),
-        ))
+        .child(
+            toolbar_icon(
+                Icon::Refresh,
+                if vm.is_refreshing() {
+                    "Refreshing feeds"
+                } else {
+                    "Refresh"
+                },
+            )
+            .width(if compact { 35.0 } else { 72.0 })
+            .on_click(move |_| refresh.refresh()),
+        )
         .child(filter_menu(vm.clone()));
     if compact {
         actions = actions.child(menus::button("More", more_items(vm.clone(), ui.clone())));
@@ -80,7 +83,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
                     })
                     .on_click(move |_| list.set_view_mode(ViewMode::List)),
             )
-            .child(border().width(16.0));
+            .child(border().width(18.0));
     }
     if !compact {
         nav = nav
@@ -92,10 +95,10 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             .child(icon_action(Icon::ChevronDown, "Next item (j)", move || {
                 next.next_article(1)
             }))
-            .child(border().width(16.0));
+            .child(border().width(18.0));
     }
     nav = nav.child(menus::attach(
-        toolbar_icon(Icon::Settings, "Settings"),
+        toolbar_icon(Icon::Settings, "Settings").width(if compact { 35.0 } else { 72.0 }),
         settings_items(vm.clone(), ui),
     ));
     tools = tools.child(nav);
@@ -112,10 +115,10 @@ pub fn page_header(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         57.0
     };
     rsx! { Border {height,border_brush:"#EBEBEB",border_thickness:(0.0,0.0,0.0,1.0),
-        Grid {column_definitions:"*,Auto",margin:(18.0,0.0,24.0,0.0),
+        Grid {column_definitions:"*,Auto",margin:(13.0,0.0,38.0,0.0),
             TextBlock {text:vm.title(),font_size:13.0,foreground:"#777777",vertical_alignment:V::Center}
             Border {Grid.column:1,vertical_alignment:V::Center,
-                {menus::attach(toolbar_icon(Icon::Settings,"Settings"),settings_items(vm,ui))}
+                {menus::attach(toolbar_icon(Icon::Settings,"Settings").width(72.0),settings_items(vm,ui))}
             }
         }
     }}
@@ -124,8 +127,10 @@ fn filter_menu(vm: Rc<AppViewModel>) -> Element {
     let unread = vm.state().settings.unread_only;
     let all = vm.clone();
     let fresh = vm.clone();
-    menus::button(
-        if unread { "New items" } else { "All items" },
+    menus::attach(
+        reader_controls::dropdown(if unread { "New items" } else { "All items" })
+            .width(72.0)
+            .padding((6.0, 5.0)),
         vec![
             menus::checked("All items", !unread, move || all.set_unread_only(false)),
             menus::checked("New items", unread, move || fresh.set_unread_only(true)),
@@ -133,7 +138,14 @@ fn filter_menu(vm: Rc<AppViewModel>) -> Element {
     )
 }
 fn mark_menu(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
-    menus::button("Mark all as read", mark_items(vm, ui))
+    let mark = vm.clone();
+    let confirm = ui.clone();
+    rsx! {Grid{column_definitions:"99,20",height:29.0,
+        Button{class:"reader-button",padding:(6.0,5.0),content:"Mark all as read",automation_properties_name:"Mark all as read",on_click:move |_|{
+            if mark.state().settings.confirm_mark_all{confirm.show(Panel::MarkAll);}else{mark.mark_all_read(None);}
+        }}
+        Border{Grid.column:1,{menus::attach(reader_controls::toolbar_icon(Icon::ChevronDown,"Mark all read options").width(20.0).padding(5.0),mark_items(vm,ui))}}
+    }}
 }
 fn mark_items(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Vec<Element> {
     let all = vm.clone();
@@ -165,7 +177,10 @@ fn sort_menu(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     } else {
         "View settings"
     };
-    menus::button(label, sort_items(vm, ui))
+    menus::attach(
+        reader_controls::dropdown(label).width(115.0),
+        sort_items(vm, ui),
+    )
 }
 fn sort_items(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Vec<Element> {
     let order = vm.state().settings.sort;
