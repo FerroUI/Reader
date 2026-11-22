@@ -6,6 +6,10 @@ A feed reader in Rust that recreates Google Reader's final desktop interface wit
 
 The workflow publishes successful builds from `main`; the deployment job is the source of truth for the currently published revision. This repository implements the core reading and subscription workflows. It does **not establish 100% visual or feature parity** with the retired Google service. [Fidelity and feature coverage](docs/parity.md) distinguishes the implemented experience, adaptations and remaining gaps. [Reference research](docs/reference.md) records preserved original CSS, JavaScript, screenshots and official feature announcements.
 
+![Expanded reading in the compiled FerroUI application](docs/screenshots/expanded.png)
+
+Actual browser verification captures: [Home](docs/screenshots/home.png) · [Expanded reading](docs/screenshots/expanded.png) · [Narrow layout](docs/screenshots/narrow.png). See the [verification record](docs/verification.md) for the tested revision, interaction checks and measured control counts.
+
 ## What you can do
 
 - Read All items, individual subscriptions, folders, starred items and tags, in expanded or list view. Open a row in place, move between articles, keep an item unread, star it, edit tags and add a private note.
@@ -66,7 +70,7 @@ The browser stores the library in the `ferroui-reader` IndexedDB database. Write
 
 Malformed saved data is retained in a recovery copy when storage allows it. If that copy cannot be written, normal writes are blocked to protect the original. Storage errors are shown in the application. **Import/Export → Download backup** produces a portable complete library; OPML only carries subscriptions and folders. Restoring a JSON backup replaces the current library after validation, while importing OPML merges subscriptions.
 
-The service worker installs a complete application asset snapshot before activating it, including WASM and fonts. It does not cache every publisher image or fetch new articles while offline. Close all Reader tabs and reopen to activate a waiting application update. For development, `?nooffline=1` prevents registering a worker; if an older worker already controls the origin, unregister it through your browser's application tools before checking changed assets.
+The service worker verifies the size and SHA-256 of every application asset against the build manifest before completing installation, including the stamped index, WASM and fonts. Downloads bypass stale HTTP-cache entries and a failed new installation preserves the prior cache. These cache-integrity paths have focused tests; the strengthened browser reload/offline gate is tracked separately in [verification.md](docs/verification.md). The worker does not cache every publisher image or fetch new articles while offline. Close all Reader tabs and reopen to activate a waiting application update. For development, `?nooffline=1` prevents registering a worker; if an older worker already controls the origin, unregister it through your browser's application tools before checking changed assets.
 
 ## Run the desktop host
 
@@ -134,11 +138,11 @@ Read [architecture.md](docs/architecture.md) for data flow, retained controls, p
 
 ```bash
 cargo test --locked -p reader-domain -p reader-state
-node --test scripts/host.test.mjs
+node --test scripts/*.test.mjs
 cargo check --locked -p reader-desktop
 ```
 
-The tests cover domain and view-model invariants and focused browser-host behavior. They do not certify every original screen, pixel, browser or native operating system. The ordinary Pages workflow runs the first two commands and builds one browser target, without a platform matrix or native packaging gate. [Verification status](docs/verification.md) records the passing browser interaction run, measured control counts and remaining unrun checks.
+The tests cover domain and view-model invariants and focused browser-host behavior. They do not certify every original screen, pixel, browser or native operating system. The ordinary Pages workflow runs the first two commands and builds one browser target, without a platform matrix or native packaging gate. [Verification status](docs/verification.md) records the final eleven-check browser pass, inspected visual corrections, measured control counts and verified new-document offline reload with 10,000 saved articles.
 
 ### Optional rendered-browser verification
 

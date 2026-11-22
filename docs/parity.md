@@ -116,6 +116,6 @@ GitHub Pages serves static files and cannot execute a server-side RSS proxy. A c
 
 The lean Pages workflow runs domain/state and focused JavaScript host tests, builds one production browser module using the pinned FerroUI toolchain and deploys that output from `main`. Framework dependencies and browser tools are cached; it does not launch a browser screenshot suite on every commit.
 
-An explicit `[verify-ui]` commit marker or manual `verify_ui: true` dispatch adds the rendered-browser gate and the `reader-ui-verification` evidence artifact. The latest observed results, including checks still pending, are recorded in [verification.md](verification.md).
+An explicit `[verify-ui]` commit marker or manual `verify_ui: true` dispatch adds the rendered-browser gate and the `reader-ui-verification` evidence artifact. The final eleven-check pass, new-document offline proof and remaining coverage limits are recorded in [verification.md](verification.md).
 
 Before claiming a release has visual and interaction parity, check the built app in a real browser at desktop and narrow widths: add/import feeds, navigate, open articles, star/tag/mark unread, search, change density/mode, reload, export and exercise keyboard commands. Check actual screenshots against the reference and record any unsupported original-service features explicitly. A first cold WebAssembly build is heavier than a cached rebuild; the CI workflow keeps this compilation out of repeated setup work.
