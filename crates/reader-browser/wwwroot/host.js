@@ -51,11 +51,11 @@ async function perform(message, generation) {
       const subscription = ++latestSubscription;
       const startingView = runtime.currentView();
       try {
-        const result = await fetchFeed(message.url, message.proxy);
+        const result = await fetchFeed(message.url, message.proxy, message.connection);
         if (generation !== runtime.libraryGeneration()) break;
         const open = subscription === latestSubscription && runtime.currentView() === startingView;
         runtime.receiveFeed(result.url, result.contents, open, 0, result.url);
-      } catch (error) { if (generation === runtime.libraryGeneration()) runtime.feedError(message.url, error.message); }
+      } catch (error) { if (generation === runtime.libraryGeneration()) runtime.feedError(message.url, error?.message || String(error)); }
       finally { finishOperation(generation); }
       break;
     }
@@ -63,7 +63,7 @@ async function perform(message, generation) {
       if (!beginOperation(generation)) break;
       try { await refreshFeeds(message.feeds, message.proxy,
         (url, xml, id, base) => { if (generation === runtime.libraryGeneration()) runtime.receiveFeed(url, xml, false, id, base); },
-        (url, error) => { if (generation === runtime.libraryGeneration()) runtime.feedError(url, error); }); }
+        (url, error) => { if (generation === runtime.libraryGeneration()) runtime.feedError(url, error); }, message.connection); }
       finally { finishOperation(generation); }
       break;
     case "fetchImage":

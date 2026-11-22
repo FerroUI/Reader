@@ -113,6 +113,7 @@ pub struct Settings {
     pub font_size: f64,
     pub density: Density,
     pub start_page: View,
+    pub feed_connection: crate::FeedConnection,
     /// Optional trusted CORS endpoint; `{url}` is replaced with the encoded feed URL.
     pub feed_proxy: String,
 }
@@ -129,6 +130,7 @@ impl Default for Settings {
             font_size: 13.0,
             density: Density::Comfortable,
             start_page: View::Home,
+            feed_connection: crate::FeedConnection::Automatic,
             feed_proxy: String::new(),
         }
     }

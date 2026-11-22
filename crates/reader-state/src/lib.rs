@@ -1,5 +1,6 @@
 //! ReactiveUI MVVM application state with incremental DynamicData article caches.
 mod commands;
+mod connection;
 mod counts;
 mod history;
 mod navigation;

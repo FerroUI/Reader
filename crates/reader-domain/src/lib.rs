@@ -1,5 +1,6 @@
 //! Portable feed document, parsing, queries and mutations. No platform or UI dependencies.
 mod action;
+mod connection;
 mod document;
 mod feed;
 mod folders;
@@ -15,6 +16,7 @@ mod stream;
 mod trends;
 
 pub use action::{Action, Changes};
+pub use connection::{subscription_url, validate_feed_proxy, FeedConnection};
 pub use feed::{parse_feed, ParsedArticle, ParsedFeed};
 pub use html::{plain_text, safe_url};
 pub use model::*;

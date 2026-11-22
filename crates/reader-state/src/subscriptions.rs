@@ -3,8 +3,11 @@ use reader_domain::{Action, Id, View};
 
 impl AppViewModel {
     pub fn subscribe(&self, url: String) {
-        let Some(url) = reader_domain::safe_url(&url, None) else {
-            self.report_error("Enter a full http or https RSS or Atom feed URL.".into());
+        let Some(url) = reader_domain::subscription_url(&url) else {
+            self.report_error(
+                "Enter an HTTP or HTTPS feed or website address without embedded credentials."
+                    .into(),
+            );
             return;
         };
         let existing = self
@@ -20,8 +23,18 @@ impl AppViewModel {
         }
         self.refreshing.set(true);
         self.set_status("Subscribing…".into());
-        let proxy = self.state().settings.feed_proxy.clone();
-        self.request(HostRequest::Subscribe { url, proxy });
+        let (proxy, connection) = {
+            let state = self.state();
+            (
+                state.settings.feed_proxy.clone(),
+                state.settings.feed_connection,
+            )
+        };
+        self.request(HostRequest::Subscribe {
+            url,
+            proxy,
+            connection,
+        });
     }
     pub fn refresh(&self) {
         if self.refreshing.replace(true) {
@@ -39,9 +52,14 @@ impl AppViewModel {
             .cloned()
             .collect();
         let proxy = state.settings.feed_proxy.clone();
+        let connection = state.settings.feed_connection;
         drop(state);
         self.set_status("Refreshing feeds…".into());
-        self.request(HostRequest::Refresh { feeds, proxy });
+        self.request(HostRequest::Refresh {
+            feeds,
+            proxy,
+            connection,
+        });
     }
     pub fn finish_refresh(&self) {
         self.refreshing.set(false);

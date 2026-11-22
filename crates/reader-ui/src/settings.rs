@@ -6,6 +6,7 @@ use reader_controls::{action, action_row, link, paragraph, separator};
 use reader_domain::{Density, View};
 use reader_state::AppViewModel;
 use std::rc::Rc;
+mod connection;
 
 pub fn preferences(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let settings = vm.state().settings.clone();
@@ -129,20 +130,10 @@ pub fn preferences(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             },
         ));
     }
-    form = form.child(action_row(fonts, 8.0)).child(separator()).child(
-        text_block()
-            .text("Feed connection")
-            .font_weight(FontWeight::Bold),
-    );
-    if ui.form_for.borrow().as_ref() != Some(&Panel::Preferences) {
-        *ui.form_for.borrow_mut() = Some(Panel::Preferences);
-        ui.entry.set(settings.feed_proxy);
-    }
-    let save = vm.clone();
-    let input = ui.entry;
-    form=form.child(paragraph("Feeds that allow browser requests work directly. For other feeds, you can use a trusted proxy. Enter its URL with {url} where the encoded feed address should go."))
-        .child(reader_controls::input("Feed proxy URL").name("FeedProxy").text(ui.entry.two_way()).placeholder_text("https://your-service.example/feed?url={url}"))
-        .child(action("Save feed connection",move||{let mut settings=save.state().settings.clone();settings.feed_proxy=input.get_untracked().trim().to_owned();save.set_settings(settings);save.set_status("Feed connection saved.".into());}));
+    form = form
+        .child(action_row(fonts, 8.0))
+        .child(separator())
+        .child(connection::view(vm, ui));
     form.into()
 }
 pub fn import_export(vm: Rc<AppViewModel>) -> Element {

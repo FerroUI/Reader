@@ -1,4 +1,4 @@
-use reader_domain::{Feed, Id};
+use reader_domain::{Feed, FeedConnection, Id};
 use serde::Serialize;
 use std::rc::Rc;
 
@@ -8,10 +8,12 @@ pub enum HostRequest {
     Refresh {
         feeds: Vec<Feed>,
         proxy: String,
+        connection: FeedConnection,
     },
     Subscribe {
         url: String,
         proxy: String,
+        connection: FeedConnection,
     },
     OpenUrl {
         url: String,

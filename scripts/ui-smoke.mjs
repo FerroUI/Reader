@@ -4,6 +4,7 @@ import path from "node:path";
 import { createHarness } from "./ui/harness.mjs";
 import { mobileChecks } from "./ui/mobile.mjs";
 import { refinementChecks } from "./ui/refinement.mjs";
+import { feedNetworkChecks } from "./ui/feed-network.mjs";
 import { sleep } from "../FerroUI/scripts/browser/harness.mjs";
 
 const site = path.resolve(process.argv[2] || "target/browser/reader-browser");
@@ -115,6 +116,7 @@ try {
       assert(result.preserved, "a stale writer must preserve the committed library");
     });
     await refinementChecks(h, check);
+    await feedNetworkChecks(h, check);
     await mobileChecks(h, check);
     await check("expanded read tracking follows user scrolling and preserves Keep unread", async () => {
       const data = await h.state();
