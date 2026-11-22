@@ -159,25 +159,7 @@ pub fn install_theme(app: &Application) {
             .set(TemplatedControl::border_brush_property(), "#BEBEBE")
             .build(),
     );
-    app.styles().add(
-        style("TextBox.reader-input")
-            .set(
-                TemplatedControl::font_family_property(),
-                FontFamily::new("fonts:Reader#Liberation Sans"),
-            )
-            .set(TemplatedControl::font_size_property(), 13.0)
-            .set(TemplatedControl::corner_radius_property(), 0.0)
-            .set(TemplatedControl::border_thickness_property(), 1.0)
-            .set(TemplatedControl::border_brush_property(), "#D9D9D9")
-            .set(TemplatedControl::background_property(), "#FFFFFF")
-            .set(Layoutable::min_height_property(), 0.0)
-            .build(),
-    );
-    app.styles().add(
-        style("TextBox.reader-input:focus /template/ Button#DeleteButton")
-            .set(Visual::is_visible_property(), false)
-            .build(),
-    );
+    crate::inputs::install(app);
     install_list(app);
     crate::menus::install(app);
     crate::checks::install(app);

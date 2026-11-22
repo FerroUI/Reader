@@ -24,8 +24,7 @@ fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
     let selected = row.selected;
     let star = vm.clone();
     let open = vm.clone();
-    let source_open = vm.clone();
-    let date_open = vm.clone();
+    let row_open = vm.clone();
     let height = if row.touch {
         44.0
     } else {
@@ -39,6 +38,9 @@ fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
     let mut line = grid()
         .name("ArticleRow")
         .tag(Some(Rc::new(id) as ferroui_base::BoxedValue))
+        .with(move |node| {
+            crate::gestures::attach_article_tap(&node.clone().upcast(), row_open.clone())
+        })
         .column_definitions(&format!(
             "{},{source_width},*,70",
             if row.touch { 44 } else { 28 }
@@ -83,9 +85,6 @@ fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
         line = line.child(
             text_block()
                 .grid_column(1)
-                .with(move |node| {
-                    crate::gestures::attach_article_tap(&node.clone().upcast(), source_open.clone())
-                })
                 .text(row.source.to_string())
                 .font_size(11.0)
                 .foreground("#666666")
@@ -104,9 +103,6 @@ fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
     line = line.child(
         text_block()
             .grid_column(3)
-            .with(move |node| {
-                crate::gestures::attach_article_tap(&node.clone().upcast(), date_open.clone())
-            })
             .text(date(row.article.published))
             .font_size(11.0)
             .foreground("#666666")

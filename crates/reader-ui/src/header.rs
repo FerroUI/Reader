@@ -1,4 +1,5 @@
 use crate::{menus, session::Session};
+use ferroui_base::input::text_input::{TextInputContentType, TextInputReturnKeyType};
 use ferroui_base::input::Key;
 use ferroui_base::layout::{HorizontalAlignment as H, Orientation, VerticalAlignment as V};
 use ferroui_base::media::{FontFamily, FontWeight};
@@ -76,6 +77,10 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         .vertical_alignment(V::Center)
         .child(
             reader_controls::input("Search Reader")
+                .text_input_options_content_type(TextInputContentType::Search)
+                .text_input_options_return_key_type(TextInputReturnKeyType::Search)
+                .text_input_options_auto_capitalization(false)
+                .text_input_options_show_suggestions(Some(false))
                 .name("SearchReader")
                 .node_ref(ui.search_input)
                 .text(ui.search.two_way())

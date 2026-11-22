@@ -5,6 +5,7 @@ use crate::{
     session::{Panel, Session},
     settings,
 };
+use ferroui_base::input::text_input::{TextInputContentType, TextInputReturnKeyType};
 use ferroui_base::input::{Key, KeyboardNavigationMode};
 use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
 use ferroui_base::media::{TextTrimming, TextWrapping};
@@ -172,6 +173,13 @@ fn form(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Element {
             }
         });
     let note = matches!(panel, Panel::Note(_));
+    if panel == Panel::Subscribe {
+        input = input
+            .text_input_options_content_type(TextInputContentType::Url)
+            .text_input_options_return_key_type(TextInputReturnKeyType::Go)
+            .text_input_options_auto_capitalization(false)
+            .text_input_options_show_suggestions(Some(false));
+    }
     if note {
         input = input
             .height(150.0)

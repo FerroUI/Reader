@@ -4,7 +4,7 @@ import { httpUrl, proxyUrl, fetchFeed, refreshFeeds, decodeFeed } from "../crate
 import { parseRoute, routeFor, attachNavigation, navigationChanged } from "../crates/reader-browser/wwwroot/navigation.js";
 import { viewportRectangle } from "../crates/reader-browser/wwwroot/viewport.js";
 import { articleUrl } from "../crates/reader-browser/wwwroot/transfers.js";
-import { attachInputGuard } from "../crates/reader-browser/wwwroot/input.js";
+import { attachInputGuard, inputHintsChanged } from "../crates/reader-browser/wwwroot/input.js";
 import { attachRuntime, request } from "../crates/reader-browser/wwwroot/host.js";
 
 test("untrusted feed and proxy addresses cannot execute code or carry credentials", () => {
@@ -125,6 +125,37 @@ test("IME candidate keys bypass app shortcuts without canceling browser composit
   }
   assert.equal(key().stopped, false);
   dispose(); assert.equal(listeners.size, 0);
+});
+
+test("native focus hints update the same input without changing type, text, selection or composition", () => {
+  const previous = globalThis.document;
+  const attributes = new Map();
+  const input = { type: "text", value: "draft input", selectionStart: 2, selectionEnd: 7,
+    composition: { text: "候補" },
+    getAttribute: name => attributes.get(name) ?? null,
+    setAttribute: (name, value) => attributes.set(name, value),
+    removeAttribute: name => attributes.delete(name),
+    focus: () => assert.fail("updating hints must not cycle browser focus") };
+  Object.freeze(input);
+  globalThis.document = { getElementById(id) {
+    assert.equal(id, "out");
+    return { querySelector(selector) { assert.equal(selector, ":scope > .ferroui-input-element"); return input; } };
+  } };
+  try {
+    inputHintsChanged("search", "search", "none", "pl-PL");
+    assert.equal(attributes.get("inputmode"), "search");
+    assert.equal(attributes.get("enterkeyhint"), "search");
+    inputHintsChanged("url", "go", "none", "");
+    assert.equal(attributes.get("inputmode"), "url");
+    assert.equal(attributes.get("enterkeyhint"), "go");
+    assert.equal(attributes.get("autocapitalize"), "none");
+    assert.equal(attributes.get("autocorrect"), "off");
+    assert.equal(attributes.get("spellcheck"), "false");
+    assert.equal(attributes.get("writingsuggestions"), "false");
+    assert.equal(attributes.has("lang"), false);
+    assert.deepEqual([input.type, input.value, input.selectionStart, input.selectionEnd, input.composition.text],
+      ["text", "draft input", 2, 7, "候補"]);
+  } finally { globalThis.document = previous; }
 });
 
 test("a completed subscription cannot take navigation away from a newer reading location", async () => {

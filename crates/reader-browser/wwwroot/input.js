@@ -2,6 +2,27 @@ export function isCompositionKey(event, composing = false) {
   return composing || event.isComposing || event.key === "Process" || event.key === "Dead" || event.keyCode === 229;
 }
 
+export function applyInputHints(input, mode, enter, capitalization, language = "") {
+  // Plain TextBox has no transactional exact-edit correction protocol. Hints
+  // never enable suggestions, replace the element, or touch value/selection.
+  const attributes = {
+    inputmode: mode, enterkeyhint: enter, autocapitalize: capitalization,
+    autocorrect: "off", spellcheck: "false", writingsuggestions: "false",
+    autocomplete: "off", lang: language || null,
+  };
+  for (const [name, value] of Object.entries(attributes)) {
+    if (input.getAttribute(name) === value) continue;
+    if (value === null) input.removeAttribute(name); else input.setAttribute(name, value);
+  }
+}
+
+// Called synchronously by the native TopLevel's GotFocus event, even when
+// two native fields share one DOM focus target. Exact-edit textarea is untouched.
+export function inputHintsChanged(mode, enter, capitalization, language) {
+  const input = document.getElementById("out")?.querySelector(":scope > .ferroui-input-element");
+  if (input) applyInputHints(input, mode, enter, capitalization, language);
+}
+
 export function attachInputGuard(element) {
   let composing = false;
   const start = () => { composing = true; };

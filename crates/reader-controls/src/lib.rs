@@ -3,6 +3,7 @@
 mod buttons;
 mod checks;
 mod icons;
+mod inputs;
 mod menus;
 mod templates;
 mod theme;

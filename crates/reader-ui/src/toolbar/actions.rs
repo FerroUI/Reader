@@ -12,15 +12,18 @@ pub(super) fn filter_menu(vm: Rc<AppViewModel>) -> Element {
     let unread = vm.state().settings.unread_only;
     let all = vm.clone();
     let fresh = vm.clone();
+    let touch = crate::responsive::touch(&vm);
+    let label = if unread { "New items" } else { "All items" };
+    let filter = if touch {
+        reader_controls::dropdown(label)
+    } else {
+        reader_controls::compact_dropdown(label)
+    };
     menus::attach(
         &vm,
-        reader_controls::dropdown(if unread { "New items" } else { "All items" })
-            .width(if crate::responsive::touch(&vm) {
-                96.0
-            } else {
-                72.0
-            })
-            .padding((6.0, 5.0)),
+        filter
+            .width(if touch { 96.0 } else { 72.0 })
+            .padding((if touch { 6.0 } else { 2.0 }, 5.0)),
         vec![
             menus::checked("All items", !unread, move || all.set_unread_only(false)),
             menus::checked("New items", unread, move || fresh.set_unread_only(true)),
@@ -35,31 +38,53 @@ pub(super) fn mark_menu(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         Button{class:"reader-button",padding:(6.0,5.0),content:"Mark all as read",automation_properties_name:"Mark all as read",on_click:move |_|{
             if mark.state().settings.confirm_mark_all{confirm.show(Panel::MarkAll);}else{mark.mark_all_read(None);}
         }}
-        Border{Grid.column:1,{menus::attach(&vm,reader_controls::toolbar_icon(Icon::ChevronDown,"Mark all read options").width(if touch{44.0}else{20.0}).padding(5.0),mark_items(vm.clone(),ui))}}
+        Border{Grid.column:1,{menus::attach(&vm,reader_controls::toolbar_icon(Icon::ChevronDown,"Mark all read options").width(if touch{44.0}else{20.0}).padding(5.0),mark_items(vm.clone(),ui,false))}}
     }}
 }
-fn mark_items(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Vec<Element> {
+fn mark_items(vm: Rc<AppViewModel>, ui: Rc<Session>, standalone: bool) -> Vec<Element> {
     let all = vm.clone();
     let day = vm.clone();
     let week = vm.clone();
     let fortnight = vm.clone();
     vec![
-        menus::item("All items", move || {
-            if all.state().settings.confirm_mark_all {
-                ui.show(Panel::MarkAll);
+        menus::item(
+            if standalone {
+                "Mark all as read"
             } else {
-                all.mark_all_read(None);
-            }
-        }),
-        menus::item("Items older than a day", move || {
-            day.mark_all_read(Some(day.now() - 86400))
-        }),
-        menus::item("Items older than a week", move || {
-            week.mark_all_read(Some(week.now() - 7 * 86400))
-        }),
-        menus::item("Items older than two weeks", move || {
-            fortnight.mark_all_read(Some(fortnight.now() - 14 * 86400))
-        }),
+                "All items"
+            },
+            move || {
+                if all.state().settings.confirm_mark_all {
+                    ui.show(Panel::MarkAll);
+                } else {
+                    all.mark_all_read(None);
+                }
+            },
+        ),
+        menus::item(
+            if standalone {
+                "Mark older than a day as read"
+            } else {
+                "Items older than a day"
+            },
+            move || day.mark_all_read(Some(day.now() - 86400)),
+        ),
+        menus::item(
+            if standalone {
+                "Mark older than a week as read"
+            } else {
+                "Items older than a week"
+            },
+            move || week.mark_all_read(Some(week.now() - 7 * 86400)),
+        ),
+        menus::item(
+            if standalone {
+                "Mark older than two weeks as read"
+            } else {
+                "Items older than two weeks"
+            },
+            move || fortnight.mark_all_read(Some(fortnight.now() - 14 * 86400)),
+        ),
     ]
 }
 pub(super) fn sort_menu(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
@@ -117,7 +142,7 @@ pub(super) fn more_items(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Vec<Element> 
         menus::item("Next item", move || next.next_article(1)),
         menus::separator(),
     ];
-    items.extend(mark_items(vm.clone(), ui.clone()));
+    items.extend(mark_items(vm.clone(), ui.clone(), true));
     items.push(menus::separator());
     items.extend(sort_items(vm, ui));
     items

@@ -87,7 +87,8 @@ export async function mobileChecks(h, check) {
       assert.equal(readCount(await h.state()), 0, "a scroll beginning on an article must not open it");
 
       const canceled = await visibleRow(h);
-      const point = [canceled.x + canceled.width - 28, canceled.y + canceled.height / 2];
+      // Tap below the date's glyphs: the entire 44px row is the target.
+      const point = [canceled.x + canceled.width - 28, canceled.y + canceled.height - 8];
       await touch.start(point);
       await touch.cancel();
       await sleep(120);
@@ -216,6 +217,7 @@ export async function mobileChecks(h, check) {
       await h.resize(390, 844);
       await h.page.press("a");
       await h.edit("DialogInput", "https://example.com/unfinished-feed.xml");
+      await h.inputHints("url", "go");
       // Models the public visualViewport contract. A physical Safari keyboard is
       // not available on the Linux runner and is explicitly outside this check.
       await h.page.evaluate(`(() => {

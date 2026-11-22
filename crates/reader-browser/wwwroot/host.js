@@ -3,6 +3,7 @@ import { fetchFeed, fetchImage, refreshFeeds } from "./feeds.js";
 import { downloadFile, pickFile, openUrl, copyText, share, email, printArticle } from "./transfers.js";
 export { load, save, preserveRecovery };
 export { navigationChanged } from "./navigation.js";
+export { inputHintsChanged } from "./input.js";
 export const now = () => Math.floor(Date.now() / 1000);
 export const width = () => document.getElementById("out").getBoundingClientRect().width;
 export const height = () => document.getElementById("out").getBoundingClientRect().height;

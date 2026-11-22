@@ -61,8 +61,15 @@ pub fn toolbar_icon(kind: Icon, label: &str) -> El<Button> {
         .child(icon(kind, 14.0, "#666666"))
 }
 pub fn dropdown(label: &str) -> El<Button> {
+    dropdown_with_gap(label, 9.0)
+}
+/// Compact Reader filters keep their historical 72px outer width with readable labels.
+pub fn compact_dropdown(label: &str) -> El<Button> {
+    dropdown_with_gap(label, 2.0)
+}
+fn dropdown_with_gap(label: &str, gap: f64) -> El<Button> {
     button().class("reader-button").horizontal_content_alignment(H::Stretch).automation_properties_name(label).child(rsx! {
-        Grid { column_definitions:"*,8",column_spacing:9.0,
+        Grid { column_definitions:"*,8",column_spacing:gap,
             TextBlock {text:label,font_size:11.0,font_weight:FontWeight::Bold,text_trimming:<dyn TextTrimming>::character_ellipsis(),vertical_alignment:V::Center}
             Border {Grid.column:1,{icon(Icon::ChevronDown,8.0,"#777777")}}
         }

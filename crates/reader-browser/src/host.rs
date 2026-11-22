@@ -12,6 +12,8 @@ extern "C" {
     pub fn request(json: &str);
     #[wasm_bindgen(js_name = navigationChanged)]
     pub fn navigation_changed();
+    #[wasm_bindgen(js_name = inputHintsChanged)]
+    pub fn input_hints_changed(mode: &str, enter: &str, capitalization: &str, language: &str);
     #[wasm_bindgen(js_name = preserveRecovery)]
     pub fn preserve_recovery(contents: &str) -> bool;
 }

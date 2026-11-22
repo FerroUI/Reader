@@ -2,6 +2,7 @@
 mod app;
 mod exports;
 mod host;
+mod input_hints;
 mod inspection;
 
 use ferroui_browser::{BrowserAccessibilityMode, BrowserAppBuilder, BrowserPlatformOptions};

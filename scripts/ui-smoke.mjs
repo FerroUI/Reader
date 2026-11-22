@@ -42,7 +42,9 @@ try {
     });
     await check("search typing does not trigger reading shortcuts", async () => {
       const before = await h.state();
-      await h.edit("SearchReader", "is:starred tag:Verification", true);
+      await h.edit("SearchReader", "is:starred tag:Verification");
+      await h.inputHints("search", "search");
+      await h.page.press("Enter");
       await h.until(() => h.page.evaluate("JSON.parse(readerApp.currentView()).Search === 'is:starred tag:Verification'"), "search route");
       assert.equal((await h.state()).articles.filter(a => a.starred).length, before.articles.filter(a => a.starred).length);
       await h.capture("04-search");
@@ -65,7 +67,9 @@ try {
       await writeFile(path.join(site, "verification-feed.xml"), xml);
       const url = new URL("verification-feed.xml", h.page.url).href;
       await h.clickName("SubscribeButton");
-      await h.edit("DialogInput", url, true);
+      await h.edit("DialogInput", url);
+      await h.inputHints("url", "go");
+      await h.page.press("Enter");
       await h.until(async () => (await h.state()).feeds.some(f => f.url === url), "downloaded subscription");
       await h.until(async () => (await h.state()).articles.some(a => a.title === "Native feed integration"), "parsed feed item");
       await h.capture("05-feed");

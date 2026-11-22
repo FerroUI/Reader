@@ -49,6 +49,12 @@ Opening an article, scanning a list cursor and scrolling are different transitio
 
 Explicit Keep unread is held in session state so automatic read tracking does not immediately reverse the action. Programmatic scrolling has a short suppression window. Mark-all-read computes the intended stream and age cutoff in the domain layer. Settings determine whether the UI requests confirmation.
 
+The reading tracker requires both real user input and a changed offset from the article list's own `ScrollViewer` in the same dispatcher frame. A viewport resize, item reflow or layout notification alone is insufficient. Modal surfaces, navigation changes and programmatic cursor scrolling invalidate pending reading intent.
+
+Touch and pen activate article content after an accepted release. A shared contact guard records maximum movement, so a pan that returns to its starting point remains cancelled. Additional contacts, capture loss, cancellation and a hold also invalidate a tap. Native scrolling and held subscription dragging use FerroUI gesture recognizers. A stationary held release opens subscription actions; movement after the hold uses the same validated drop operations as mouse dragging. Edge scrolling runs only during a live held drag, and insertion markers distinguish before/after positions.
+
+Subscription position is stored in the feed sequence. Every folder projects that sequence; a feed with several memberships therefore keeps the same relative order across those projections. Reordering within a folder preserves all memberships. A row drop into another folder changes membership and position atomically. Undo restores the user's order/membership change while retaining unrelated background feed metadata and new subscriptions. Folder ordering and independent per-folder feed orders are not implemented.
+
 Undo is a bounded in-memory history, generally storing the affected fields or subscriptions instead of copying the complete document. Full document replacement retains a snapshot for undo. The history does not persist across a restart and is not an event-sourced synchronization protocol.
 
 ## Retained controls, RSX and performance
@@ -56,6 +62,8 @@ Undo is a bounded in-memory history, generally storing the affected fields or su
 Views use the FerroUI declarative `rsx!` syntax and typed builders for conditional or repeated content. Both create the same underlying controls and participate in framework binding, input routing, layout and automation.
 
 `Rows` retains one `FerroList` and one recycling data template for the window lifetime. Its identity-aware reconciliation updates rows whose article data, selection or presentation changed, preserving the surrounding virtualized `ListBox`. Article models are shared by `Rc`; pointer equality makes unchanged-row comparisons cheap. ID indices and incremental unread counts avoid repeatedly scanning the entire library for common read/star changes.
+
+FerroUI's `.with(...)` callback runs only when a control mounts. It must not capture a changing article identity in a recycled row. Article pointer hooks keep a weak control reference and resolve the current `ArticleRow`/`ArticleEntry` ancestor tag when input arrives. Declarative `on_click` callbacks are exchanged by reconciliation. Subscription drag hooks are protected by keys containing the feed ID and folder, and publisher text blocks by article ID and content hash. The rendered touch fixture imports replacement IDs, scrolls recycled rows, stars one, then opens that same row to exercise this lifecycle boundary.
 
 The implementation still has work proportional to stream length when it creates a new row projection or changes a stream query. Parsing, backup serialization and a large import can consume main-thread time in the browser. There is no claim of constant-time sorting or arbitrary-library-size latency. The major controls are retained and network/storage I/O is asynchronous, while focused behavior tests guard mutation and reentrancy invariants.
 

@@ -58,6 +58,17 @@ export async function createHarness(site, output) {
     if (!value) await page.press("Backspace");
     if (submit) await page.press("Enter");
   }
+  async function inputHints(mode, enter) {
+    await until(async () => {
+      const actual = await page.evaluate(`(() => {
+        const input = document.querySelector('.ferroui-input-element');
+        return input && ['inputmode', 'enterkeyhint', 'autocapitalize', 'autocorrect', 'spellcheck']
+          .map(name => input.getAttribute(name));
+      })()`);
+      assert.deepEqual(actual, [mode, enter, "none", "off", "false"]);
+      return true;
+    }, `browser ${mode}/${enter} keyboard hints`);
+  }
   async function capture(name) {
     await sleep(150);
     healthy();
@@ -72,5 +83,5 @@ export async function createHarness(site, output) {
       return view.width === width && view.height === height;
     }, `viewport ${width} × ${height}`);
   }
-  return { page, state, snapshot, healthy, until, ready, reload, navigate, control, click, clickName, clickLabel, clickNavigation, clickText, edit, capture, resize };
+  return { page, state, snapshot, healthy, until, ready, reload, navigate, control, click, clickName, clickLabel, clickNavigation, clickText, edit, inputHints, capture, resize };
 }

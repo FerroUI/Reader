@@ -35,6 +35,7 @@ impl ApplicationImpl for App {
     fn initialize(this: &Self) {
         Self::parent_initialize(this);
         reader_controls::install_theme(this);
+        crate::input_hints::install();
     }
     fn on_framework_initialization_completed(this: &Self) {
         let now = crate::host::now() as i64;
