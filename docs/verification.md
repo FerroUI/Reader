@@ -1,6 +1,63 @@
 # Verification record
 
-## Current real-feed startup release — 22 November 2026
+## Current article-reading and scrolling release — 22 November 2026
+
+Publisher articles now open inside the native reading pane through **Read full article**, with selectable text, inline links, structured tables, horizontally scrolling code and responsive images. The feed body remains available, and successful downloads are saved with the library. The stream now reuses FerroUI's TreeDataGrid presenter for variable-height article realization. See [article-reading.md](article-reading.md) for behavior, architecture and connection limits.
+
+| Evidence | Verified result |
+| --- | --- |
+| Application revision | [`2463a5af5d4cce7ee7c1f268b40a47c8c1e7cc99`](https://github.com/FerroUI/Reader/commit/2463a5af5d4cce7ee7c1f268b40a47c8c1e7cc99) |
+| Workflow | [45080772694](https://github.com/FerroUI/Reader/actions/runs/45080772694): build job **137388235115** and Pages deploy job **137390272579** succeeded |
+| Build identifier | `f3ffc9bb9161ea03` |
+| Rust and JavaScript | **94 Rust tests** and **54 JavaScript tests** passed; the final local native desktop check also passed |
+| Rendered browser | **33 scenarios passed**; names and durations are preserved in [article-verification-results.json](article-verification-results.json) |
+| Offline application | **37 verified resources**, including the extraction worker and its matching WASM; a new-document offline reload retained the installed build and **10,000 saved articles** |
+| Release metadata | [article-release.json](evidence/article-release.json) records the exact revision, jobs, counts, snapshot metrics, assertion tolerances and artifact hashes |
+
+The recorded browser scenario durations total **60,129ms**. These include harness readiness, interactions, assertions and captures; they are not device-independent performance measurements. The measurements above come from the final CI artifact and deployment. The manual live-site observations below are identified separately from these controlled fixtures.
+
+### Native article reading
+
+The controlled publisher fixture exercises an explicit download, local Rust extraction and native rendering. It verifies that ordinary feed reading does not request the website; feed/full-content switching reuses the saved copy. Cancellation and an extraction error retain the last readable article. A new document restores the saved copy, and it reopens with the network disabled without another publisher request. Recorded requests contain neither cookies nor authorization headers.
+
+Native text selection and copying pass with the selected text **“Publisher body marker. ”**. Pointer and keyboard inline-link activation, horizontally scrolling code, table content and publisher-relative URLs are exercised. Publisher scripts do not execute, and the fixture rejects DOM article/iframe substitution for the native reading surface. At viewport widths **390 → 320 → 390px**, the image follows **320 → 250 → 320px**, within the asserted **1px** tolerance, without requiring a breakpoint change.
+
+| Preserved evidence | Content |
+| --- | --- |
+| [Desktop article](screenshots/14-article-native.png) / [control tree](evidence/14-article-native.json) | Saved full article, native text selection, structured table, code, nested list, quote and inline link |
+| [Inline error](screenshots/14-article-error.png) / [control tree](evidence/14-article-error.json) | Failed extraction preserves the saved readable copy |
+| [Phone article](screenshots/14-article-mobile.png) / [control tree](evidence/14-article-mobile.json) | Native table and code contained in a 390px viewport |
+| [320px image layout](screenshots/14-article-mobile-small-image.png) / [control tree](evidence/14-article-mobile-small-image.json) | Image and article content respond within the phone breakpoint |
+| [Article assertions](evidence/14-article-verification.json) | Selection/copy result, persistence, cancellation, error preservation, responsive widths and exact fixture requests |
+
+### Large, nonuniform streams
+
+The scrolling fixture loads **1,200 expanded articles** with short items, long paragraphs, wide code and tall images. Its first far seek targets an item immediately after **2,400px of declared images** whose unmeasured estimate is much smaller. Further backward/forward seeks and a rapid wheel burst must realize the requested item in the actual viewport, keep finite scroll geometry and retain fewer than **80 article containers / 9,000 native visuals** at each checked point.
+
+| Final snapshot | Library size | Article containers | Native visuals | Scroll extent |
+| --- | ---: | ---: | ---: | ---: |
+| [Mixed-height stream](screenshots/15-mixed-height-stream.png) / [tree](evidence/15-mixed-height-stream.json) | 1,200 | **2** | **618** | 1,020,255px |
+| [After delayed image decode](screenshots/15-image-scroll-anchor.png) / [tree](evidence/15-image-scroll-anchor.json) | 1,200 | **1** | **520** | 1,026,233px |
+| [Phone long article](screenshots/15-phone-long-article.png) / [tree](evidence/15-phone-long-article.json) | 1,200 | **1** | **289** | 1,615,139px |
+| [10,000-item list tree](evidence/article-10000-list.json) | 10,000 | **56** | **1,471** | 280,000px |
+
+These are retained control-tree snapshot counts, not peak-memory measurements or universal bounds. Unvisited article heights remain estimates until measured. The 10,000-item capture is stored separately from the older release's `09-virtualized.json`.
+
+Read/star changes must preserve the article position, scroll offset and measured extent within **1.5px**, while the retained template displays the changed star action. Keyboard scanning brings the next item into view without marking it read; selecting the following item does mark it read. A delayed image must increase the actual article height by **more than 400px**, while the visible paragraph moves **no more than 3px**. Desktop-to-phone reflow must preserve the same paragraph's viewport-relative position within **3px**. These values are passing assertion tolerances, not recorded exact displacements. A trusted touch pan beginning on native rich text advances the viewport without changing read state; a subsequent accepted tap marks only its own article read.
+
+Virtualization is **at article level**: body blocks inside a realized article still participate in layout. The body projection bounds pathological complexity, but this release does not implement block virtualization. Saved article text is available offline; images use a separate memory cache and may require a connection after reload. The controlled fixture does not establish public-provider availability, physical iOS behavior or complete historical Google Reader parity.
+
+### Independent observations on the published application
+
+The published [Reader application](https://ferroui.com/Reader/#home) initially served the previous offline build `ad7a2095a4e2e65c`. A normal reload followed by closing and reopening the Reader client activated **`f3ffc9bb9161ea03`**, preserving all **eight existing subscriptions and 167 unread articles**. No storage reset, worker unregister or forced activation was used.
+
+On the Rust feed, **Read full article** downloaded **“Enabling the parallel frontend on nightly”** and displayed **Full article · saved**. Native headings, paragraphs, links and a table rendered, and scrolling reached the publisher's Nalgebra benchmark image. On BBC News, **“Explosion on Russian ship at Libya port caused by suspected drone attack, officials say”** expanded from a one-sentence feed summary into a saved article with multiple paragraphs. These manual observations establish successful reading from two actual publishers; they do not identify whether each request used direct access or a proxy.
+
+Returning to the Rust feed and performing an ordinary reload retained its saved full article and native controls. Normal reading scroll marked that article read, leaving **166 total unread and 9 Rust unread**, as expected. The final Rust reading tab was left available for review. No application extraction error was observed. These are observations of this library and session, not guarantees of publisher availability or item counts.
+
+The initial [45078408836](https://github.com/FerroUI/Reader/actions/runs/45078408836) gate caught a regression where clicking native article text did not select the article and mark it read; it **did not deploy**. The text control handled the press before the ancestor handler. The fix restores the handled mouse path and guards touch release. The final gate passes that article-selection assertion, along with text selection, copying, links and all 33 browser scenarios. Earlier records below retain their own revision identifiers, screenshots and measurements.
+
+## Previous real-feed startup release — revision 59fee66
 
 Fresh libraries now start with six real subscriptions: **Hacker News, Ars Technica and The Verge** in Technology; **Rust Blog and GitHub Blog** in Development; and **BBC News** in News. Production starts with **zero articles**, saves the subscriptions and fetches their publishers on first use. It does not manufacture stories. The feed addresses and connection behavior are documented in [feed-connection.md](feed-connection.md).
 

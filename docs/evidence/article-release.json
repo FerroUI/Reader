@@ -1,0 +1,268 @@
+{
+  "application_revision": "2463a5af5d4cce7ee7c1f268b40a47c8c1e7cc99",
+  "build_id": "f3ffc9bb9161ea03",
+  "workflow_run": 45080772694,
+  "workflow_url": "https://github.com/FerroUI/Reader/actions/runs/45080772694",
+  "build_job": 137388235115,
+  "deploy_job": 137390272579,
+  "build_result": "success",
+  "deploy_result": "success",
+  "live_url": "https://ferroui.com/Reader/#home",
+  "verification_date": "2026-11-22",
+  "evidence_scope": "Final passing CI artifact, successful deployment metadata and separately identified manual observations of the published application.",
+  "test_counts": {
+    "rust": 94,
+    "javascript": 54,
+    "rendered_browser": 33
+  },
+  "scenario_time_sum_ms": 60129,
+  "offline_manifest_resources": 37,
+  "rendered_results": "../article-verification-results.json",
+  "article_fixture": {
+    "source": "14-article-verification.json",
+    "full_content_retained": true,
+    "offline_reopen": true,
+    "cancellation_preserved": true,
+    "extraction_failure_preserved": true,
+    "native_inline_link_opened": true,
+    "selected_text": "Publisher body marker. ",
+    "copy_verified": true,
+    "same_breakpoint_viewport_widths": [
+      390,
+      320,
+      390
+    ],
+    "same_breakpoint_image_widths": [
+      320,
+      250,
+      320
+    ],
+    "image_width_assertion_tolerance_px": 1,
+    "publisher_requests_omit_cookies_and_authorization": true,
+    "public_provider_availability_established": false
+  },
+  "scrolling_fixture": {
+    "script": "../../scripts/ui/scrolling.mjs",
+    "virtualization_unit": "article",
+    "block_virtualization": false,
+    "mixed_height_article_records": 1200,
+    "far_seek_indices": [
+      1001,
+      37,
+      1002
+    ],
+    "first_target_preceding_declared_image_height_px": 2400,
+    "rapid_wheel_deltas_px": [
+      900,
+      1300,
+      700,
+      1100
+    ],
+    "rapid_wheel_minimum_advance_assertion_px": 300,
+    "mixed_article_container_assertion": {
+      "minimum_exclusive": 0,
+      "maximum_exclusive": 80
+    },
+    "mixed_native_visual_assertion_maximum_exclusive": 9000,
+    "annotation_update_assertion_tolerance_px": 1.5,
+    "annotation_update_asserted_properties": [
+      "article_y",
+      "scroll_offset_y",
+      "scroll_extent_height"
+    ],
+    "delayed_image_minimum_article_growth_assertion_px": 400,
+    "delayed_image_paragraph_assertion_tolerance_px": 3,
+    "phone_reflow_paragraph_assertion_tolerance_px": 3,
+    "phone_reflow_assertion_uses_viewport_relative_position": true,
+    "phone_pan_starts_on_native_rich_text": true,
+    "phone_pan_preserves_read_count": true,
+    "subsequent_rich_text_tap_marks_only_target_read": true,
+    "assertion_thresholds_are_not_measured_displacements": true,
+    "snapshots": [
+      {
+        "source": "15-mixed-height-stream.json",
+        "article_records": 1200,
+        "viewport": {
+          "width": 1363,
+          "height": 936
+        },
+        "article_containers": 2,
+        "native_visuals": 618,
+        "article_scroll": {
+          "extentHeight": 1020255,
+          "offsetY": 855283,
+          "viewportHeight": 766
+        }
+      },
+      {
+        "source": "15-image-scroll-anchor.json",
+        "article_records": 1200,
+        "viewport": {
+          "width": 1363,
+          "height": 936
+        },
+        "article_containers": 1,
+        "native_visuals": 520,
+        "article_scroll": {
+          "extentHeight": 1026233,
+          "offsetY": 942914,
+          "viewportHeight": 766
+        }
+      },
+      {
+        "source": "15-phone-long-article.json",
+        "article_records": 1200,
+        "viewport": {
+          "width": 390,
+          "height": 844
+        },
+        "article_containers": 1,
+        "native_visuals": 289,
+        "article_scroll": {
+          "extentHeight": 1615139,
+          "offsetY": 809967.581178599,
+          "viewportHeight": 571
+        }
+      },
+      {
+        "source": "article-10000-list.json",
+        "article_records": 10000,
+        "viewport": {
+          "width": 1363,
+          "height": 936
+        },
+        "article_containers": 56,
+        "native_visuals": 1471,
+        "article_scroll": {
+          "extentHeight": 280000,
+          "offsetY": 3795.9999999999973,
+          "viewportHeight": 766
+        }
+      }
+    ],
+    "snapshot_counts_are_not_peak_memory_or_universal_bounds": true,
+    "unmeasured_article_heights_are_estimates": true
+  },
+  "prior_gate_failure": {
+    "workflow_run": 45078408836,
+    "workflow_url": "https://github.com/FerroUI/Reader/actions/runs/45078408836",
+    "deployment": "skipped",
+    "cause": "The scrolling gate failed its reading selects the requested article assertion: a native text control handled the pointer press before ancestor bubbling, so clicking article text did not select the article and mark it read. The fix restores propagation for handled mouse input and uses guarded touch release. The failed run was not deployed; the final 33-scenario gate passed this assertion as well as native text selection, copying and links."
+  },
+  "physical_ios_keyboard_verified": false,
+  "full_historical_parity_established": false,
+  "evidence_source_mapping": {
+    "evidence/14-article-error.json": {
+      "artifact_path": "target/article-ui-verified/14-article-error.json",
+      "sha256": "c83b186b2cb0df9bd5e875729ee99685b161e59724ab2bb74736e62ca183fbe3"
+    },
+    "screenshots/14-article-error.png": {
+      "artifact_path": "target/article-ui-verified/14-article-error.png",
+      "sha256": "8c5a16fc4d4180cc596db6eb95320d00ef1fcff93730860185e3070e765a3825"
+    },
+    "evidence/14-article-mobile-small-image.json": {
+      "artifact_path": "target/article-ui-verified/14-article-mobile-small-image.json",
+      "sha256": "45ab2cdb9e782fc47f890f33d83c4c4c7c00e3beaf252159497163e0b310ebd4"
+    },
+    "screenshots/14-article-mobile-small-image.png": {
+      "artifact_path": "target/article-ui-verified/14-article-mobile-small-image.png",
+      "sha256": "4c9f34d046c5582f9afea0de7266580f6654395c51dae4c711600e41e7e98a51"
+    },
+    "evidence/14-article-mobile.json": {
+      "artifact_path": "target/article-ui-verified/14-article-mobile.json",
+      "sha256": "cdc3465641d78dbe2037b1159a6b6787f49667b9c80d3486dfb105db64ff2175"
+    },
+    "screenshots/14-article-mobile.png": {
+      "artifact_path": "target/article-ui-verified/14-article-mobile.png",
+      "sha256": "984d77ef944945d997d1c14f31d2e3d52c65d94dd55f9ee28d93738aec8e90a5"
+    },
+    "evidence/14-article-native.json": {
+      "artifact_path": "target/article-ui-verified/14-article-native.json",
+      "sha256": "52f4c10139b11d1f7f17fd505406aa248702d8cf00c5a0d49b4d02a3cc35310d"
+    },
+    "screenshots/14-article-native.png": {
+      "artifact_path": "target/article-ui-verified/14-article-native.png",
+      "sha256": "1a99f0a049e1ad78257839bad4adfd317540160632fd6c5f5012f6f04c72f8e9"
+    },
+    "evidence/14-article-verification.json": {
+      "artifact_path": "target/article-ui-verified/14-article-verification.json",
+      "sha256": "708d25410b1800818b743eaf15fe8b0c3d19ec209e44b9157167ecee1024ecca"
+    },
+    "evidence/15-image-scroll-anchor.json": {
+      "artifact_path": "target/article-ui-verified/15-image-scroll-anchor.json",
+      "sha256": "9c43201af5b5d3e70f1254749f14b16d1e6df185e6d8521785f6d8918099688f"
+    },
+    "screenshots/15-image-scroll-anchor.png": {
+      "artifact_path": "target/article-ui-verified/15-image-scroll-anchor.png",
+      "sha256": "1c4404314f5a060e0edabac80fed8a0a28f7e560182662656a5db5f95effc338"
+    },
+    "evidence/15-mixed-height-stream.json": {
+      "artifact_path": "target/article-ui-verified/15-mixed-height-stream.json",
+      "sha256": "a8ff73ba64a0a95d84083734edaf8f5940b1282046bf3ef2ced7fc19f5620052"
+    },
+    "screenshots/15-mixed-height-stream.png": {
+      "artifact_path": "target/article-ui-verified/15-mixed-height-stream.png",
+      "sha256": "d0bd313a7f0153683a912f02e779a71466229aff42b9fef2a907cea3f8193432"
+    },
+    "evidence/15-phone-long-article.json": {
+      "artifact_path": "target/article-ui-verified/15-phone-long-article.json",
+      "sha256": "7779b851140f773144408f2b9f51af52908f38336b38f60d6657d7cd8b39eee0"
+    },
+    "screenshots/15-phone-long-article.png": {
+      "artifact_path": "target/article-ui-verified/15-phone-long-article.png",
+      "sha256": "344cc7d98a8164228f420cf0cb8fc41876f0a164dbab9b5a39f4828ffd00f7d3"
+    },
+    "article-verification-results.json": {
+      "artifact_path": "target/article-ui-verified/results.json",
+      "sha256": "e3f43d929fc3899586783f6a5fa69d1f8c49868e12fad16332206ef2a241b38e"
+    },
+    "evidence/article-10000-list.json": {
+      "artifact_path": "target/article-ui-verified/09-virtualized.json",
+      "sha256": "972f76e21b61df583a0992f7dff66e1ed651aebdeb917f8d25654fedd9aac647"
+    }
+  },
+  "live_build_id_observed": "f3ffc9bb9161ea03",
+  "native_check": {
+    "scope": "Final local native desktop compilation",
+    "result": "success",
+    "duration_seconds": 4.98
+  },
+  "live_observations": [
+    {
+      "source": "manual browser UI observation",
+      "action": "Activate the current published application",
+      "initial_build_id": "ad7a2095a4e2e65c",
+      "observed_build_id": "f3ffc9bb9161ea03",
+      "observed": "A normal reload followed by closing and reopening the Reader client activated the new offline application. No library reset, service-worker unregister or forced skipWaiting was used.",
+      "preserved_subscriptions": 8,
+      "preserved_unread_articles": 167
+    },
+    {
+      "source": "manual browser UI observation",
+      "action": "Read a complete Rust Blog article",
+      "route": "#feed/1",
+      "title": "Enabling the parallel frontend on nightly",
+      "observed": "Read full article downloaded and displayed Full article \u00b7 saved. Native headings, paragraphs, links and a table rendered; scrolling reached the actual Nalgebra benchmark image."
+    },
+    {
+      "source": "manual browser UI observation",
+      "action": "Expand a BBC News summary into the full article",
+      "route": "#feed/16",
+      "title": "Explosion on Russian ship at Libya port caused by suspected drone attack, officials say",
+      "observed": "Read full article changed the one-sentence feed summary into a multi-paragraph saved article and displayed Full article \u00b7 saved."
+    },
+    {
+      "source": "manual browser UI observation",
+      "action": "Reload the saved Rust article",
+      "route": "#feed/1",
+      "observed": "Returning to the Rust feed and performing an ordinary reload preserved the saved full article and native reading controls. Normal scrolling had marked that Rust article read, leaving 166 total unread and 9 Rust unread."
+    },
+    {
+      "source": "manual browser UI observation",
+      "action": "Inspect diagnostics and leave the result available",
+      "route": "#feed/1",
+      "observed": "Expected canvas GPU-context fallback logs and an extension metadata warning were present; reading succeeded without application extraction errors. The Rust reading tab was marked as the deliverable."
+    }
+  ],
+  "live_publisher_transport_route": "Not established by the observed browser logs; no direct/proxy route is claimed."
+}

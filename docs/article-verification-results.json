@@ -1,0 +1,137 @@
+{
+  "passed": 33,
+  "checks": [
+    {
+      "name": "native first paint",
+      "milliseconds": 2448
+    },
+    {
+      "name": "fresh library loads real default feeds and preserves edits on reopening",
+      "milliseconds": 1573
+    },
+    {
+      "name": "an intentionally empty saved library does not restore default subscriptions",
+      "milliseconds": 1264
+    },
+    {
+      "name": "stream navigation and list shortcut",
+      "milliseconds": 890
+    },
+    {
+      "name": "scan, open, star, tag, and keep unread",
+      "milliseconds": 877
+    },
+    {
+      "name": "search typing does not trigger reading shortcuts",
+      "milliseconds": 753
+    },
+    {
+      "name": "browser modifiers and composition keys do not execute Reader commands",
+      "milliseconds": 583
+    },
+    {
+      "name": "feed subscription through the browser network host",
+      "milliseconds": 847
+    },
+    {
+      "name": "preferences menu and exact compact density",
+      "milliseconds": 1482
+    },
+    {
+      "name": "atomic IndexedDB persistence survives reload",
+      "milliseconds": 657
+    },
+    {
+      "name": "competing storage writers cannot silently overwrite a newer generation",
+      "milliseconds": 9
+    },
+    {
+      "name": "home stories open their source and article tags navigate",
+      "milliseconds": 1656
+    },
+    {
+      "name": "empty unread recovery keeps its feed and search keeps its query",
+      "milliseconds": 1553
+    },
+    {
+      "name": "desktop quick add anchors, cancels and survives a narrow resize",
+      "milliseconds": 1960
+    },
+    {
+      "name": "subscription cursor scans, collapses and opens without reading early",
+      "milliseconds": 1187
+    },
+    {
+      "name": "keyboard help keeps four groups and a reachable phone close action",
+      "milliseconds": 1369
+    },
+    {
+      "name": "dated mark-all confirmation preserves cutoff and opt-out",
+      "milliseconds": 1731
+    },
+    {
+      "name": "cross-origin discovery, relay subscription, refresh and failure reporting",
+      "milliseconds": 3129
+    },
+    {
+      "name": "publisher article downloads into native selectable reading controls",
+      "milliseconds": 3037
+    },
+    {
+      "name": "article cancellation and publisher errors preserve the saved copy",
+      "milliseconds": 1052
+    },
+    {
+      "name": "saved article survives reload and remains usable offline on mobile",
+      "milliseconds": 4134
+    },
+    {
+      "name": "phone touch scrolling, cancellation and tap-to-expand",
+      "milliseconds": 4056
+    },
+    {
+      "name": "browser Back dismisses mobile overlays before changing streams",
+      "milliseconds": 1003
+    },
+    {
+      "name": "held subscription menus, cancellation, reordering and folder movement",
+      "milliseconds": 4490
+    },
+    {
+      "name": "small portrait and landscape dialogs keep actions reachable",
+      "milliseconds": 1041
+    },
+    {
+      "name": "visual viewport keyboard resize preserves dialog input and focus",
+      "milliseconds": 930
+    },
+    {
+      "name": "expanded read tracking follows user scrolling and preserves Keep unread",
+      "milliseconds": 1484
+    },
+    {
+      "name": "mixed-height articles keep bounded realization and exact far targets",
+      "milliseconds": 2315
+    },
+    {
+      "name": "read/star updates preserve the visible article and keyboard seeks its neighbor",
+      "milliseconds": 2328
+    },
+    {
+      "name": "late image decoding preserves the paragraph inside a tall article",
+      "milliseconds": 1395
+    },
+    {
+      "name": "phone resize and touch retain long-article position without opening another item",
+      "milliseconds": 5744
+    },
+    {
+      "name": "ten thousand items keep a bounded native control tree",
+      "milliseconds": 1267
+    },
+    {
+      "name": "installed application and saved library reload without network",
+      "milliseconds": 1885
+    }
+  ]
+}

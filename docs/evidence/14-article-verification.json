@@ -1,0 +1,70 @@
+{
+  "articleId": 19,
+  "sourceUrl": "http://127.0.0.1:46227/article",
+  "fullContentRetained": true,
+  "offlineReopen": true,
+  "cancellationPreserved": true,
+  "extractionFailurePreserved": true,
+  "sameBreakpointImageWidths": [
+    320,
+    250,
+    320
+  ],
+  "nativeInlineLinkOpened": true,
+  "selection": {
+    "selectedText": "Publisher body marker. ",
+    "copyVerified": true
+  },
+  "requests": [
+    {
+      "pathname": "/feed.xml",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "pathname": "/article",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "pathname": "/journal/pixel.png",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "pathname": "/journal/details",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "pathname": "/favicon.ico",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "pathname": "/journal/details",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "pathname": "/article",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "pathname": "/article",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "pathname": "/article",
+      "cookie": "",
+      "authorization": ""
+    },
+    {
+      "pathname": "/journal/pixel.png",
+      "cookie": "",
+      "authorization": ""
+    }
+  ]
+}
