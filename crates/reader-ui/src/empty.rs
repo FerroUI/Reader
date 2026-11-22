@@ -1,6 +1,6 @@
 //! Empty streams keep their identity: recovering from an unread filter never
 //! navigates away from the subscription, folder, tag, or search being viewed.
-use ferroui_base::layout::HorizontalAlignment as H;
+use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
 use ferroui_base::media::{FontWeight, TextAlignment, TextWrapping};
 use ferroui_controls::primitives::ScrollBarVisibility;
 use ferroui_view::prelude::*;
@@ -29,7 +29,7 @@ pub fn view(vm: Rc<AppViewModel>) -> Element {
     let search = matches!(view, View::Search(_));
     rsx! {
         ScrollViewer {name:"EmptyStream",horizontal_scroll_bar_visibility:ScrollBarVisibility::Disabled,vertical_scroll_bar_visibility:ScrollBarVisibility::Auto,
-            Border {name:"EmptyStreamMessage",margin:13.0,padding:if narrow{(16.0,20.0,16.0,32.0)}else{(26.0,20.0,26.0,39.0)},border_brush:"#CCCCCC",border_thickness:2.0,corner_radius:5.0,background:"White",
+            Border {name:"EmptyStreamMessage",vertical_alignment:V::Top,margin:13.0,padding:if narrow{(16.0,20.0,16.0,32.0)}else{(26.0,20.0,26.0,39.0)},border_brush:"#CCCCCC",border_thickness:2.0,corner_radius:5.0,background:"White",
                 StackPanel {spacing:16.0,horizontal_alignment:H::Stretch,
                     TextBlock {name:"EmptyStreamTitle",text:title,font_size:19.0,font_weight:FontWeight::Bold,foreground:"#000000",text_alignment:TextAlignment::Center,text_wrapping:TextWrapping::Wrap,margin:(0.0,16.0,0.0,0.0)}
                     if unread && !search {

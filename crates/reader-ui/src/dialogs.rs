@@ -1,3 +1,4 @@
+mod editor_focus;
 mod folders;
 mod form;
 mod navigate;

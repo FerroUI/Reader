@@ -99,21 +99,16 @@ pub(super) fn prepare(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Fo
     let enter = save.clone();
     let field = ui.field;
     let validation = ui.form_error;
+    let focus_ui = ui.clone();
+    let focus_panel = panel.clone();
     let mut input = reader_controls::input(label)
         .name("DialogInput")
         .node_ref(field)
         .text(ui.entry.two_way())
-        .on_text_changed(move |_| validation.set(String::new()))
+        .on_text_changed(move |_| validation.set_if_changed(String::new()))
         .horizontal_alignment(H::Stretch)
-        .on_loaded(move |event| {
-            if let Some(field) = event.source().and_then(|source| source.cast::<TextBox>()) {
-                field.focus();
-                if fresh {
-                    field.select_all();
-                } else if let Some((selection, caret)) = selection {
-                    field.set_selection_and_caret(selection, caret);
-                }
-            }
+        .with(move |field| {
+            super::editor_focus::attach(field, &focus_ui, focus_panel.clone(), fresh, selection);
         });
     if panel == Panel::Subscribe {
         input = input

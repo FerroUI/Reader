@@ -44,6 +44,8 @@ export async function refinementChecks(h, check) {
       await h.clickText("New items");
       const empty = await h.control(e => e.name === "EmptyStreamTitle", "empty unread message");
       assert.match(empty.text, /has no unread items/);
+      const message = await h.control(e => e.name === "EmptyStreamMessage", "empty message container");
+      assert(message.height < 250, "empty message must size to its content instead of stretching through the stream");
       await h.capture("11-empty-feed");
       await h.clickLabel("View all items");
       assert.deepEqual(await route(h), { Feed: feed.id });
@@ -67,14 +69,18 @@ export async function refinementChecks(h, check) {
       assert.equal(popup.width, 302);
       await h.edit("DialogInput", "https://example.com/unsaved-review.xml");
       await h.inputHints("url", "go");
+      const selection = (await h.control(e => e.name === "DialogInput", "desktop edit caret")).textSelection;
+      assert.equal(selection.caret, "https://example.com/unsaved-review.xml".length);
       await h.capture("11-subscribe");
       await h.resize(390, 844);
       const input = await h.control(e => e.name === "DialogInput", "resized editor");
       assert.equal(input.text, "https://example.com/unsaved-review.xml");
       assert(input.focused, "changing popup to mobile dialog must retain native editing focus");
+      assert.deepEqual(input.textSelection, selection, "changing presentation must retain the native caret and selection");
       await h.page.send("Input.insertText", { text: "#append" });
       await h.until(async () => (await h.control(e => e.name === "DialogInput", "rotated edit caret")).text === "https://example.com/unsaved-review.xml#append",
         "typing after a breakpoint must append at the preserved caret, not replace the draft");
+      await h.capture("11-mobile-subscribe");
       await h.clickLabel("Cancel");
       await closed(h);
       await h.resize(1363, 936);

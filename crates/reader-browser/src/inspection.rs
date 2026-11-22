@@ -85,6 +85,8 @@ pub fn inspect_view() -> String {
             "automationName":AutomationProperties::get_name(&visual),"articleId":article_id,
             "treeCursor":visual.classes().contains("keyboard-cursor"),
             "focused":visual.cast::<InputElement>().is_some_and(|i|i.is_focused()),
+            "textSelection":visual.cast::<TextBox>().map(|field|json!({
+                "start":field.selection_start(),"end":field.selection_end(),"caret":field.caret_index()})),
             "x":p.x,"y":p.y,"width":b.width,"height":b.height,"hit":hit}),
             )
         })
