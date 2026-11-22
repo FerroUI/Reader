@@ -1,0 +1,145 @@
+name: Build and publish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  CARGO_BUILD_JOBS: 1
+  CARGO_PROFILE_BROWSER_CODEGEN_UNITS: 16
+  CARGO_PROFILE_TEST_DEBUG: 0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          submodules: recursive
+      - name: Read pinned browser tools
+        id: pins
+        run: |
+          echo "emsdk=$(sed -n 's/^EMSDK_VERSION="\(.*\)"$/\1/p' FerroUI/scripts/browser/setup.sh)" >> "$GITHUB_OUTPUT"
+          echo "rust=$(sed -n 's/^RUST_VERSION="\(.*\)"$/\1/p' FerroUI/scripts/browser/setup.sh)" >> "$GITHUB_OUTPUT"
+          echo "bindgen=$(sed -n 's/^wasm-bindgen = "=\(.*\)"$/\1/p' FerroUI/Cargo.toml)" >> "$GITHUB_OUTPUT"
+          echo "framework=$(git -C FerroUI rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Restore browser SDK and bindings generator
+        id: tools
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/browser-tools/emsdk
+            ~/browser-tools/bin
+          key: reader-tools-${{ runner.os }}-${{ runner.arch }}-${{ steps.pins.outputs.rust }}-${{ steps.pins.outputs.emsdk }}-${{ steps.pins.outputs.bindgen }}
+      - name: Install the framework's canonical toolchain
+        run: |
+          FerroUI/scripts/browser/setup.sh "$HOME/browser-tools"
+          source "$HOME/browser-tools/env.sh"
+          printf '%s\n' "EMSDK=$EMSDK" "RUSTUP_TOOLCHAIN=$RUSTUP_TOOLCHAIN" "EMCC_CFLAGS=$EMCC_CFLAGS" >> "$GITHUB_ENV"
+          printf '%s\n' "$EMSDK" "$EMSDK/upstream/emscripten" "$HOME/browser-tools/bin" >> "$GITHUB_PATH"
+      - name: Save installed tools
+        if: steps.tools.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/browser-tools/emsdk
+            ~/browser-tools/bin
+          key: ${{ steps.tools.outputs.cache-primary-key }}
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: FerroUI/src/Browser/FerroUI.Browser/webapp/package-lock.json
+      - name: Preserve clean pinned framework source timestamps
+        run: |
+          python3 - <<'PY'
+          import os, pathlib, subprocess
+          root = pathlib.Path("FerroUI")
+          def git(*args):
+              return subprocess.check_output(["git", "-C", str(root), *args])
+          subprocess.run(["git", "-C", str(root), "diff", "--quiet", "HEAD", "--"], check=True)
+          stamp = int(git("show", "-s", "--format=%ct", "HEAD")) * 1_000_000_000
+          directories = set()
+          for record in git("ls-files", "--stage", "-z").split(b"\0"):
+              if not record:
+                  continue
+              metadata, name = record.split(b"\t", 1)
+              if metadata.split()[0] == b"160000":
+                  continue
+              source = root / os.fsdecode(name)
+              stat = source.stat(follow_symlinks=False)
+              os.utime(source, ns=(stat.st_atime_ns, stamp), follow_symlinks=False)
+              directories.update(p for p in source.parents if p != root and root in p.parents)
+          for directory in sorted(directories, key=lambda p: len(p.parts), reverse=True):
+              stat = directory.stat()
+              os.utime(directory, ns=(stat.st_atime_ns, stamp))
+          PY
+      # Cargo validates features/compiler flags. Only clean framework files get old
+      # timestamps; application sources keep checkout times and always rebuild when changed.
+      - name: Restore compiled dependencies
+        id: cargo
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/debug/.fingerprint
+            target/debug/build
+            target/debug/deps
+            target/browser/.fingerprint
+            target/browser/build
+            target/browser/deps
+            target/wasm32-unknown-emscripten/browser
+          key: reader-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.pins.outputs.rust }}-${{ steps.pins.outputs.emsdk }}-${{ steps.pins.outputs.framework }}-${{ hashFiles('Cargo.lock', 'Cargo.toml', '.cargo/config.toml', 'scripts/build-browser.sh', '.github/workflows/pages.yml') }}-${{ hashFiles('crates/**') }}
+          restore-keys: |
+            reader-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.pins.outputs.rust }}-${{ steps.pins.outputs.emsdk }}-${{ steps.pins.outputs.framework }}-${{ hashFiles('Cargo.lock', 'Cargo.toml', '.cargo/config.toml', 'scripts/build-browser.sh', '.github/workflows/pages.yml') }}-
+      - name: Check feed and reader state
+        run: |
+          cargo test --locked -p reader-domain -p reader-state
+          node --test scripts/host.test.mjs
+      - name: Build the browser app
+        run: bash scripts/build-browser.sh
+      - name: Save compiled dependencies
+        if: steps.cargo.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target/debug/.fingerprint
+            target/debug/build
+            target/debug/deps
+            target/browser/.fingerprint
+            target/browser/build
+            target/browser/deps
+            target/wasm32-unknown-emscripten/browser
+          key: ${{ steps.cargo.outputs.cache-primary-key }}
+      - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: target/browser/reader-browser
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

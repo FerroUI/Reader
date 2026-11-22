@@ -1,0 +1,23 @@
+[package]
+name = "reader-ui"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+build = "build.rs"
+
+[dependencies]
+reader-domain = { path = "../reader-domain" }
+reader-state = { path = "../reader-state" }
+reader-controls = { path = "../reader-controls" }
+ferroui-base.workspace = true
+ferroui-controls.workspace = true
+ferroui-view.workspace = true
+ferroui-reactive.workspace = true
+ferroui-reactiveui.workspace = true
+ferroui-dynamic-data.workspace = true
+chrono = { version = "0.4", default-features = false, features = ["std"] }
+url.workspace = true
+
+[build-dependencies]
+ferroui-build.workspace = true

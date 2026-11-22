@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en" data-reader-build="__BUILD_VERSION__">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="A familiar home for your feeds. Read, organize, search, and save your favorite articles with FerroUI Reader.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Reader</title>
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="stylesheet" href="./app.css">
+</head>
+<body>
+  <main id="out" aria-label="Reader">
+    <div class="ferroui-splash" role="status" aria-live="polite">
+      <img src="./icon.svg" width="48" height="48" alt="">
+      <h1>Reader</h1>
+      <p id="loading-status">Loading your reading list…</p>
+      <span class="loading-line" aria-hidden="true"></span>
+    </div>
+  </main>
+  <noscript>Reader needs JavaScript and WebAssembly enabled in your browser.</noscript>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

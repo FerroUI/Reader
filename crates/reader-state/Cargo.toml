@@ -1,0 +1,16 @@
+[package]
+name = "reader-state"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[dependencies]
+reader-domain = { path = "../reader-domain" }
+ferroui-system.workspace = true
+ferroui-reactive.workspace = true
+ferroui-reactiveui.workspace = true
+ferroui-dynamic-data.workspace = true
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", default-features = false, features = ["std"] }
