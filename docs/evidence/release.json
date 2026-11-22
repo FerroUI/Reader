@@ -1,19 +1,20 @@
 {
-  "application_revision": "d6906685190049bac9693174fc20736cfd5f4d05",
-  "build_id": "b7fd96dc173b6471",
-  "workflow_run": 45042481284,
-  "workflow_url": "https://github.com/FerroUI/Reader/actions/runs/45042481284",
+  "application_revision": "05a865b30c87cc9ba04050294d6de313badc64cd",
+  "build_id": "23a85d01c9f9e4a8",
+  "workflow_run": 45056258119,
+  "workflow_url": "https://github.com/FerroUI/Reader/actions/runs/45056258119",
   "build_result": "success",
   "deploy_result": "success",
   "live_url": "https://ferroui.com/Reader/#home",
-  "live_build_id_observed": "b7fd96dc173b6471",
+  "live_build_id_observed": "23a85d01c9f9e4a8",
   "verification_date": "2026-11-22",
   "test_counts": {
-    "domain_state": 26,
+    "domain_state": 28,
+    "subscription_tree": 5,
     "gesture_motion": 4,
     "native_operations": 2,
     "javascript": 18,
-    "rendered_browser": 17
+    "rendered_browser": 23
   },
   "viewports": {
     "desktop": [
@@ -45,5 +46,28 @@
     "native_visuals": 939
   },
   "physical_ios_keyboard_verified": false,
-  "full_historical_parity_established": false
+  "full_historical_parity_established": false,
+  "scenario_time_sum_ms": 33211,
+  "native_first_paint_step_ms": 1606,
+  "offline_manifest_resources": 26,
+  "live_observations": [
+    "Native Home controls and updated overview layout visible",
+    "Subscribe anchored to its desktop button",
+    "Focused Subscribe DOM input exposes URL/Go and capitalization disabled",
+    "Browser Back dismisses Subscribe and retains Home",
+    "Closing older duplicate Reader clients permits normal service-worker activation"
+  ],
+  "responsive_caret": {
+    "draft_length": 38,
+    "desktop_caret": 38,
+    "retained_on_resize": true,
+    "after_inserting_append": 45,
+    "selection_collapsed": true
+  },
+  "empty_feed_message_bounds": {
+    "x": 249,
+    "y": 151,
+    "width": 1101,
+    "height": 134
+  }
 }

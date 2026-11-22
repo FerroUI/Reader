@@ -101,7 +101,7 @@ The Subscribe and tag editors support focused input, Enter to save, Escape to cl
 
 ## Keyboard map
 
-This table transcribes behavior from the preserved final keyboard-help resource. A space-separated sequence means successive keys, not a simultaneous chord.
+This table transcribes behavior from the preserved final keyboard-help resource. A space-separated sequence means successive keys, not a simultaneous chord. It is the historical map, not a list of every currently implemented destination: the app has no Popular items destination (`g p`), and Shift+T currently invokes host sharing rather than the original custom Send to menu. The in-app help omits the unavailable destination and calls the host action Send item. Current coverage and adaptations are recorded in [parity.md](parity.md#implemented-coverage-and-remaining-differences).
 
 | Shortcut | Action |
 |---|---|
@@ -146,7 +146,7 @@ The [saved client](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a
 
 Traversal does not wrap. Without a cursor, it starts relative to the opened tree occurrence. With neither cursor nor opened occurrence, Shift+N chooses the first eligible entry and Shift+P does nothing. Shift+O opens the cursor entry and retains it; opening an already open entry refreshes it. Shift+X toggles the cursor's folder or, from a child feed, the nearest ancestor with children. Rebuilding the visible tree preserves the same occurrence or its closest surviving ancestor. Shift+J/K are aliases of Shift+N/P in `wE`.
 
-The [keyboard-help template](https://readerisdead.com/reader/ui/2662170544-en-keyboard-help-banner?hl=en) has four groups arranged as a two-by-two table: Navigation/Application, then Jumping/Acting on items. Its [CSS](https://readerisdead.com/reader/ui/2139832829-en-scroll.css) places the banner at 5% from the top and left, width 90%, with a black 80%-opaque background, 10 px radius, white text and `#dd0` group headings. Keys are bold and right-aligned; descriptions are normal weight. It includes separate-window and close links and scrolls when the viewport is too short (`VC`). Narrow layouts may stack groups while retaining the command meanings and reachable close action.
+The [keyboard-help template](https://readerisdead.com/reader/ui/2662170544-en-keyboard-help-banner?hl=en) has four groups arranged as a two-by-two table: Navigation/Application, then Jumping/Acting on items. Its [CSS](https://readerisdead.com/reader/ui/2139832829-en-scroll.css) places the banner at 5% from the top and left, width 90%, with a black 80%-opaque background, 10 px radius, white text and `#dd0` group headings. Keys are bold and right-aligned; descriptions are normal weight. It includes separate-window and close links and scrolls when the viewport is too short (`VC`). The app retains the four groups, close actions and scrolling, but does not provide the original separate-window sheet. Narrow layouts stack the groups while preserving the supported command meanings and reachable close action.
 
 ## Historical scope and additional primary sources
 

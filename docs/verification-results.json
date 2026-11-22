@@ -1,73 +1,97 @@
 {
-  "passed": 17,
+  "passed": 23,
   "checks": [
     {
       "name": "native first paint",
-      "milliseconds": 2087
+      "milliseconds": 1606
     },
     {
       "name": "stream navigation and list shortcut",
-      "milliseconds": 1154
+      "milliseconds": 1094
     },
     {
       "name": "scan, open, star, tag, and keep unread",
-      "milliseconds": 1241
+      "milliseconds": 860
     },
     {
       "name": "search typing does not trigger reading shortcuts",
-      "milliseconds": 708
+      "milliseconds": 690
     },
     {
       "name": "browser modifiers and composition keys do not execute Reader commands",
-      "milliseconds": 467
+      "milliseconds": 529
     },
     {
       "name": "feed subscription through the browser network host",
-      "milliseconds": 854
+      "milliseconds": 857
     },
     {
       "name": "preferences menu and exact compact density",
-      "milliseconds": 1424
+      "milliseconds": 1497
     },
     {
       "name": "atomic IndexedDB persistence survives reload",
-      "milliseconds": 762
+      "milliseconds": 872
     },
     {
       "name": "competing storage writers cannot silently overwrite a newer generation",
-      "milliseconds": 127
+      "milliseconds": 27
+    },
+    {
+      "name": "home stories open their source and article tags navigate",
+      "milliseconds": 1666
+    },
+    {
+      "name": "empty unread recovery keeps its feed and search keeps its query",
+      "milliseconds": 1601
+    },
+    {
+      "name": "desktop quick add anchors, cancels and survives a narrow resize",
+      "milliseconds": 2117
+    },
+    {
+      "name": "subscription cursor scans, collapses and opens without reading early",
+      "milliseconds": 1134
+    },
+    {
+      "name": "keyboard help keeps four groups and a reachable phone close action",
+      "milliseconds": 1309
+    },
+    {
+      "name": "dated mark-all confirmation preserves cutoff and opt-out",
+      "milliseconds": 1590
     },
     {
       "name": "phone touch scrolling, cancellation and tap-to-expand",
-      "milliseconds": 4284
+      "milliseconds": 4009
     },
     {
       "name": "browser Back dismisses mobile overlays before changing streams",
-      "milliseconds": 1018
+      "milliseconds": 983
     },
     {
       "name": "held subscription menus, cancellation, reordering and folder movement",
-      "milliseconds": 4507
+      "milliseconds": 4474
     },
     {
       "name": "small portrait and landscape dialogs keep actions reachable",
-      "milliseconds": 1037
+      "milliseconds": 1029
     },
     {
       "name": "visual viewport keyboard resize preserves dialog input and focus",
-      "milliseconds": 913
+      "milliseconds": 908
     },
     {
       "name": "expanded read tracking follows user scrolling and preserves Keep unread",
-      "milliseconds": 1409
+      "milliseconds": 1420
     },
     {
       "name": "ten thousand items keep a bounded native control tree",
-      "milliseconds": 1049
+      "milliseconds": 1110
     },
     {
       "name": "installed application and saved library reload without network",
-      "milliseconds": 1806
+      "milliseconds": 1829
     }
   ]
 }

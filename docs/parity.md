@@ -8,19 +8,20 @@ The following describes the checked-in implementation. It is a source-level feat
 
 | Area | Present implementation | Remaining difference |
 | --- | --- | --- |
-| Main interface | Final-era fallback white header with a combined Google Reader wordmark, red Subscribe button, subscription tree, reading toolbar, stream title and all three density choices | Font rasterization, vector branding, menus and dialogs need reference-image comparison; 100% pixel parity is not established |
-| Streams | Home, All items, Starred, feed, folder, tag, search, Trends and Explore destinations | Home uses a local overview and Explore a four-feed starter catalog; these are not the original server-generated pages |
-| Reading | Expanded/list modes, inline row opening, cursor navigation, read/unread, sticky Keep unread, stars, tags and private notes | Historical Google+ actions and original social interactions are not available |
+| Main interface | Final-era fallback white header with a combined Google Reader wordmark, red Subscribe button, subscription tree, reading toolbar, stream title and all three density choices; menu and dialog styling follows preserved source measurements | Font rasterization, vector branding and visual states still need complete reference-image comparison; 100% pixel parity is not established |
+| Streams | Home, All items, Starred, feed, folder, tag, search, Trends and Explore destinations; Home stories open their source feed; unread-empty recovery preserves the current stream | Home uses a local overview and Explore a four-feed starter catalog; these are not the original server-generated pages |
+| Reading | Expanded/list modes, inline row opening, cursor navigation, read/unread, sticky Keep unread, stars, private notes and individually navigable article tags | Historical Google+ actions and original social interactions are not available; expanded headers still show the source inside that feed, whereas the original `#entries.single-source` CSS hides its source label/link |
 | Article body | Selectable text, simple formatting, links, headings, lists, quotes, code and fetched images | Constrained HTML projection; no publisher CSS engine, embedded media players or complete HTML/table layout |
-| Stream controls | All/unread, newest/oldest, previous/next, age-based mark-read, per-stream display preferences | No Google's magic ranking, translation or global subscription statistics |
+| Stream controls | All/unread, newest/oldest, previous/next, age-based mark-read, per-stream display preferences; configured bulk confirmation above 50 unread items, retained age cutoff and persistent opt-out | No Google's magic ranking, translation or global subscription statistics |
 | Subscriptions | RSS/Atom/JSON Feed, accessible-page discovery, refresh, rename, multiple folder labels, reorder/drag, filter and unsubscribe | No Google feed index, search-by-keyword directory, server crawler or historical archive |
-| Folder management | Create/rename/delete folders, assign memberships, collapse/expand, move feeds | The complete original tree/context-menu command surface is not implemented |
-| Search | Local text and field operators, quoted phrases and exclusions; scoped local searches | Searches saved articles only, without Google's historical corpus |
+| Folder management | Create/rename/delete folders, assign memberships, collapse/expand, move feeds; keyboard folder toggling preserves the cursor's parent occurrence | The complete original tree/context-menu command surface, folder ordering and independent per-folder feed orders are not implemented |
+| Search | Local text and field operators, quoted phrases and exclusions; scoped local searches with query-specific empty feedback | Searches saved articles only, without Google's historical corpus |
 | Trends | Local totals, 30-day reading chart and per-feed totals/read percentages | Original hour/day charts, subscriber-based statistics and inactive/obscure subscription analytics are not fully reproduced |
 | Import/export | OPML merge/export with multiple memberships; validated complete JSON backup/restore; recent-change undo | Google Takeout social JSON and account recovery are not supported; undo is session-only |
 | Preferences | Density, text size, start page, automatic read tracking, bulk-read confirmation, all/updated subscriptions, proxy | No localization, complete historical settings tabs or custom Send to services |
-| Keyboard | Core article/stream/share/view keys, timed `g` prefix, subscription/tag jump dialogs, `g Shift+t` Trends, text-size keys and input exclusions | Original folder-tree cursor/toggle semantics are incomplete; subscription traversal opens feeds directly |
-| Browser integration | Stream history, Back-dismissed dialogs/drawer, downloads/uploads, focus-preserving clipboard fallback, supported native sharing, email drafts, sanitized print document; article URL fragments retained | Availability follows browser permissions and platform capabilities; no account, social or server email delivery |
+| Keyboard | Separate subscription-tree cursor with Shift+N/P and Shift+J/K aliases, Shift+O to open, Shift+X to toggle a folder; timed `g` prefix, subscription/tag jump dialogs, `g Shift+t` Trends, text-size keys and input exclusions | No Popular items destination (`g p`); Shift+T invokes host sharing rather than the historical custom Send to menu; Space pages the current stream rather than reproducing all original item/page/next-stream behavior |
+| Dialogs and help | Subscribe and visible-article tag editors anchor to their desktop controls; other dialogs use the original white backdrop and compact heading; four-group shortcut help adapts to narrow viewports | Coarse-pointer/narrow screens and tag editing without a visible article anchor use centered dialogs; the original separate-window shortcut sheet and full historical settings surfaces are not reproduced |
+| Browser integration | Stream history, Back-dismissed popups/dialogs/drawer, downloads/uploads, focus-preserving clipboard fallback, supported native sharing, email drafts, sanitized print document; article URL fragments retained | Availability follows browser permissions and platform capabilities; no account, social or server email delivery |
 | Browser persistence | IndexedDB transactions with generation checks; localStorage fallback; recovery handling; offline application snapshot | No cross-device synchronization; fallback storage lacks transactional multi-tab conflict protection |
 | Desktop integration | Shared UI, native pickers/clipboard/launcher, asynchronous curl, coalesced atomic file writes | Requires curl; feed decoder currently UTF-8-only; share copies text, print opens a text preview, and one process should use a data directory |
 | Narrow screen | Overlay subscriptions, compact toolbar, responsive article widths, coarse-pointer targets, safe-area and visual-viewport layout, browser pinch magnification, native Search/Search and URL/Go keyboard hints | An adaptation of the desktop design; not a reproduction of Google's separate original mobile UI. DOM hints and synthetic keyboard viewport handling are tested; physical iOS keyboard presentation is not verified |
@@ -45,17 +46,18 @@ UI state belongs in view models. Reusable controls render properties and command
 
 | Area | Required behavior and important edge cases |
 |---|---|
-| Home | Useful overview derived from current subscriptions; links navigate to real streams |
+| Home | Useful overview derived from current subscriptions; clicking the title, date or excerpt opens the article in its source feed |
 | Streams | All items, individual feed, folder, starred and tag filters; accurate unread counts |
+| Empty streams | Reading-list, starred and named-stream messages distinguish empty from unread-empty; View all items clears only the current filter; search feedback retains the query and scope |
 | Selection | Stable article identity through read-state changes, refresh, sorting and collection updates |
 | Expanded reading | Readable title, source, author, date and body; original-link action; active article distinction |
 | List reading | Unread bold/read regular rows; in-place expansion; selection distinct from expansion |
 | Automatic read state | Opening/reading updates counts; Keep unread is not immediately reversed by scroll tracking |
-| Star and tags | Immediate, persistent changes; tag views update; a star does not imply read |
-| Bulk read | Current stream only; all/day/week/two-week age cutoffs; confirmation when configured |
+| Star and tags | Immediate, persistent changes; a star does not imply read; Add tags becomes Edit tags with individual tag-navigation links and no duplicate label |
+| Bulk read | Current stream only; all/day/week/two-week age cutoffs; configured confirmation above 50 unread items in the whole stream, including dated actions; Cancel changes nothing; confirmation preserves the cutoff and can persist Don't ask me again |
 | Sort and filter | Newest/oldest, all/unread; deterministic stable order for equal dates |
 | Search | Titles and article text; case-insensitive input; meaningful empty results; scope respected |
-| Subscribe | RSS/Atom URL parsing, duplicate handling, loading/error state and a real resulting feed |
+| Subscribe | RSS/Atom URL parsing, duplicate handling, loading/error state and a real resulting feed; desktop popup anchored to Subscribe with Enter, Escape and outside dismissal |
 | Refresh | Bounded concurrent work; no duplicate articles; no navigation on background completion; results cannot recreate an unsubscribed source |
 | Folders | Create, rename, membership changes, collapse/expand, delete and move/reorder semantics |
 | Manage subscriptions | Searchable list, rename, unsubscribe, folder changes and coherent active selection |
@@ -63,7 +65,8 @@ UI state belongs in view models. Reusable controls render properties and command
 | Backup | Portable app document preserves read/star/tag/preferences state; import validates its schema |
 | Trends | Statistics computed from recorded events, with useful empty states; no fabricated activity |
 | Preferences | Density, reading mode and relevant settings persist across reloads |
-| Keyboard | Reference map, input focus exclusions, multi-key timeout and dialog Escape handling |
+| Keyboard | Subscription cursor moves without opening or marking articles read; visible-tree order, no wrapping, duplicate feed occurrences and collapsed-parent recovery remain coherent; input focus exclusions, multi-key timeout and dialog Escape handling |
+| Popups | Desktop anchors follow native layout; form values survive presentation changes; active text composition is not remounted during resize; touch dialogs retain reachable actions |
 | Browser navigation | Back/forward restores feed/folder destination; selection does not corrupt stream history |
 | Sharing | Visible user action opens a supported sharing destination or copies a link; no silent send |
 | Persistence | Reload retains subscriptions and article annotations; storage failure is visible and recoverable |
@@ -114,8 +117,8 @@ GitHub Pages serves static files and cannot execute a server-side RSS proxy. A c
 
 ## Build and release verification
 
-The lean Pages workflow runs domain/state and focused JavaScript host tests, builds one production browser module using the pinned FerroUI toolchain and deploys that output from `main`. Framework dependencies and browser tools are cached; it does not launch a browser screenshot suite on every commit.
+The lean Pages workflow runs domain/state, focused JavaScript host, pure gesture, tree-cursor and native request-operation checks, builds one production browser module using the pinned FerroUI toolchain and deploys that output from `main`. Framework dependencies and browser tools are cached; it does not launch a browser screenshot suite on every commit.
 
-An explicit `[verify-ui]` commit marker or manual `verify_ui: true` dispatch adds the 17-check rendered-browser gate and the `reader-ui-verification` evidence artifact. Its tested revision, new-document offline proof, mobile scenarios and remaining coverage limits are recorded in [verification.md](verification.md).
+An explicit `[verify-ui]` commit marker or manual `verify_ui: true` dispatch adds the rendered-browser gate and the `reader-ui-verification` evidence artifact. The current suite defines 23 scenarios, including source-feed Home navigation, tag links, empty-stream recovery, anchored quick add, subscription cursor behavior, shortcut help and dated mark-all confirmation. Defined scenarios are not a passing-run claim: the executed revision, outcomes, new-document offline proof and remaining coverage limits are recorded separately in [verification.md](verification.md).
 
 Before claiming a release has visual and interaction parity, check the built app in a real browser at desktop and narrow widths: add/import feeds, navigate, open articles, star/tag/mark unread, search, change density/mode, reload, export and exercise keyboard commands. Check actual screenshots against the reference and record any unsupported original-service features explicitly. A first cold WebAssembly build is heavier than a cached rebuild; the CI workflow keeps this compilation out of repeated setup work.

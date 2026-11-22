@@ -62,7 +62,7 @@ The default deployment uses the normal single-threaded browser profile. FerroUI'
 
 ### Connecting live feeds
 
-Use **Subscribe**, enter a feed or website URL, and press the dialog's subscribe action. Direct browser requests work when the publisher allows cross-origin access. A static GitHub Pages application cannot bypass a publisher's CORS policy or act as a feed crawler.
+Use **Subscribe**, enter a feed or website URL, and choose **Add**. A desktop popup opens below Subscribe; touch layouts use a dialog. Direct browser requests work when the publisher allows cross-origin access. A static GitHub Pages application cannot bypass a publisher's CORS policy or act as a feed crawler.
 
 For a feed that blocks direct access, open **Reader settings → Feed connection** and enter a proxy endpoint you control or trust, with `{url}` where the encoded source address belongs:
 
@@ -113,6 +113,8 @@ Shortcuts apply outside text inputs. Press `?` for the in-app reference.
 | --- | --- |
 | `j` / `k` | Open next / previous article |
 | `n` / `p` | Move the article cursor without opening |
+| `Shift+n` / `Shift+p` (`Shift+j` / `Shift+k`) | Move the subscription-tree cursor without opening |
+| `Shift+o` / `Shift+x` | Open the cursor's stream / toggle its folder or parent folder |
 | `o` / `Enter` | Expand or collapse the selected row |
 | `Space` / `Shift+Space` | Page down / page up |
 | `s`, `m`, `t` | Toggle star, toggle read state, edit tags |
@@ -130,7 +132,7 @@ Shortcuts apply outside text inputs. Press `?` for the in-app reference.
 | `Escape` | Close the dialog or selected entry |
 | `Ctrl+z` / `Cmd+z` | Undo a recent library change |
 
-Some original shortcuts and social actions are not reproduced. Subscription traversal opens feeds directly; it does not reproduce the complete original keyboard cursor and folder-toggle behavior of the navigation tree. The complete historical map in [reference.md](docs/reference.md) is a fidelity target, not a claim that every original key is implemented.
+The subscription cursor follows visible feeds, folders and tags independently of the open article stream, without wrapping. Shift+O opens it; Shift+X toggles its folder or a feed's parent folder. Some original commands remain different: there is no Popular items destination (`g p`), and Shift+T uses the supported host sharing action rather than the historical custom Send to menu. The complete historical map in [reference.md](docs/reference.md) is a fidelity target; [parity.md](docs/parity.md) records the remaining differences.
 
 ## Architecture and checks
 
@@ -152,7 +154,7 @@ node --test scripts/*.test.mjs
 cargo check --locked -p reader-desktop
 ```
 
-The tests cover domain and view-model invariants and focused browser-host behavior. They do not certify every original screen, pixel, browser or native operating system. The ordinary Pages workflow runs the first two commands, four pure gesture checks and two native request-operation checks, then builds one browser target without a platform matrix or native packaging gate. [Verification status](docs/verification.md) records the 17-check rendered-browser gate, inspected visual corrections, measured control counts and verified new-document offline reload with 10,000 saved articles.
+The tests cover domain and view-model invariants and focused browser-host behavior. They do not certify every original screen, pixel, browser or native operating system. The ordinary Pages workflow runs the first two commands, four pure gesture checks, five tree-cursor checks and two native request-operation checks, then builds one browser target without a platform matrix or native packaging gate. [Verification status](docs/verification.md) records executed rendered-browser checks, their exact revision, inspected visual corrections, measured control counts and offline-reload evidence. The current optional browser suite defines 23 scenarios; its definition alone does not establish a passing result.
 
 ### Optional rendered-browser verification
 
