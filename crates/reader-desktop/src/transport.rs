@@ -1,4 +1,6 @@
 use reader_domain::ParsedFeed;
+mod cancel;
+pub use cancel::DownloadCancel;
 use std::{
     io::Read,
     process::{Command, Stdio},
@@ -20,6 +22,15 @@ struct Response {
 /// Native requests do not need a CORS proxy. The operating system's curl supplies
 /// HTTPS certificates, compression, redirects and a hard per-request timeout.
 fn download(url: &str, limit: usize) -> Result<Response, String> {
+    download_with_cancel(url, limit, &DownloadCancel::default())
+}
+
+fn download_with_cancel(
+    url: &str,
+    limit: usize,
+    cancel: &DownloadCancel,
+) -> Result<Response, String> {
+    cancel.check()?;
     let url =
         reader_domain::safe_url(url, None).ok_or("Only HTTP and HTTPS URLs are supported.")?;
     let mut command = Command::new("curl");
@@ -58,25 +69,29 @@ fn download(url: &str, limit: usize) -> Result<Response, String> {
         use std::os::windows::process::CommandExt;
         command.creation_flags(0x08000000); // CREATE_NO_WINDOW
     }
-    let mut child = command.spawn().map_err(|error| {
-        format!("Could not run curl: {error}. Install curl to retrieve feeds in the desktop app.")
+    let child = command.spawn().map_err(|error| {
+        format!("Could not run curl: {error}. Install curl to retrieve content in the desktop app.")
     })?;
     let mut bytes = Vec::new();
-    let read = child
-        .stdout
-        .take()
-        .ok_or("The download stream is unavailable.")?
+    let read = cancel
+        .attach(child)?
         .take((limit + 8193) as u64)
         .read_to_end(&mut bytes);
     if read.is_err() || bytes.len() > limit + 8192 {
-        let _ = child.kill();
-        let _ = child.wait();
+        cancel.cancel();
+        let _ = cancel.finish();
         return Err(read.err().map_or_else(
-            || "The response exceeds the 8 MB limit.".into(),
+            || {
+                format!(
+                    "The response exceeds the {} MB limit.",
+                    limit / (1024 * 1024)
+                )
+            },
             |e| e.to_string(),
         ));
     }
-    let result = child.wait_with_output().map_err(|e| e.to_string())?;
+    let result = cancel.finish()?;
+    cancel.check()?;
     if !result.status.success() {
         let error = String::from_utf8_lossy(&result.stderr).trim().to_owned();
         return Err(if error.is_empty() {
@@ -94,7 +109,10 @@ fn download(url: &str, limit: usize) -> Result<Response, String> {
         .ok_or("The download redirected to an unsupported URL.")?;
     bytes.truncate(separator);
     if bytes.len() > limit {
-        return Err("The response exceeds the 8 MB limit.".into());
+        return Err(format!(
+            "The response exceeds the {} MB limit.",
+            limit / (1024 * 1024)
+        ));
     }
     Ok(Response { bytes, url })
 }
@@ -122,4 +140,16 @@ pub fn feed(url: String, now: i64, discover: bool) -> Result<FeedResponse, Strin
 
 pub fn image(url: &str) -> Result<Vec<u8>, String> {
     download(url, IMAGE_LIMIT).map(|r| r.bytes)
+}
+
+pub fn article(
+    url: &str,
+    cancel: &DownloadCancel,
+) -> Result<reader_content::ExtractedArticle, String> {
+    let response = download_with_cancel(url, reader_content::MAX_DOCUMENT_BYTES, cancel)?;
+    cancel.check()?;
+    let source = String::from_utf8_lossy(&response.bytes);
+    let content = reader_content::extract(&source, &response.url)?;
+    cancel.check()?;
+    Ok(content)
 }

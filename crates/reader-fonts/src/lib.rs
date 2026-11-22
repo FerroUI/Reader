@@ -48,4 +48,5 @@ pub const BUNDLED_FONTS: &[&[u8]] = &[
     include_bytes!("../assets/fonts/LiberationSans-Italic.ttf"),
     include_bytes!("../assets/fonts/LiberationSans-BoldItalic.ttf"),
     include_bytes!("../assets/fonts/LiberationSerif-Regular.ttf"),
+    include_bytes!("../assets/fonts/LiberationMono-Regular.ttf"),
 ];

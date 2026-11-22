@@ -1,4 +1,4 @@
-use crate::{history::UndoEntry, AppViewModel, HostRequest};
+use crate::{AppViewModel, HostRequest, history::UndoEntry};
 use reader_domain::{Action, AppState, Changes};
 
 impl AppViewModel {
@@ -48,6 +48,7 @@ impl AppViewModel {
         let previous = self.document.replace(state);
         self.library_generation
             .set(self.library_generation.get().wrapping_add(1));
+        self.reset_article_loads();
         self.refreshing.set(false);
         self.restore_stream_settings();
         let changes = Changes {

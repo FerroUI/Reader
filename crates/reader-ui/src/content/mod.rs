@@ -1,103 +1,89 @@
-mod html;
-mod parser;
+mod cache;
+mod table;
+mod text;
 use ferroui_base::layout::HorizontalAlignment as H;
-use ferroui_base::media::{FontFamily, FontStyle, FontWeight, TextWrapping};
-use ferroui_controls::documents::{Hyperlink, InlineCollection, Run};
+use ferroui_controls::primitives::ScrollBarVisibility;
 use ferroui_view::prelude::*;
 use reader_domain::Article;
-use reader_state::{AppViewModel, HostRequest};
-use std::{
-    hash::{Hash, Hasher},
-    rc::Rc,
-};
+use reader_state::AppViewModel;
+use std::rc::Rc;
 
 pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64, selected: bool) -> Element {
-    let mut hash = std::collections::hash_map::DefaultHasher::new();
-    article.content.hash(&mut hash);
-    article.content_base_url().hash(&mut hash);
-    let content_hash = hash.finish();
-    let blocks = parser::parse(&article.content, article.content_base_url());
+    let (fingerprint, blocks) =
+        cache::project(article.reading_content(), article.reading_base_url());
     let mut body = stack_panel()
+        .name("ArticleBody")
         .max_width(650.0)
-        .horizontal_alignment(H::Left)
+        .horizontal_alignment(H::Stretch)
         .spacing(14.0);
     if blocks.is_empty() {
         body = body.child(reader_controls::paragraph(article.summary.clone()));
     }
-    for (i, block) in blocks.into_iter().enumerate() {
-        if let Some((url, alt)) = block.image {
-            body = body.child(crate::images::view(vm.clone(), url, alt));
+    for (index, block) in blocks.iter().enumerate() {
+        let key = format!("{}-{fingerprint}-{index}", article.id);
+        if let Some(image) = &block.image {
+            body = body.child(crate::images::with_metadata(vm.clone(), image.clone(), key));
             continue;
         }
-        let model = vm.clone();
-        let heading = block.heading;
-        let quote = block.quote;
-        let pre = block.pre;
-        let spans = block.spans;
-        let text = selectable_text_block()
-            .key(format!("{}-{content_hash}-{i}", article.id))
-            .font_size(if heading > 0 {
-                (24.0 - f64::from(heading) * 2.0).max(size)
-            } else {
-                size
-            })
-            .font_weight(if heading > 0 {
-                FontWeight::Bold
-            } else {
-                FontWeight::Normal
-            })
-            .foreground(if article.read && !selected {
-                "#222222"
-            } else {
-                "#000000"
-            })
-            .text_wrapping(TextWrapping::Wrap)
-            .line_height(size * 1.5)
-            .max_width(650.0)
-            .with(move |text| {
-                let inlines = InlineCollection::new();
-                text.set_inlines(Some(inlines.clone()));
-                for segment in &spans {
-                    let run = Run::with_text(Some(&segment.text));
-                    if segment.bold {
-                        run.set_font_weight(FontWeight::Bold);
-                    }
-                    if segment.italic {
-                        run.set_font_style(FontStyle::Italic);
-                    }
-                    if segment.code || pre {
-                        run.set_font_family(FontFamily::new("monospace"));
-                    }
-                    if let Some(url) = &segment.href {
-                        let link = Hyperlink::new();
-                        link.set_navigate_uri(Some(url.clone()));
-                        link.inlines().add(run);
-                        let url = url.clone();
-                        let model = model.clone();
-                        let token = link.navigation_requested(move |event| {
-                            event.set_handled(true);
-                            model.request(HostRequest::OpenUrl { url: url.clone() });
-                        });
-                        on_cleanup(move || token.dispose());
-                        inlines.add(link);
-                    } else {
-                        inlines.add(run);
-                    }
-                }
-            });
-        if quote {
-            body = body.child(
-                border()
-                    .border_brush("#CCCCCC")
-                    .border_thickness((3.0, 0.0, 0.0, 0.0))
-                    .padding((14.0, 0.0))
-                    .child(text),
-            );
-        } else if pre {
-            body = body.child(border().background("#F5F5F5").padding(12.0).child(text));
-        } else {
-            body = body.child(text);
+        if let Some(table) = &block.table {
+            body = body.child(table::view(vm.clone(), table, size, &key));
+            continue;
         }
+        if block.rule {
+            body = body.child(reader_controls::separator());
+            continue;
+        }
+        let content = text::view(
+            vm.clone(),
+            &block.spans,
+            size,
+            block.heading,
+            block.pre,
+            article.read && !selected,
+            key,
+        );
+        let content = if block.pre {
+            border()
+                .background("#F5F5F5")
+                .padding(12.0)
+                .child(
+                    scroll_viewer()
+                        .name("ArticleCodeScroll")
+                        .horizontal_scroll_bar_visibility(ScrollBarVisibility::Auto)
+                        .vertical_scroll_bar_visibility(ScrollBarVisibility::Disabled)
+                        .child(content),
+                )
+                .into()
+        } else {
+            content
+        };
+        let content = if block.quote {
+            border()
+                .border_brush("#CCCCCC")
+                .border_thickness((3.0, 0.0, 0.0, 0.0))
+                .padding((14.0, 0.0))
+                .child(content)
+                .into()
+        } else {
+            content
+        };
+        let content = if block.list_depth > 1 {
+            border()
+                .margin(((block.list_depth - 1) as f64 * 18.0, 0.0, 0.0, 0.0))
+                .child(content)
+                .into()
+        } else {
+            content
+        };
+        body = body.child(if block.notice {
+            border()
+                .background("#FFF7D1")
+                .padding(12.0)
+                .child(content)
+                .into()
+        } else {
+            content
+        });
     }
     if !article.note.is_empty() {
         body = body.child(border().background("#FFF9DC").padding(12.0).child(

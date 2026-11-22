@@ -5,6 +5,17 @@ use std::rc::Rc;
 #[derive(Clone, Debug, Serialize)]
 #[serde(tag = "kind", rename_all = "camelCase")]
 pub enum HostRequest {
+    FetchArticle {
+        id: Id,
+        request_id: u64,
+        generation: u64,
+        url: String,
+        proxy: String,
+        connection: FeedConnection,
+    },
+    CancelArticle {
+        request_id: u64,
+    },
     Refresh {
         feeds: Vec<Feed>,
         proxy: String,

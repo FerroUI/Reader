@@ -8,10 +8,12 @@ build = "build.rs"
 
 [dependencies]
 reader-domain = { path = "../reader-domain" }
+reader-content.workspace = true
 reader-state = { path = "../reader-state" }
 reader-controls = { path = "../reader-controls" }
 ferroui-base.workspace = true
 ferroui-controls.workspace = true
+ferroui-controls-treedatagrid.workspace = true
 ferroui-view.workspace = true
 ferroui-reactive.workspace = true
 ferroui-reactiveui.workspace = true

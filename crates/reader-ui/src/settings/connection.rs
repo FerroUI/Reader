@@ -33,10 +33,10 @@ pub(super) fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     }
     let description = match selected {
         FeedConnection::Automatic => format!(
-            "Automatic tries publishers directly, then your custom proxy or {PUBLIC_RELAY_NAME}. {PUBLIC_RELAY_NAME} receives public RSS/Atom feed URLs and may cache or limit items. Use Direct only or a trusted proxy for private feeds."
+            "Automatic tries publishers directly, then your custom proxy or {PUBLIC_RELAY_NAME}. {PUBLIC_RELAY_NAME} receives public RSS/Atom feed URLs and may cache or limit items. When you choose Read full article, Jina Reader receives the public article URL if direct access fails. Use Direct only or your trusted proxy for private addresses."
         ),
         FeedConnection::Direct => "Connect only to the publisher. The publisher must allow browser access. Your saved custom proxy is kept but will not be used.".into(),
-        FeedConnection::Custom => "Try the publisher first, then your trusted proxy. The proxy receives the feed URL. Its address must contain {url} for the encoded feed address.".into(),
+        FeedConnection::Custom => "Try the publisher first, then your trusted proxy. The proxy receives the requested feed or article URL and must return its original XML or HTML. Its address must contain {url} for the encoded address.".into(),
     };
     let input = ui.entry;
     let error = ui.form_error;

@@ -32,4 +32,10 @@ fi
 FerroUI/scripts/build-browser.sh reader-browser ${READER_ARGUMENTS[@]+"${READER_ARGUMENTS[@]}"}
 mkdir -p "$READER_SITE/fonts"
 cp crates/reader-fonts/assets/fonts/* "$READER_SITE/fonts/"
+# A small independent WASM module does HTML5/Readability parsing in Web Workers.
+# It is loaded on demand and keeps the UI module free of the extraction engine.
+rustup target add wasm32-unknown-unknown
+cargo build --locked --target wasm32-unknown-unknown --profile browser -p reader-extract
+wasm-bindgen --target web --no-typescript --out-dir "$READER_SITE/extractor" \
+  "$READER_TARGET/wasm32-unknown-unknown/browser/reader_extract.wasm"
 node scripts/prepare-site.mjs "$READER_SITE"

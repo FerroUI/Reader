@@ -1,5 +1,6 @@
 mod footer;
 mod header;
+mod reading;
 use crate::{content, rows::Row, session::Session};
 use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
 use ferroui_base::media::{FontWeight, TextTrimming};
@@ -31,7 +32,11 @@ fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
             Density::Compact => 27.0,
         }
     };
-    let source_width = if row.narrow { "0" } else { "165" };
+    let source_width = if row.narrow || row.single_source {
+        "0"
+    } else {
+        "165"
+    };
     let mut line = grid()
         .name("ArticleRow")
         .tag(Some(Rc::new(id) as ferroui_base::BoxedValue))
@@ -78,7 +83,7 @@ fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
                 },
             )),
     );
-    if !row.narrow {
+    if !row.narrow && !row.single_source {
         line = line.child(
             text_block()
                 .grid_column(1)
@@ -140,7 +145,12 @@ fn expanded(vm: Rc<AppViewModel>, ui: Rc<Session>, row: Row) -> Element {
             .with(move |node| {
                 crate::gestures::attach_article_tap(&node.clone().upcast(), select.clone())
             })
-            .child(body),
+            .child(
+                stack_panel()
+                    .spacing(12.0)
+                    .child(reading::view(vm.clone(), &row))
+                    .child(body),
+            ),
     );
     card = card.child(footer::view(vm, ui, &row).grid_row(2));
     border()

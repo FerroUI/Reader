@@ -1,6 +1,7 @@
 import { load, save, preserveRecovery, flushStorage, setStorageReporter } from "./reader-storage.js";
 import { fetchFeed, fetchImage, refreshFeeds } from "./feeds.js";
 import { downloadFile, pickFile, openUrl, copyText, share, email, printArticle } from "./transfers.js";
+import { ArticleRequests } from "./articles.js";
 export { load, save, preserveRecovery };
 export { navigationChanged } from "./navigation.js";
 export { inputHintsChanged } from "./input.js";
@@ -8,7 +9,12 @@ export const now = () => Math.floor(Date.now() / 1000);
 export const width = () => document.getElementById("out").getBoundingClientRect().width;
 export const height = () => document.getElementById("out").getBoundingClientRect().height;
 let runtime, saveTimer, pendingOperations = 0, latestSubscription = 0, operationGeneration;
+const articles = new ArticleRequests({
+  receive: (message, result) => runtime.receiveArticle(message.id, message.request_id, message.generation, message.url, result.html, result.base_url),
+  error: (message, error) => runtime.articleError(message.id, message.request_id, message.generation, message.url, error),
+});
 export function attachRuntime(value) {
+  articles.dispose();
   runtime = value;
   setStorageReporter(error => runtime.storageError(error?.message || String(error)));
 }
@@ -23,6 +29,8 @@ export function request(json) {
   try { message = JSON.parse(json); } catch (error) { reportError(error); return; }
   // Keep user-gesture-sensitive file/share/window operations in the input callback.
   switch (message.kind) {
+    case "fetchArticle": articles.request(message); return;
+    case "cancelArticle": articles.cancel(message.request_id); return;
     case "export": try { downloadFile(message.filename, message.contents, message.mime_type); } catch (e) { reportError(e); } return;
     case "import": try { pickFile(message.format, runtime); } catch (e) { reportError(e); } return;
     case "openUrl": try { openUrl(message.url); } catch (e) { reportError(e); } return;

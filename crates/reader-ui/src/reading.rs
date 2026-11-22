@@ -1,6 +1,10 @@
 //! Auto-read follows actual input and an observed offset change in the same frame.
 //! Layout, image reflow, route restoration and keyboard scanning alone never read.
+mod extent;
+mod geometry;
 mod input;
+mod metrics;
+mod panel;
 
 use crate::session::{Panel, Session};
 use ferroui_base::threading::{Dispatcher, DispatcherPriority};
@@ -46,6 +50,9 @@ pub(crate) fn user_scroll() {
 }
 impl Reading {
     fn input(self: &Rc<Self>) {
+        if let Some(list) = self.list.upgrade() {
+            panel::user_input(&list);
+        }
         let (Some(vm), Some(ui)) = (self.vm.upgrade(), self.ui.upgrade()) else {
             return;
         };

@@ -12,6 +12,7 @@ test = false
 
 [dependencies]
 reader-domain.workspace = true
+reader-content = { workspace = true, features = ["extraction"] }
 reader-state.workspace = true
 reader-controls.workspace = true
 reader-ui.workspace = true

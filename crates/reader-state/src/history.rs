@@ -115,7 +115,10 @@ impl UndoEntry {
                 ));
             }
             Action::AddSubscription { .. } => {}
-            Action::MergeFeed { .. } | Action::FeedError { .. } => return None,
+            Action::MergeFeed { .. }
+            | Action::FeedError { .. }
+            | Action::CacheFullArticle { .. }
+            | Action::ShowFullArticle { .. } => return None,
         }
         Some(Self {
             changes,

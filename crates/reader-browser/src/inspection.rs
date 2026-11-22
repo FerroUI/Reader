@@ -49,7 +49,7 @@ pub fn inspect_view() -> String {
                 .and_then(|control| control.tag())
                 .and_then(|tag| tag.downcast_ref::<u64>().copied());
             let text = if let Some(t) = visual.cast::<TextBlock>() {
-                t.text()
+                t.text().or_else(|| t.inlines().and_then(|inlines| inlines.text()))
             } else if let Some(t) = visual.cast::<TextBox>() {
                 t.text()
             } else if let Some(item) = visual.cast::<MenuItem>() {
@@ -85,6 +85,10 @@ pub fn inspect_view() -> String {
             "automationName":AutomationProperties::get_name(&visual),"articleId":article_id,
             "treeCursor":visual.classes().contains("keyboard-cursor"),
             "focused":visual.cast::<InputElement>().is_some_and(|i|i.is_focused()),
+            "scroll":visual.cast::<ScrollViewer>().map(|scroll|json!({
+                "offsetX":scroll.offset().x,"offsetY":scroll.offset().y,
+                "viewportWidth":scroll.viewport().width,"viewportHeight":scroll.viewport().height,
+                "extentWidth":scroll.extent().width,"extentHeight":scroll.extent().height})),
             "textSelection":visual.cast::<TextBox>().map(|field|json!({
                 "start":field.selection_start(),"end":field.selection_end(),"caret":field.caret_index()})),
             "x":p.x,"y":p.y,"width":b.width,"height":b.height,"hit":hit}),

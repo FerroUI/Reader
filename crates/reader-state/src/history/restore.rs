@@ -140,6 +140,7 @@ impl crate::AppViewModel {
         if entry.snapshot.is_some() {
             self.library_generation
                 .set(self.library_generation.get().wrapping_add(1));
+            self.reset_article_loads();
             self.refreshing.set(false);
             self.selected.set(None);
             self.cursor.set(None);

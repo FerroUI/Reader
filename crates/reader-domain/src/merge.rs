@@ -93,6 +93,10 @@ impl AppState {
                     article.content_base = item.content_base;
                     article.summary = item.summary;
                     article.published = item.published;
+                    if article.url != item.url {
+                        article.full_content = None;
+                        article.show_full_content = false;
+                    }
                     article.url = item.url;
                     article.author = item.author;
                     article.rebuild_search();

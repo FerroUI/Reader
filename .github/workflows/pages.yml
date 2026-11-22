@@ -110,19 +110,24 @@ jobs:
             target/browser/build
             target/browser/deps
             target/wasm32-unknown-emscripten/browser
+            target/wasm32-unknown-unknown/browser
           key: reader-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.pins.outputs.rust }}-${{ steps.pins.outputs.emsdk }}-${{ steps.pins.outputs.framework }}-${{ hashFiles('Cargo.lock', 'Cargo.toml', '.cargo/config.toml', 'scripts/build-browser.sh', '.github/workflows/pages.yml') }}-${{ hashFiles('crates/**') }}
           restore-keys: |
             reader-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.pins.outputs.rust }}-${{ steps.pins.outputs.emsdk }}-${{ steps.pins.outputs.framework }}-${{ hashFiles('Cargo.lock', 'Cargo.toml', '.cargo/config.toml', 'scripts/build-browser.sh', '.github/workflows/pages.yml') }}-
             reader-build-v1-${{ runner.os }}-${{ runner.arch }}-${{ steps.pins.outputs.rust }}-${{ steps.pins.outputs.emsdk }}-${{ steps.pins.outputs.framework }}-
       - name: Check feed and reader state
         run: |
-          cargo test --locked -p reader-domain -p reader-state
+          cargo test --locked -p reader-domain -p reader-state -p reader-content --features reader-content/extraction
           rustc --edition=2021 --test crates/reader-ui/src/gestures/motion.rs -o target/reader-motion-tests
           target/reader-motion-tests
           rustc --edition=2021 --test crates/reader-ui/src/sidebar/tree.rs -o target/reader-tree-tests
           target/reader-tree-tests
           rustc --edition=2021 --test crates/reader-desktop/src/operations.rs -o target/reader-operation-tests
           target/reader-operation-tests
+          rustc --edition=2021 --test scripts/scroll_geometry.rs -o target/reader-scroll-tests
+          target/reader-scroll-tests
+          rustc --edition=2021 --test crates/reader-ui/src/images/layout.rs -o target/reader-image-tests
+          target/reader-image-tests
           node --test scripts/*.test.mjs
       - name: Build the browser app
         run: bash scripts/build-browser.sh
@@ -140,6 +145,7 @@ jobs:
             target/browser/build
             target/browser/deps
             target/wasm32-unknown-emscripten/browser
+            target/wasm32-unknown-unknown/browser
           key: ${{ steps.cargo.outputs.cache-primary-key }}
       - name: Verify rendered controls when requested
         if: contains(github.event.head_commit.message, '[verify-ui]') || inputs.verify_ui

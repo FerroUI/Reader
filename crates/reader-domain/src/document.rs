@@ -94,9 +94,11 @@ impl AppState {
             }
             article.url = crate::safe_url(&article.url, None).unwrap_or_default();
             article.content_base = crate::safe_url(&article.content_base, None).unwrap_or_default();
+            article.normalize_full_content();
             article.tags = clean_names(std::mem::take(&mut article.tags));
             article.rebuild_search();
         }
+        self.trim_article_cache(None);
         self.folders = clean_names(std::mem::take(&mut self.folders));
         self.settings.font_size = if self.settings.font_size.is_finite() {
             self.settings.font_size.clamp(11.0, 26.0)

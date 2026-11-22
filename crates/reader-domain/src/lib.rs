@@ -1,5 +1,6 @@
 //! Portable feed document, parsing, queries and mutations. No platform or UI dependencies.
 mod action;
+mod article_content;
 mod connection;
 mod document;
 mod feed;
@@ -19,12 +20,13 @@ mod stream;
 mod trends;
 
 pub use action::{Action, Changes};
-pub use connection::{subscription_url, validate_feed_proxy, FeedConnection};
-pub use feed::{parse_feed, ParsedArticle, ParsedFeed};
+pub use article_content::{FullArticle, MAX_ARTICLE_CACHE_BYTES, MAX_ARTICLE_HTML_BYTES};
+pub use connection::{FeedConnection, subscription_url, validate_feed_proxy};
+pub use feed::{ParsedArticle, ParsedFeed, parse_feed};
 pub use html::{plain_text, safe_url};
 pub use model::*;
-pub use opml::{parse_opml, OpmlSubscription};
+pub use opml::{OpmlSubscription, parse_opml};
 pub use query::{matches_view, search_matches};
-pub use starter::{DefaultFeed, DEFAULT_FEEDS};
+pub use starter::{DEFAULT_FEEDS, DefaultFeed};
 pub use stream::StreamSettings;
 pub use trends::{FeedTrend, Trends};

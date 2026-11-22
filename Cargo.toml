@@ -3,6 +3,8 @@ resolver = "2"
 members = [
   "crates/reader-fonts",
   "crates/reader-domain",
+  "crates/reader-content",
+  "crates/reader-extract",
   "crates/reader-state",
   "crates/reader-controls",
   "crates/reader-ui",
@@ -293,6 +295,7 @@ getrandom = { version = "0.4" }
 chrono = { version = "0.4", default-features = false, features = ["std", "serde"] }
 reader-fonts = { path = "crates/reader-fonts" }
 reader-domain = { path = "crates/reader-domain" }
+reader-content = { path = "crates/reader-content" }
 reader-state = { path = "crates/reader-state" }
 reader-controls = { path = "crates/reader-controls" }
 reader-ui = { path = "crates/reader-ui" }

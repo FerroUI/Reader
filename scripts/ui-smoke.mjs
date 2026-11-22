@@ -5,6 +5,8 @@ import { createHarness } from "./ui/harness.mjs";
 import { mobileChecks } from "./ui/mobile.mjs";
 import { refinementChecks } from "./ui/refinement.mjs";
 import { feedNetworkChecks } from "./ui/feed-network.mjs";
+import { articleChecks } from "./ui/articles.mjs";
+import { scrollingChecks } from "./ui/scrolling.mjs";
 import { interceptStarterFeeds, starterChecks } from "./ui/starter.mjs";
 import { sleep } from "../FerroUI/scripts/browser/harness.mjs";
 
@@ -122,6 +124,7 @@ try {
     });
     await refinementChecks(h, check);
     await feedNetworkChecks(h, check);
+    await articleChecks(h, check);
     await mobileChecks(h, check);
     await check("expanded read tracking follows user scrolling and preserves Keep unread", async () => {
       const data = await h.state();
@@ -145,6 +148,7 @@ try {
       assert.equal((await h.state()).articles.find(a => a.id === read.id).read, false, "small scroll must not undo explicit Keep unread");
       await h.resize(1363, 936);
     });
+    await scrollingChecks(h, check);
     await check("ten thousand items keep a bounded native control tree", async () => {
       const data = await h.state();
       const feed = data.feeds[0];

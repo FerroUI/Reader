@@ -1,4 +1,4 @@
-use crate::{history::UndoEntry, AppViewModel};
+use crate::{AppViewModel, history::UndoEntry};
 use reader_domain::{Action, Changes, Density, Id, Settings, SortOrder, View, ViewMode};
 use std::rc::Rc;
 
@@ -41,6 +41,7 @@ impl AppViewModel {
     }
 
     pub(crate) fn publish(&self, changes: &Changes) {
+        self.prune_article_loads();
         let updates = {
             let state = self.document.borrow();
             if self

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
+use std::rc::Rc;
 
 pub type Id = u64;
 
@@ -31,6 +32,11 @@ pub struct Article {
     pub content: String,
     /// Effective document/XML Base for relative URLs inside the article body.
     pub content_base: String,
+    /// Extracted publisher content is separate from, and never replaces, the feed body.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub full_content: Option<Rc<crate::FullArticle>>,
+    #[serde(skip_serializing_if = "crate::article_content::is_false")]
+    pub show_full_content: bool,
     pub summary: String,
     pub published: i64,
     pub read: bool,
@@ -40,7 +46,7 @@ pub struct Article {
     pub read_at: Option<i64>,
     /// Derived once on import/update, never persisted in the backup document.
     #[serde(skip)]
-    pub search_text: String,
+    pub search_text: Rc<str>,
 }
 
 impl Article {
@@ -53,14 +59,20 @@ impl Article {
     }
     pub fn rebuild_search(&mut self) {
         self.search_text = format!(
-            "{} {} {} {} {}",
+            "{} {} {} {} {} {}",
             self.title,
             self.author,
             crate::plain_text(&self.content),
+            self.full_content
+                .as_ref()
+                .filter(|full| full.source_url == self.url)
+                .map(|full| crate::plain_text(&full.html))
+                .unwrap_or_default(),
             self.tags.join(" "),
             self.note
         )
-        .to_lowercase();
+        .to_lowercase()
+        .into();
     }
 }
 

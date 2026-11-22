@@ -13,6 +13,7 @@ Actual browser verification captures: [Home](docs/screenshots/home.png) · [Expa
 ## What you can do
 
 - Read All items, individual subscriptions, folders, starred items and tags, in expanded or list view. Open a row in place, move between articles, keep an item unread, star it, edit tags and add a private note.
+- Choose **Read full article** to load the publisher's article inside Reader. Switch back to **Feed content**, reload a saved copy, cancel a download or retry an inline error. Downloaded text is saved locally for offline reading, search, printing and JSON backups. See [article reading](docs/article-reading.md) for connection and publisher limits.
 - Subscribe to RSS, Atom and JSON Feed addresses, or discover a feed from an accessible website. Refresh subscriptions, rename them, create/rename folders, assign several folders, drag subscriptions between folders or reorder them, and unsubscribe.
 - Switch between all and unread items, sort newest or oldest first, and retain each stream's reading preferences. Mark a stream read, including items older than one day, one week or two weeks.
 - Search saved article text, titles, authors, feed names, tags and notes. Query operators include `is:unread`, `is:starred`, `feed:`, `author:`, `title:`, `tag:`, `before:` and `after:`; quoted phrases and excluded terms are supported.
@@ -59,7 +60,7 @@ python3 -m http.server 8080 --directory target/browser/reader-browser
 
 Open [localhost:8080](http://localhost:8080/). Serve the output through HTTP; opening `index.html` as a local file does not provide the browser capabilities the app needs.
 
-The target is **`wasm32-unknown-emscripten`**. The pinned framework uses Rust **1.99.0**, Emscripten **6.0.10** and wasm-bindgen **0.2.129**. The setup script and checked-in toolchain select matching versions. The build wrapper delegates compilation and web runtime generation to FerroUI, copies the shared fonts, then generates a content-derived build identifier, offline manifest and `.nojekyll`.
+The UI target is **`wasm32-unknown-emscripten`**. Article extraction uses a separate **`wasm32-unknown-unknown`** Web Worker module, built by the same wrapper and loaded on demand. The pinned framework uses Rust **1.99.0**, Emscripten **6.0.10** and wasm-bindgen **0.2.129**. The setup script and checked-in toolchain select matching versions. The build wrapper delegates UI compilation and web runtime generation to FerroUI, stages the extractor and shared fonts, then generates a content-derived build identifier, offline manifest and `.nojekyll`.
 
 Useful options pass through to FerroUI's builder:
 
@@ -153,6 +154,8 @@ The subscription cursor follows visible feeds, folders and tags independently of
 | --- | --- |
 | `reader-domain` | Serializable models, validated actions, feed parsing, search, OPML and backup documents |
 | `reader-state` | ReactiveUI commands, DynamicData caches, counts, navigation, stream preferences and undo |
+| `reader-content` | Bounded native content projection and optional shared HTML5/Readability extraction |
+| `reader-extract` | Independent Web Worker WASM module for publisher extraction |
 | `reader-controls` | Trimmed Material base, Reader styles, reusable templates and vector icons |
 | `reader-ui` | Shared RSX shell, virtualized article rows, menus, dialogs, keyboard and drag interactions |
 | `reader-fonts` | Shared font registration and licensed Liberation font assets |
@@ -162,7 +165,7 @@ The subscription cursor follows visible feeds, folders and tags independently of
 Read [architecture.md](docs/architecture.md) for data flow, retained controls, performance decisions and host boundaries.
 
 ```bash
-cargo test --locked -p reader-domain -p reader-state
+cargo test --locked -p reader-domain -p reader-state -p reader-content --features reader-content/extraction
 node --test scripts/*.test.mjs
 cargo check --locked -p reader-desktop
 ```
@@ -179,7 +182,7 @@ node scripts/ui-smoke.mjs target/browser/reader-browser target/ui-smoke
 
 The harness serves the built application locally and launches a **fresh isolated Chromium profile**. It does not reuse your signed-in browser, feed library or service-worker cache. Set `CHROME` to the browser executable if automatic discovery cannot find it. Node.js 24 is sufficient; no Playwright or browser-testing package is required.
 
-The requested checks exercise first paint, actual control input, reading/annotation shortcuts, search and keyboard hints, feed subscription, settings, reload persistence, conflicting storage writers, touch scrolling/cancellation, in-place opening, held menus, subscription reordering/folder movement, browser Back, small/landscape/keyboard-sized dialogs, automatic reading state, a 10,000-article virtualization fixture and offline reload. A separate fixture publisher omits CORS headers, so the cross-origin scenario requires the configured relay, discovers a relative feed from HTML and checks refresh identity and failure reporting. PNG screenshots, control-tree JSON and a success report or failure evidence are written to `target/ui-smoke`. A passing scripted run is evidence for those exercised paths, not complete historical visual parity.
+The requested checks exercise first paint, actual control input, reading/annotation shortcuts, search and keyboard hints, feed subscription, settings, reload persistence, conflicting storage writers, touch scrolling/cancellation, in-place opening, held menus, subscription reordering/folder movement, browser Back, small/landscape/keyboard-sized dialogs, automatic reading state, a 10,000-article virtualization fixture and offline reload. Additional scenarios cover full-article extraction, cached feed/full switching, cancellation, error recovery, code/table overflow, mobile offline reading, 1,200 heterogeneous articles, far seeks and delayed-image paragraph anchoring. A separate fixture publisher omits CORS headers, so the cross-origin scenario requires the configured relay, discovers a relative feed from HTML and checks refresh identity and failure reporting. PNG screenshots, control-tree JSON and a success report or failure evidence are written to `target/ui-smoke`. A passing scripted run is evidence for those exercised paths, not complete historical visual parity.
 
 To request this gate in GitHub Actions, include **`[verify-ui]`** in the pushed commit message or manually dispatch **Build and publish** with **`verify_ui: true`**. The workflow runs the browser script after compilation and uploads **`reader-ui-verification`** with a seven-day retention period, including available failure evidence. A failed requested gate blocks that run's deployment. Ordinary `main` pushes keep the domain/state + JavaScript checks, build and deploy path.
 

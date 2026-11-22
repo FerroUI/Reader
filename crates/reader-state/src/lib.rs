@@ -1,4 +1,5 @@
 //! ReactiveUI MVVM application state with incremental DynamicData article caches.
+mod article_content;
 mod commands;
 mod connection;
 mod counts;
@@ -11,8 +12,8 @@ mod services;
 mod subscriptions;
 
 use ferroui_dynamic_data::SourceCache;
-use ferroui_reactive::{concurrency::ImmediateScheduler, ObservableExt};
-use ferroui_reactiveui::{reactive_object, IReactiveObjectExt, ReactiveCommand, ReactiveObject};
+use ferroui_reactive::{ObservableExt, concurrency::ImmediateScheduler};
+use ferroui_reactiveui::{IReactiveObjectExt, ReactiveCommand, ReactiveObject, reactive_object};
 use reader_domain::{Action, AppState, Article, Id, View};
 pub use services::{HostRequest, HostServices, SaveCallback};
 use std::{
@@ -26,6 +27,7 @@ pub struct AppViewModel {
     revision: RefCell<u64>,
     document: RefCell<AppState>,
     library_generation: Cell<u64>,
+    article_loads: article_content::ArticleLoads,
     now: Cell<i64>,
     view: RefCell<View>,
     selected: Cell<Option<Id>>,
@@ -85,6 +87,7 @@ impl AppViewModel {
                 revision: RefCell::new(0),
                 document: RefCell::new(state),
                 library_generation: Cell::new(0),
+                article_loads: article_content::ArticleLoads::default(),
                 now: Cell::new(now),
                 view: RefCell::new(start_page),
                 selected: Cell::new(None),

@@ -39,8 +39,10 @@ pub(super) fn view(vm: Rc<AppViewModel>, row: &Row, padding: f64) -> Element {
                 }
             }
             WrapPanel{orientation:Orientation::Horizontal,
-                TextBlock{text:"from ",font_size:13.0,foreground:"#666666",vertical_alignment:V::Center}
-                {reader_controls::link(&row.source,move||source.navigate(reader_domain::View::Feed(feed_id)))}
+                if !row.single_source {
+                    TextBlock{text:"from ",font_size:13.0,foreground:"#666666",vertical_alignment:V::Center}
+                    {reader_controls::link(&row.source,move||source.navigate(reader_domain::View::Feed(feed_id)))}
+                }
                 if !row.article.author.is_empty(){TextBlock{text:format!(" by {}",row.article.author),font_size:13.0,foreground:"#666666",vertical_alignment:V::Center}}
             }
         }
@@ -79,8 +81,10 @@ fn touch_heading(vm: Rc<AppViewModel>, row: &Row, padding: f64) -> Element {
                 {icon(if row.article.starred{Icon::Starred}else{Icon::Star},18.0,if row.article.starred{"#E9BC36"}else{"#B5B5B5"})}
             }
         }
-        Button{class:"reader-link",horizontal_content_alignment:H::Stretch,automation_properties_name:format!("From {}",row.source),on_click:move |_|feed.navigate(reader_domain::View::Feed(feed_id)),
-            TextBlock{text:format!("from {}",row.source),font_size:13.0,foreground:"#1155CC",text_wrapping:TextWrapping::Wrap}
+        if !row.single_source {
+            Button{class:"reader-link",horizontal_content_alignment:H::Stretch,automation_properties_name:format!("From {}",row.source),on_click:move |_|feed.navigate(reader_domain::View::Feed(feed_id)),
+                TextBlock{text:format!("from {}",row.source),font_size:13.0,foreground:"#1155CC",text_wrapping:TextWrapping::Wrap}
+            }
         }
         if !row.article.author.is_empty(){TextBlock{text:format!("by {}",row.article.author),font_size:13.0,foreground:"#666666",text_wrapping:TextWrapping::Wrap}}
         TextBlock{text:super::full_date(row.article.published),font_size:12.0,foreground:"#777777",text_wrapping:TextWrapping::Wrap}

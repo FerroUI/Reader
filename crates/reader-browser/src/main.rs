@@ -1,5 +1,6 @@
 #![cfg_attr(target_os = "emscripten", no_main)]
 mod app;
+mod article_exports;
 mod exports;
 mod host;
 mod input_hints;
@@ -19,8 +20,9 @@ pub fn run_main(
     italic: Vec<u8>,
     bold_italic: Vec<u8>,
     serif: Vec<u8>,
+    mono: Vec<u8>,
 ) -> Result<(), JsValue> {
-    let bytes = RefCell::new(Some(vec![regular, bold, italic, bold_italic, serif]));
+    let bytes = RefCell::new(Some(vec![regular, bold, italic, bold_italic, serif, mono]));
     let font_error = Rc::new(RefCell::new(None));
     let result = font_error.clone();
     AppBuilder::configure::<app::App>()

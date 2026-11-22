@@ -4,6 +4,19 @@ impl AppState {
     pub fn apply(&mut self, action: Action, now: i64) -> Result<Changes, String> {
         let mut changes = Changes::default();
         match action {
+            Action::CacheFullArticle { id, content } => {
+                return self.cache_full_article(id, content);
+            }
+            Action::ShowFullArticle { id, show } => {
+                let article = self
+                    .article_mut(id)
+                    .ok_or("This article no longer exists.")?;
+                let show = show && article.has_full_content();
+                if article.show_full_content != show {
+                    article.show_full_content = show;
+                    changes.articles.push(id);
+                }
+            }
             Action::SetRead { id, read } => {
                 let article = self
                     .article_mut(id)

@@ -39,6 +39,8 @@ An old library's saved custom proxy is retained and takes precedence in Automati
 
 Fallback is used for a connection failure or timeout. A readable publisher HTTP error, unsupported encoding or oversized response keeps its actual error instead of being retried through another service.
 
+**Read full article** follows this same connection preference for publisher HTML. In Automatic mode without a custom proxy, its public fallback is Jina Reader. Article downloads start only when requested, and the extracted text is saved in the library. See [article reading](article-reading.md) for controls, service disclosure, offline behavior and limits.
+
 ## Automatic service: rss2json
 
 Reader sends a public RSS/Atom URL to the [rss2json API](https://rss2json.com/docs) without an API key, then normalizes the returned items for its shared Rust feed parser. The publisher URL remains the subscription identity; the API endpoint is never saved as the feed address.

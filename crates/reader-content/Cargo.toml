@@ -1,0 +1,16 @@
+[package]
+name = "reader-content"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[features]
+default = []
+extraction = ["dep:dom_smoothie"]
+
+[dependencies]
+reader-domain.workspace = true
+web_atoms = "=0.3.0"
+dom_smoothie = { version = "=0.19.0", optional = true }
+

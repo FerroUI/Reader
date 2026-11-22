@@ -1,8 +1,16 @@
-use crate::{Id, ParsedFeed, Settings};
+use crate::{FullArticle, Id, ParsedFeed, Settings};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Action {
+    CacheFullArticle {
+        id: Id,
+        content: FullArticle,
+    },
+    ShowFullArticle {
+        id: Id,
+        show: bool,
+    },
     SetRead {
         id: Id,
         read: bool,

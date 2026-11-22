@@ -19,6 +19,9 @@ pub struct Row {
     pub font_size: f64,
     pub narrow: bool,
     pub touch: bool,
+    pub single_source: bool,
+    pub article_loading: bool,
+    pub article_error: Option<String>,
 }
 impl PartialEq for Row {
     fn eq(&self, other: &Self) -> bool {
@@ -30,6 +33,9 @@ impl PartialEq for Row {
             && self.font_size == other.font_size
             && self.narrow == other.narrow
             && self.touch == other.touch
+            && self.single_source == other.single_source
+            && self.article_loading == other.article_loading
+            && self.article_error == other.article_error
     }
 }
 impl Row {
@@ -80,6 +86,7 @@ impl Rows {
             .map(|f| (f.id, Rc::from(f.title)))
             .collect();
         let narrow = vm.viewport() < 700.0;
+        let single_source = matches!(vm.view(), reader_domain::View::Feed(_));
         let next = vm
             .visible_shared()
             .into_iter()
@@ -92,6 +99,9 @@ impl Rows {
                     settings.view_mode == ViewMode::Expanded || selected == Some(article.id);
                 Row {
                     selected: cursor.or(selected) == Some(article.id),
+                    article_loading: vm.article_loading(article.id),
+                    article_error: vm.article_error(article.id),
+                    single_source,
                     article,
                     source,
                     expanded,

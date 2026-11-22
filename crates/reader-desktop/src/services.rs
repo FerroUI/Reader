@@ -3,10 +3,11 @@ use crate::{
     operations::{FeedOperations, Ticket},
     transport,
 };
+mod articles;
 use ferroui_base::{
+    Ref,
     input::platform::ClipboardExtensions,
     threading::{Dispatcher, DispatcherPriority, DispatcherTimer},
-    Ref,
 };
 use ferroui_controls::Window;
 use reader_domain::{Action, Feed, View};
@@ -22,12 +23,24 @@ pub fn install(vm: &Rc<AppViewModel>, window: &Ref<Window>, directory: PathBuf) 
     let weak_vm = Rc::downgrade(vm);
     let weak_window = window.downgrade();
     let operations = Rc::new(FeedOperations::default());
+    let articles = Rc::new(articles::ArticleRequests::default());
+    let closing_articles = Rc::downgrade(&articles);
+    window
+        .closed(move || {
+            if let Some(articles) = closing_articles.upgrade() {
+                articles.cancel_all();
+            }
+        })
+        .detach();
     let save_scheduled = Rc::new(Cell::new(false));
     vm.set_services(HostServices {
         request: Rc::new(move |request| {
             let (Some(vm), Some(window)) = (weak_vm.upgrade(), weak_window.upgrade()) else {
                 return;
             };
+            if articles.handle(&vm, &request) {
+                return;
+            }
             if matches!(request, HostRequest::ScheduleSave) {
                 if !save_scheduled.replace(true) {
                     let scheduled = save_scheduled.clone();
@@ -165,6 +178,8 @@ async fn handle(
         HostRequest::ScheduleSave => {
             vm.flush()?;
         }
+        // These are registered synchronously by install before any async work.
+        HostRequest::FetchArticle { .. } | HostRequest::CancelArticle { .. } => {}
     }
     Ok(())
 }

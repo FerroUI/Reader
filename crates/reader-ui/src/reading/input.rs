@@ -21,6 +21,7 @@ fn scrollbar(source: Option<Ref<FerroObject>>) -> bool {
         })
 }
 pub fn attach(list: &Ref<ListBox>, vm: Rc<AppViewModel>, ui: Rc<Session>) {
+    super::panel::install(list, &vm, &ui);
     let reading = Rc::new(Reading {
         list: list.downgrade(),
         vm: Rc::downgrade(&vm),

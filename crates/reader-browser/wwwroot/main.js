@@ -6,7 +6,7 @@ import { attachNavigation } from "./navigation.js";
 import { attachViewport } from "./viewport.js";
 import { attachInputGuard } from "./input.js";
 
-const fontNames = ["LiberationSans-Regular.ttf", "LiberationSans-Bold.ttf", "LiberationSans-Italic.ttf", "LiberationSans-BoldItalic.ttf", "LiberationSerif-Regular.ttf"];
+const fontNames = ["LiberationSans-Regular.ttf", "LiberationSans-Bold.ttf", "LiberationSans-Italic.ttf", "LiberationSans-BoldItalic.ttf", "LiberationSerif-Regular.ttf", "LiberationMono-Regular.ttf"];
 try {
   await prepareStorage();
   const [loaded, ...fonts] = await Promise.all([
