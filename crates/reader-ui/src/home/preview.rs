@@ -26,7 +26,9 @@ pub(super) fn view(vm: Rc<AppViewModel>, article: &Article) -> Element {
             vm.navigate(View::Feed(feed));
             vm.select(Some(id));
         },
-        StackPanel{spacing:0.0,
+        // Keep the whole preview hit-testable, including blank space beside
+        // short dates and summaries, while the Button changes pointer states.
+        StackPanel{spacing:0.0,background:"Transparent",
             TextBlock{text:article.title.clone(),font_size:13.5,line_height:16.0,font_weight:FontWeight::Bold,foreground:"#444444",text_wrapping:TextWrapping::Wrap}
             TextBlock{text:date,font_size:13.5,line_height:16.0,foreground:"#777777",tool_tip_tip:crate::article::full_date(article.published),margin:(0.0,0.0,0.0,2.0)}
             TextBlock{text:excerpt(&article.summary),font_size:13.5,foreground:"#444444",text_wrapping:TextWrapping::Wrap,line_height:16.0}
