@@ -23,7 +23,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
                 40.0
             }
         };
-    let compact = available < if touch { 790.0 } else { 730.0 };
+    let compact = available < if touch { 820.0 } else { 730.0 };
     let settings = vm.state().settings.clone();
     let refresh = vm.clone();
     let previous = vm.clone();

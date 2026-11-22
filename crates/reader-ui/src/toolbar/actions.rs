@@ -15,7 +15,11 @@ pub(super) fn filter_menu(vm: Rc<AppViewModel>) -> Element {
     menus::attach(
         &vm,
         reader_controls::dropdown(if unread { "New items" } else { "All items" })
-            .width(72.0)
+            .width(if crate::responsive::touch(&vm) {
+                96.0
+            } else {
+                72.0
+            })
             .padding((6.0, 5.0)),
         vec![
             menus::checked("All items", !unread, move || all.set_unread_only(false)),

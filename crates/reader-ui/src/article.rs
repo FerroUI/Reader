@@ -84,11 +84,7 @@ fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
             text_block()
                 .grid_column(1)
                 .with(move |node| {
-                    crate::gestures::attach_article_tap(
-                        &node.clone().upcast(),
-                        source_open.clone(),
-                        id,
-                    )
+                    crate::gestures::attach_article_tap(&node.clone().upcast(), source_open.clone())
                 })
                 .text(row.source.to_string())
                 .font_size(11.0)
@@ -109,7 +105,7 @@ fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
         text_block()
             .grid_column(3)
             .with(move |node| {
-                crate::gestures::attach_article_tap(&node.clone().upcast(), date_open.clone(), id)
+                crate::gestures::attach_article_tap(&node.clone().upcast(), date_open.clone())
             })
             .text(date(row.article.published))
             .font_size(11.0)
@@ -149,7 +145,7 @@ fn expanded(vm: Rc<AppViewModel>, ui: Rc<Session>, row: Row) -> Element {
             .margin((spacing, 6.0, spacing, 20.0))
             .horizontal_alignment(H::Stretch)
             .with(move |node| {
-                crate::gestures::attach_article_tap(&node.clone().upcast(), select.clone(), id)
+                crate::gestures::attach_article_tap(&node.clone().upcast(), select.clone())
             })
             .child(body),
     );

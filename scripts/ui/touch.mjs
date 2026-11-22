@@ -12,10 +12,19 @@ export async function createTouch(page) {
   const points = contacts => contacts.map(([x, y, id = 0]) => ({
     x, y, id, radiusX: 2, radiusY: 2, force: 1,
   }));
-  const start = (...contacts) => send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: points(contacts) });
+  let active = false;
+  async function start(...contacts) {
+    await send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: points(contacts) });
+    active = true;
+  }
   const move = (...contacts) => send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: points(contacts) });
-  const end = () => send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  const cancel = () => send("Input.dispatchTouchEvent", { type: "touchCancel", touchPoints: [] });
+  async function finish(type) {
+    if (!active) return;
+    await send("Input.dispatchTouchEvent", { type, touchPoints: [] });
+    active = false;
+  }
+  const end = () => finish("touchEnd");
+  const cancel = () => finish("touchCancel");
   async function tap(x, y) {
     await start([x, y]);
     await sleep(45);

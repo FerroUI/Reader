@@ -22,12 +22,14 @@ async function settledScroll(h) {
     return stable >= 3;
   }, "touch inertia settles", 5000);
 }
-async function back(h) {
+async function back(h, { nested = false } = {}) {
   const current = await h.page.send("Page.getNavigationHistory", {});
   assert(!current.error && current.currentIndex > 0, "browser history must contain the preceding entry");
   const result = await h.page.send("Page.navigateToHistoryEntry", { entryId: current.entries[current.currentIndex - 1].id });
   assert(!result.error, JSON.stringify(result));
-  await h.until(async () => (await h.page.send("Page.getNavigationHistory", {})).currentIndex === current.currentIndex - 1,
+  // A remaining underlying drawer replaces the consumed transient guard. Its
+  // index stays the same; the caller asserts that only the top menu disappeared.
+  if (!nested) await h.until(async () => (await h.page.send("Page.getNavigationHistory", {})).currentIndex === current.currentIndex - 1,
     "Back consumes exactly the overlay history entry");
 }
 function inside(e, view) {
@@ -44,6 +46,7 @@ const overlayReady = h => h.until(() => h.page.evaluate(
 
 export async function mobileChecks(h, check) {
   const touch = await createTouch(h.page);
+  let failed = false;
   try {
     await check("phone touch scrolling, cancellation and tap-to-expand", async () => {
       await h.resize(390, 844);
@@ -159,9 +162,11 @@ export async function mobileChecks(h, check) {
       await touch.end();
       await h.control(e => /MenuItem$/.test(e.type) && e.text === "Rename subscription...", "stationary hold opens subscription actions");
       await overlayReady(h);
-      await back(h);
+      await back(h, { nested: true });
       await h.until(async () => !(await h.snapshot()).elements.some(e => /MenuItem$/.test(e.type) && e.text === "Rename subscription..."), "Back dismisses the held subscription menu");
       await h.until(async () => (await h.snapshot()).elements.some(e => e.name === "NavigationPane"), "menu dismissal preserves its underlying drawer");
+      await overlayReady(h);
+      assert.equal(await h.page.evaluate("readerApp.currentView()"), route);
 
       const sibling = data.feeds.find(f => f.title === "A List Apart");
       assert(sibling);
@@ -236,12 +241,16 @@ export async function mobileChecks(h, check) {
       await h.page.press("Escape");
     });
   } catch (error) {
+    failed = true;
+    console.error("Mobile check failed:", error.stack || error);
     await h.capture("08-mobile-failure").catch(() => {});
     throw error;
   } finally {
-    await restoreViewport(h);
-    await touch.cancel();
-    await touch.disable();
-    await h.resize(1363, 936);
+    let cleanupError;
+    for (const cleanup of [() => restoreViewport(h), touch.cancel, touch.disable, () => h.resize(1363, 936)]) {
+      try { await cleanup(); }
+      catch (error) { cleanupError ??= error; console.error("Mobile cleanup:", error.message); }
+    }
+    if (!failed && cleanupError) throw cleanupError;
   }
 }
