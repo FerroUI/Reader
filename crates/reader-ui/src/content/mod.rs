@@ -11,7 +11,7 @@ use std::{
     rc::Rc,
 };
 
-pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64) -> Element {
+pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64, selected: bool) -> Element {
     let mut hash = std::collections::hash_map::DefaultHasher::new();
     article.content.hash(&mut hash);
     article.content_base_url().hash(&mut hash);
@@ -46,7 +46,11 @@ pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64) -> Element {
             } else {
                 FontWeight::Normal
             })
-            .foreground("#333333")
+            .foreground(if article.read && !selected {
+                "#222222"
+            } else {
+                "#000000"
+            })
             .text_wrapping(TextWrapping::Wrap)
             .line_height(size * 1.5)
             .max_width(650.0)

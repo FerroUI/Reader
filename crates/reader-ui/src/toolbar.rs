@@ -37,6 +37,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         .orientation(Orientation::Horizontal)
         .spacing(if compact { 4.0 } else { 18.0 })
         .vertical_alignment(V::Center)
+        .margin((0.0, 6.0, 0.0, 0.0))
         .child(
             toolbar_icon(
                 Icon::Refresh,
@@ -62,6 +63,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         .grid_column(1)
         .orientation(Orientation::Horizontal)
         .vertical_alignment(V::Center)
+        .margin((0.0, 6.0, 0.0, 0.0))
         .spacing(0.0);
     if !compact {
         nav = nav
@@ -102,7 +104,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         settings_items(vm.clone(), ui),
     ));
     tools = tools.child(nav);
-    rsx! { Grid {row_definitions:"Auto,30",background:"White",
+    rsx! { Grid {row_definitions:"Auto,34",background:"White",
         Border {border_brush:"#EBEBEB",border_thickness:(0.0,0.0,0.0,1.0),{tools}}
         TextBlock {Grid.row:1,text:title,font_size:14.0,font_weight:FontWeight::Bold,foreground:"#333333",margin:(6.0,5.0,12.0,0.0),vertical_alignment:V::Center}
     }}
@@ -116,8 +118,8 @@ pub fn page_header(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     };
     rsx! { Border {height,border_brush:"#EBEBEB",border_thickness:(0.0,0.0,0.0,1.0),
         Grid {column_definitions:"*,Auto",margin:(13.0,0.0,38.0,0.0),
-            TextBlock {text:vm.title(),font_size:13.0,foreground:"#777777",vertical_alignment:V::Center}
-            Border {Grid.column:1,vertical_alignment:V::Center,
+            TextBlock {text:if vm.view()==View::Home{"A look at what's new in Reader".to_string()}else{vm.title()},font_size:13.0,foreground:"#777777",vertical_alignment:V::Center}
+            Border {Grid.column:1,vertical_alignment:V::Center,margin:(0.0,6.0,0.0,0.0),
                 {menus::attach(toolbar_icon(Icon::Settings,"Settings").width(72.0),settings_items(vm,ui))}
             }
         }

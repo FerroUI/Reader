@@ -32,6 +32,7 @@ pub fn preferences(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         let model = vm.clone();
         form = form.child(
             check_box()
+                .class("reader-check")
                 .content(label)
                 .font_size(13.0)
                 .min_height(28.0)

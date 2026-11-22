@@ -1,6 +1,7 @@
 //! Reusable Google Reader-era controls layered on FerroUI's Material theme.
 //! Native control templates retain keyboard, focus, automation and input semantics.
 mod buttons;
+mod checks;
 mod icons;
 mod menus;
 mod templates;

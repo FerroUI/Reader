@@ -1,10 +1,11 @@
+mod header;
 use crate::{
     content,
     rows::Row,
     session::{Panel, Session},
 };
 use ferroui_base::layout::{HorizontalAlignment as H, Orientation, VerticalAlignment as V};
-use ferroui_base::media::{FontWeight, TextTrimming, TextWrapping};
+use ferroui_base::media::{FontWeight, TextTrimming};
 use ferroui_view::prelude::*;
 use reader_controls::{icon, Icon};
 use reader_domain::Density;
@@ -110,81 +111,23 @@ fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
 }
 fn expanded(vm: Rc<AppViewModel>, ui: Rc<Session>, row: Row) -> Element {
     let id = row.article.id;
-    let open = vm.clone();
-    let star = vm.clone();
     let select = vm.clone();
-    let source = vm.clone();
-    let feed_id = row.article.feed_id;
     let spacing = match row.density {
         Density::Comfortable => 20.0,
         Density::Cozy => 10.0,
         Density::Compact => 5.0,
     };
-    let title = row.article.title.clone();
-    let body = content::view(vm.clone(), &row.article, row.font_size);
+    let body = content::view(vm.clone(), &row.article, row.font_size, row.selected);
     let mut card = grid()
         .name("ArticleEntry")
         .tag(Some(Rc::new(id) as ferroui_base::BoxedValue))
         .row_definitions("Auto,Auto,Auto")
         .background("White");
-    let mut header = grid()
-        .column_definitions("28,*,Auto")
-        .margin((spacing, spacing, spacing, 8.0));
-    header = header.child(
-        button()
-            .class("reader-flat")
-            .vertical_alignment(V::Top)
-            .width(24.0)
-            .height(25.0)
-            .automation_properties_name(if row.article.starred {
-                "Remove star"
-            } else {
-                "Add star"
-            })
-            .on_click(move |e| {
-                e.set_handled(true);
-                star.toggle_star(id);
-            })
-            .child(icon(
-                if row.article.starred {
-                    Icon::Starred
-                } else {
-                    Icon::Star
-                },
-                16.0,
-                if row.article.starred {
-                    "#E9BC36"
-                } else {
-                    "#B5B5B5"
-                },
-            )),
-    );
-    header=header.child(rsx! {
-        StackPanel {Grid.column:1,spacing:5.0,
-            Button {class:"reader-link",automation_properties_name:format!("Open {}",title),horizontal_content_alignment:H::Stretch,on_click:move |_|open.open_article(id),
-                TextBlock {text:title,font_size:18.0,font_weight:FontWeight::Bold,foreground:if row.article.read{"#444444"}else{"#1155CC"},text_wrapping:TextWrapping::Wrap}
-            }
-            StackPanel {orientation:Orientation::Horizontal,spacing:4.0,
-                {reader_controls::link(&row.source,move||source.navigate(reader_domain::View::Feed(feed_id)))}
-                TextBlock {text:if row.article.author.is_empty(){String::new()}else{format!("by {}",row.article.author)},foreground:"#666666",font_size:12.0,vertical_alignment:V::Center}
-            }
-        }
-    });
-    if !row.narrow {
-        header = header.child(
-            text_block()
-                .grid_column(2)
-                .text(date(row.article.published))
-                .font_size(11.0)
-                .foreground("#666666")
-                .margin((12.0, 2.0, 0.0, 0.0)),
-        );
-    }
-    card = card.child(header);
+    card = card.child(header::view(vm.clone(), &row, spacing));
     card = card.child(
         border()
             .grid_row(1)
-            .margin((spacing + 28.0, 6.0, spacing, 20.0))
+            .margin((spacing, 6.0, spacing, 20.0))
             .horizontal_alignment(H::Stretch)
             .on_pointer_pressed(move |_| select.select(Some(id)))
             .child(body),
@@ -215,14 +158,13 @@ fn footer(vm: Rc<AppViewModel>, ui: Rc<Session>, row: &Row) -> El<Border> {
     let mut actions = wrap_panel()
         .orientation(Orientation::Horizontal)
         .item_height(26.0)
-        .child(footer_link(
-            if row.article.starred {
-                "★ Unstar"
-            } else {
-                "☆ Add star"
-            },
-            move || star.toggle_star(id),
-        ))
+        .child(button().class("reader-link").height(26.0).padding((8.0,0.0))
+            .automation_properties_name(if row.article.starred{"Unstar"}else{"Add star"})
+            .on_click(move |event|{event.set_handled(true);star.toggle_star(id);})
+            .child(rsx!{StackPanel{orientation:Orientation::Horizontal,spacing:4.0,vertical_alignment:V::Center,
+                {icon(if row.article.starred{Icon::Starred}else{Icon::Star},12.0,if row.article.starred{"#E9BC36"}else{"#777777"})}
+                TextBlock{text:if row.article.starred{"Unstar"}else{"Add star"},font_size:11.0,foreground:"#666666",vertical_alignment:V::Center}
+            }}))
         .child(footer_link(
             if row.article.read {
                 "Keep unread"
@@ -253,7 +195,7 @@ fn footer(vm: Rc<AppViewModel>, ui: Rc<Session>, row: &Row) -> El<Border> {
         );
     }
     border()
-        .background("#F3F3F3")
+        .background("#FAFAFA")
         .border_brush("#EBEBEB")
         .border_thickness((0.0, 1.0, 0.0, 0.0))
         .padding((12.0, 2.0))
@@ -277,5 +219,11 @@ fn footer_link(label: &str, action: impl Fn() + 'static) -> Element {
 pub fn date(timestamp: i64) -> String {
     chrono::DateTime::from_timestamp(timestamp, 0)
         .map(|d| d.format("%b %-d").to_string())
+        .unwrap_or_default()
+}
+
+pub fn full_date(timestamp: i64) -> String {
+    chrono::DateTime::from_timestamp(timestamp, 0)
+        .map(|date| date.format("%b %-d, %Y %-I:%M %p").to_string())
         .unwrap_or_default()
 }

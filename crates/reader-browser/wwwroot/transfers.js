@@ -40,14 +40,14 @@ export async function share(title, url) {
 export function email(title, url) {
   location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(httpUrl(url))}`;
 }
-export function printArticle(title, html) {
+export function printArticle(title, html, baseUrl) {
   const source = new DOMParser().parseFromString(html, "text/html");
   for (const node of source.querySelectorAll("script,style,iframe,object,embed,link,meta,form,input,button,svg,math")) node.remove();
   for (const node of source.querySelectorAll("*")) {
     for (const attribute of [...node.attributes]) {
       if (!['href', 'src', 'alt', 'title', 'colspan', 'rowspan'].includes(attribute.name)) node.removeAttribute(attribute.name);
       if (['href', 'src'].includes(attribute.name)) {
-        try { node.setAttribute(attribute.name, httpUrl(attribute.value)); } catch { node.removeAttribute(attribute.name); }
+        try { node.setAttribute(attribute.name, httpUrl(attribute.value, baseUrl)); } catch { node.removeAttribute(attribute.name); }
       }
     }
   }

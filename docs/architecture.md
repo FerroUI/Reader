@@ -65,13 +65,15 @@ Liberation Sans supplies consistent Arial-like metrics across hosts, with bundle
 
 ## Article content boundary
 
-Publisher HTML is projected into selectable FerroUI text, inline formatting, links and separately fetched images. Paragraphs, headings, emphasis, simple list items, blockquotes and code receive corresponding presentation. Unsafe URL schemes, scripts, styles, embedded frames, SVG and form content are excluded from this projection.
+Publisher HTML is projected into selectable FerroUI text, inline formatting, links and separately fetched images. Paragraphs, headings, emphasis, ordered/unordered list items, blockquotes and code receive corresponding presentation; preformatted code retains whitespace and table cell text is preserved in a simplified projection. Unsafe URL schemes, scripts, styles, embedded frames, SVG and form content are excluded from this projection.
 
-This is a constrained HTML renderer. Publisher CSS, arbitrary tables/layout, active widgets, audio/video players, exact whitespace behavior and every HTML nesting rule are not reproduced. The original article link is the route to the publisher's full page. The browser's print adapter sanitizes a separate printable document; desktop printing creates an escaped text preview.
+This is a constrained HTML renderer. Publisher CSS, arbitrary table geometry/layout, active widgets, audio/video players and every HTML nesting rule are not reproduced. The original article link is the route to the publisher's full page. The browser's print adapter sanitizes a separate printable document; desktop printing creates an escaped text preview.
 
 ## Browser host
 
 `main.js` loads the canonical FerroUI runtime, prepares storage, loads shared font bytes, attaches exports and starts the Rust application. A resize observer updates the view-model width. Browser history is bridged separately from library mutations, and file import/export, sharing and printing remain small host modules.
+
+The application persistence module is named **`reader-storage.js`**. FerroUI stages its own platform module named `storage.js` into the same output directory; naming the Reader adapter `storage.js` overwrote that framework module and broke runtime imports. App adapters must use distinct names when sharing the generated output namespace. Imports and the service-worker manifest use the renamed Reader module; the framework's own `storage.js` remains in the built site.
 
 The `HostRequest` enum is serialized with an explicit operation kind. Requests cover refresh/subscribe, safe external navigation, files, share/email/copy/print, article images, focus, scroll and scheduled saves. The application contains no networking client implementation or browser object inside the domain model.
 
@@ -83,7 +85,7 @@ Browser CORS, mixed-content rules, network permissions and publisher availabilit
 
 ### Persistence and offline updates
 
-The storage adapter keeps an in-memory serialized snapshot and queues IndexedDB transactions. Each transaction checks the saved generation before replacing the document. A competing tab's successful write therefore produces a visible conflict instead of a silent overwrite. A localStorage fallback supports more limited environments without pretending to offer the same concurrency guarantee.
+`reader-storage.js` keeps an in-memory serialized snapshot and queues IndexedDB transactions. Each transaction checks the saved generation before replacing the document. A competing tab's successful write therefore produces a visible conflict instead of a silent overwrite. A localStorage fallback supports more limited environments without pretending to offer the same concurrency guarantee.
 
 Save requests are coalesced by the host. Visibility/page lifecycle hooks request a flush, and errors are reported to the view model. Abrupt process termination or storage eviction can still lose changes that have not reached persistent storage. Portable JSON backups are the explicit export boundary.
 
@@ -104,5 +106,9 @@ Native pickers import/export OPML and JSON. Clipboard and launcher integrations 
 The checked-in manifest's framework dependency block is synchronized from the pinned FerroUI checkout by `FerroUI/scripts/apps/sync-workspace.py`. `scripts/build-browser.sh` calls the upstream builder, stages fonts and runs `prepare-site.mjs` to stamp assets, build metadata and the offline manifest.
 
 The Pages workflow has a build job and a deploy job. It caches installed tools before compilation, restores Cargo outputs keyed by framework/toolchain/build inputs, runs domain/state tests and focused JavaScript host tests, and builds the real browser application. Only successful `main` builds deploy. It does not build every native platform or perform a screenshot matrix on every push.
+
+Rendered-browser verification is an explicit optional gate: `[verify-ui]` in the pushed commit message or `workflow_dispatch` with `verify_ui: true` runs `node scripts/ui-smoke.mjs target/browser/reader-browser target/ui-smoke`. The harness uses the canonical FerroUI DevTools-protocol driver with a fresh Chromium profile, serves the compiled site locally and sends real pointer/keyboard input to the FerroUI controls. Inspection exports locate live controls and read application state for assertions; screenshots preserve the observed render.
+
+The requested workflow uploads the `reader-ui-verification` artifact even when the smoke gate fails, as long as evidence files were created. Its screenshots, control-tree snapshots and results/failure evidence are retained for seven days. A requested gate is part of the build job, so its failure prevents deployment. Ordinary pushes retain the small test/build/deploy path. See [verification.md](verification.md) for the passing browser run, captured control counts and remaining unrun checks; the presence of the harness is not by itself a passing result.
 
 Visual and interaction validation remains a separate release activity. [reference.md](reference.md) defines the historical source and metrics; [parity.md](parity.md) records feature boundaries and the acceptance checklist. Passing compilation is not evidence of complete historical parity.

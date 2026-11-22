@@ -114,7 +114,9 @@ async fn handle(
             filename, contents, ..
         } => files::export(window, filename, contents).await?,
         HostRequest::Import { format } => files::import(vm, window, format).await?,
-        HostRequest::Print { title, html } => files::print(window, directory, title, html).await?,
+        HostRequest::Print { title, html, .. } => {
+            files::print(window, directory, title, html).await?
+        }
         HostRequest::FetchImage { url } => {
             let source = url.clone();
             let bytes = background::run(move || transport::image(&source))

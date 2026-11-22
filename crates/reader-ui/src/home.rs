@@ -21,7 +21,23 @@ fn welcome(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let shortcuts = ui.clone();
     let imports = ui.clone();
     let unread = vm.count(&View::All);
-    let mut content = stack_panel().spacing(18.0).horizontal_alignment(H::Stretch);
+    let mut content = stack_panel()
+        .spacing(9.0)
+        .horizontal_alignment(H::Stretch)
+        .child(
+            stack_panel()
+                .spacing(0.0)
+                .child(
+                    text_block()
+                        .text("Some items of interest")
+                        .font_size(13.0)
+                        .font_weight(FontWeight::Normal)
+                        .foreground("#777777")
+                        .height(15.0)
+                        .line_height(15.0),
+                )
+                .child(border().height(1.0).background("#EBEBEB")),
+        );
     if vm.feeds().is_empty() {
         content=content.child(text_block().text("Welcome to Google Reader").font_size(22.0))
             .child(paragraph("Keep up with your favorite websites. Reader brings their latest updates together in one place."))
@@ -50,17 +66,18 @@ fn welcome(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
                     button()
                         .class("reader-link")
                         .font_size(20.0)
-                        .font_weight(FontWeight::Normal)
+                        .font_weight(FontWeight::Bold)
                         .content(feed.title.clone())
                         .on_click(move |_| navigate.navigate(View::Feed(id))),
                 );
             for article in articles {
                 let model = vm.clone();
                 let id = article.id;
-                group=group.child(rsx!{StackPanel{key:format!("overview-entry:{id}"),spacing:4.0,
+                group=group.child(rsx!{StackPanel{key:format!("overview-entry:{id}"),spacing:0.0,
                     Button{class:"reader-link",horizontal_content_alignment:H::Stretch,on_click:move |_|{model.navigate(View::All);model.select(Some(id));},
-                        TextBlock{text:article.title.clone(),font_size:13.5,font_weight:FontWeight::Bold,foreground:"#444444",text_wrapping:TextWrapping::Wrap}
+                        TextBlock{text:article.title.clone(),font_size:13.0,line_height:15.0,font_weight:FontWeight::Bold,foreground:"#444444",text_wrapping:TextWrapping::Wrap}
                     }
+                    TextBlock{text:crate::article::full_date(article.published),font_size:13.0,line_height:15.0,foreground:"#777777",margin:(0.0,0.0,0.0,1.0)}
                     TextBlock{text:article.summary.clone(),font_size:13.0,foreground:"#555555",text_wrapping:TextWrapping::Wrap,line_height:18.0}
                 }});
             }
@@ -80,21 +97,27 @@ fn welcome(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     ));
     let wide = vm.viewport() > 1050.0;
     let mut overview = grid()
-        .column_definitions(if wide { "*,270" } else { "*" })
-        .row_definitions(if wide { "*,Auto" } else { "Auto,Auto,Auto" })
-        .column_spacing(36.0)
+        .column_definitions(if wide { "*,360" } else { "*" })
+        .row_definitions(if wide { "Auto,Auto" } else { "Auto,Auto,Auto" })
+        .column_spacing(40.0)
         .row_spacing(24.0)
         .child(content);
     let tip_add = ui.clone();
     let tip_import = ui.clone();
-    let tips=border().background("#F9F9F9").border_brush("#DDDDDD").border_thickness(1.0).padding(16.0).vertical_alignment(V::Top)
-        .grid_column(if wide{1}else{0}).grid_row(if wide{0}else{1}).child(rsx!{StackPanel{spacing:14.0,
-            TextBlock{text:"Tips and tricks",font_size:14.0,font_weight:FontWeight::Bold,foreground:"#333333"}
-            {paragraph("Read the web in one place. Subscribe to your favorite sites and get their latest posts in Reader.")}
-            {link("Add a subscription",move||tip_add.show(Panel::Subscribe))}
-            {paragraph("Use j and k to move between items, and s to star something you want to keep.")}
-            {link("Learn more keyboard shortcuts »",move||shortcuts.show(Panel::Shortcuts))}
-            {link("Import your subscriptions »",move||tip_import.show(Panel::ImportExport))}
+    let tips=border().background("#F9F9F9").border_brush("#DDDDDD").border_thickness(1.0).vertical_alignment(V::Top).margin((0.0,13.0,0.0,0.0))
+        .grid_column(if wide{1}else{0}).grid_row(if wide{0}else{1}).child(rsx!{Grid{row_definitions:"38,Auto",
+            Border{border_brush:"#DDDDDD",border_thickness:(0.0,0.0,0.0,1.0),padding:(16.0,0.0),
+                TextBlock{text:"Tips and tricks",font_size:14.0,font_weight:FontWeight::Bold,foreground:"#333333",vertical_alignment:V::Center}
+            }
+            Border{Grid.row:1,padding:16.0,
+                StackPanel{spacing:14.0,
+                    {paragraph("Read the web in one place. Subscribe to your favorite sites and get their latest posts in Reader.")}
+                    {link("Add a subscription",move||tip_add.show(Panel::Subscribe))}
+                    {paragraph("Use j and k to move between items, and s to star something you want to keep.")}
+                    {link("Learn more keyboard shortcuts »",move||shortcuts.show(Panel::Shortcuts))}
+                    {link("Import your subscriptions »",move||tip_import.show(Panel::ImportExport))}
+                }
+            }
         }});
     overview = overview.child(tips);
     let about = ui.clone();
@@ -112,7 +135,7 @@ fn welcome(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             .margin((0.0, 18.0, 0.0, 0.0))
             .child(footer),
     );
-    scroll(overview.into())
+    scroll_inset(overview.into(), (13.0, 28.0, 46.0, 32.0))
 }
 fn trends(vm: Rc<AppViewModel>) -> Element {
     let data = vm.trends();
@@ -218,9 +241,12 @@ fn explore(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     scroll(content.into())
 }
 fn scroll(content: Element) -> Element {
+    scroll_inset(content, (24.0, 26.0, 36.0, 32.0))
+}
+fn scroll_inset(content: Element, padding: (f64, f64, f64, f64)) -> Element {
     scroll_viewer()
         .horizontal_scroll_bar_visibility(ScrollBarVisibility::Disabled)
         .vertical_scroll_bar_visibility(ScrollBarVisibility::Auto)
-        .child(border().padding((24.0, 26.0, 36.0, 32.0)).child(content))
+        .child(border().padding(padding).child(content))
         .into()
 }

@@ -24,7 +24,7 @@ export function request(json) {
     case "import": pickFile(message.format, runtime); return;
     case "openUrl": try { openUrl(message.url); } catch (e) { reportError(e); } return;
     case "email": try { email(message.title, message.url); } catch (e) { reportError(e); } return;
-    case "print": printArticle(message.title, message.html); return;
+    case "print": printArticle(message.title, message.html, message.base_url); return;
     case "share": void share(message.title, message.url).then(s => s && runtime.hostStatus(s)).catch(reportError); return;
     case "copy": void copyText(message.contents).then(() => runtime.hostStatus("Copied to clipboard")).catch(reportError); return;
     case "scheduleSave": clearTimeout(saveTimer); saveTimer = setTimeout(flush, 150); return;

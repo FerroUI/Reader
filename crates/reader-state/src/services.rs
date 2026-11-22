@@ -38,6 +38,7 @@ pub enum HostRequest {
     Print {
         title: String,
         html: String,
+        base_url: String,
     },
     FetchImage {
         url: String,

@@ -3,6 +3,10 @@ name: Build and publish
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - "**/*.md"
+      - "docs/**"
+      - "LICENSE"
   workflow_dispatch:
     inputs:
       verify_ui:

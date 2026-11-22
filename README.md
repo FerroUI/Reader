@@ -2,7 +2,7 @@
 
 A feed reader in Rust that recreates Google Reader's final desktop interface with **FerroUI**. The browser and desktop hosts run the same declarative `rsx!` views, Material-based control themes, ReactiveUI view model and DynamicData article projections.
 
-**Deployment URL:** [ferroui.github.io/Reader](https://ferroui.github.io/Reader/) · [Sample library](https://ferroui.github.io/Reader/?demo=1) · [Build and publish](https://github.com/FerroUI/Reader/actions/workflows/pages.yml)
+**Live application:** [ferroui.com/Reader](https://ferroui.com/Reader/) · [Sample library](https://ferroui.com/Reader/?demo=1) · [Pages alias](https://ferroui.github.io/Reader/) · [Build and publish](https://github.com/FerroUI/Reader/actions/workflows/pages.yml)
 
 The workflow publishes successful builds from `main`; the deployment job is the source of truth for the currently published revision. This repository implements the core reading and subscription workflows. It does **not establish 100% visual or feature parity** with the retired Google service. [Fidelity and feature coverage](docs/parity.md) distinguishes the implemented experience, adaptations and remaining gaps. [Reference research](docs/reference.md) records preserved original CSS, JavaScript, screenshots and official feature announcements.
 
@@ -138,7 +138,21 @@ node --test scripts/host.test.mjs
 cargo check --locked -p reader-desktop
 ```
 
-The tests cover domain and view-model invariants and focused browser-host behavior. They do not certify every original screen, pixel, browser or native operating system. The Pages workflow runs the first two commands and builds one browser target; it intentionally has no platform matrix, screenshot suite or native packaging gate.
+The tests cover domain and view-model invariants and focused browser-host behavior. They do not certify every original screen, pixel, browser or native operating system. The ordinary Pages workflow runs the first two commands and builds one browser target, without a platform matrix or native packaging gate. [Verification status](docs/verification.md) records the passing browser interaction run, measured control counts and remaining unrun checks.
+
+### Optional rendered-browser verification
+
+After building the site, install Chrome or Chromium and run:
+
+```bash
+node scripts/ui-smoke.mjs target/browser/reader-browser target/ui-smoke
+```
+
+The harness serves the built application locally and launches a **fresh isolated Chromium profile**. It does not reuse your signed-in browser, feed library or service-worker cache. Set `CHROME` to the browser executable if automatic discovery cannot find it. Node.js 24 is sufficient; no Playwright or browser-testing package is required.
+
+The requested checks exercise first paint, actual control input, reading/annotation shortcuts, search, a local feed subscription, settings, reload persistence, conflicting storage writers, narrow navigation, a 10,000-article virtualization fixture and offline reload. PNG screenshots, control-tree JSON and a success report or failure evidence are written to `target/ui-smoke`. A passing scripted run is evidence for those exercised paths, not complete historical visual parity.
+
+To request this gate in GitHub Actions, include **`[verify-ui]`** in the pushed commit message or manually dispatch **Build and publish** with **`verify_ui: true`**. The workflow runs the browser script after compilation and uploads **`reader-ui-verification`** with a seven-day retention period, including available failure evidence. A failed requested gate blocks that run's deployment. Ordinary `main` pushes keep the domain/state + JavaScript checks, build and deploy path.
 
 ## Framework pin and deployment
 
@@ -157,7 +171,7 @@ cargo update --workspace
 bash scripts/build-browser.sh
 ```
 
-The [Pages workflow](.github/workflows/pages.yml) runs on pushes to `main` and manual dispatch. It caches the Emscripten SDK, wasm-bindgen tool and Cargo compilation outputs, keyed by the framework revision, toolchain and build inputs. After the small behavior checks and actual FerroUI browser build, it uploads `target/browser/reader-browser` and deploys through GitHub's Pages actions. Set repository Pages publishing to **GitHub Actions** when using a fork. GitHub Pages hosts only static assets; it does not provide account synchronization or feed transport services.
+The [Pages workflow](.github/workflows/pages.yml) runs on application pushes to `main` and manual dispatch; documentation-only pushes skip the build. It caches the Emscripten SDK, wasm-bindgen tool and Cargo compilation outputs, keyed by the framework revision, toolchain and build inputs. After the small behavior checks and actual FerroUI browser build, it runs rendered-browser verification only when requested, uploads `target/browser/reader-browser` and deploys through GitHub's Pages actions. Set repository Pages publishing to **GitHub Actions** when using a fork. GitHub Pages hosts only static assets; it does not provide account synchronization or feed transport services.
 
 ## Fidelity and licensing
 

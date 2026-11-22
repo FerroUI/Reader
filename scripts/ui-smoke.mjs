@@ -122,6 +122,21 @@ try {
       await h.page.wheel(900, 500, 0, 2200);
       await h.capture("09-virtualized");
     });
+    await check("installed application and saved library reload without network", async () => {
+      await h.page.evaluate("import('./host.js').then(m => m.flush())");
+      const url = new URL(h.page.url);
+      url.search = "";
+      await h.page.send("Page.navigate", { url: url.href });
+      await h.ready();
+      await h.page.evaluate("navigator.serviceWorker.ready");
+      await h.until(() => h.page.evaluate("!!navigator.serviceWorker.controller"), "offline worker activates");
+      await h.page.send("Network.emulateNetworkConditions", { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
+      await h.page.send("Page.reload");
+      await h.ready();
+      assert.equal((await h.state()).articles.length, 10000);
+      await h.capture("10-offline");
+      await h.page.send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
+    });
     h.healthy();
     await writeFile(path.join(output, "results.json"), JSON.stringify({ passed: checks.length, checks }, null, 2));
     console.log(`All ${checks.length} browser checks passed.`);

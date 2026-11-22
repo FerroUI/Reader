@@ -82,9 +82,11 @@ impl AppViewModel {
     }
     pub fn print_article(&self, id: Id) {
         if let Some(article) = self.article(id) {
+            let base_url = article.content_base_url().to_string();
             self.request(HostRequest::Print {
                 title: article.title,
                 html: article.content,
+                base_url,
             });
         }
     }

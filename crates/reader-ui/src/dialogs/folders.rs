@@ -24,6 +24,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, id: Id) -> Element {
         let name = folder.clone();
         form = form.child(
             check_box()
+                .class("reader-check")
                 .key(format!("folder-choice:{folder}"))
                 .content(folder)
                 .is_checked(Some(current))

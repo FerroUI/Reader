@@ -151,7 +151,7 @@ fn logo(narrow: bool) -> Element {
             text_block()
                 .text(letter)
                 .font_family(FontFamily::new("fonts:Reader#Liberation Serif"))
-                .font_size(if narrow { 22.0 } else { 27.0 })
+                .font_size(if narrow { 18.0 } else { 27.0 })
                 .font_weight(FontWeight::Normal)
                 .foreground(color),
         );
@@ -159,7 +159,7 @@ fn logo(narrow: bool) -> Element {
     word.child(
         text_block()
             .text("reader")
-            .font_size(if narrow { 17.0 } else { 20.0 })
+            .font_size(if narrow { 14.0 } else { 20.0 })
             .font_weight(FontWeight::Normal)
             .foreground("#777777")
             .margin((4.0, 3.0, 0.0, 0.0))

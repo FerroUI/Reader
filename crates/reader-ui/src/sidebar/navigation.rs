@@ -100,7 +100,7 @@ pub(super) fn group(
                 .width(18.0)
                 .height(32.0)
                 .horizontal_alignment(H::Left)
-                .margin((inset - 22.0, 0.0, 0.0, 0.0))
+                .margin(((inset - 22.0).max(0.0), 0.0, 0.0, 0.0))
                 .automation_properties_name(format!(
                     "{} {}",
                     if open.get() { "Collapse" } else { "Expand" },
