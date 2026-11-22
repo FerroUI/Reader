@@ -1,9 +1,76 @@
-use super::ArticlePanel;
+use super::{Anchor, ArticlePanel};
+use crate::rows::Row;
 use ferroui_base::threading::{Dispatcher, DispatcherPriority};
-use ferroui_base::{Point, Rect, Ref};
-use ferroui_controls::{as_scroll_anchor_provider, Control, StackPanel};
+use ferroui_base::{Point, Rect, Ref, WeakRef};
+use ferroui_controls::{as_scroll_anchor_provider, ContentControl, Control, StackPanel};
+use reader_domain::Article;
+use std::rc::Rc;
+
+pub(super) struct ContentAnchor {
+    control: WeakRef<Control>,
+    relative_y: f64,
+    block_index: Option<usize>,
+    article: Rc<Article>,
+}
 
 impl ArticlePanel {
+    pub(super) fn remember_block(
+        container: &Ref<Control>,
+        control: &Ref<Control>,
+        relative_y: f64,
+    ) -> Option<ContentAnchor> {
+        let item = container.cast::<ContentControl>()?.content()?;
+        let article = item.downcast_ref::<Row>()?.article.clone();
+        let block_index = control
+            .visual_parent()
+            .filter(|parent| parent.has_name("ArticleBody"))
+            .and_then(|parent| parent.cast::<StackPanel>())
+            .and_then(|body| body.children().index_of(control));
+        Some(ContentAnchor {
+            control: control.downgrade(),
+            relative_y,
+            block_index,
+            article,
+        })
+    }
+
+    /// A large resize can temporarily realize another range and recycle the old
+    /// block. Its ordinal remains valid only for the same displayed document.
+    pub(super) fn block_anchor_offset(&self, anchor: &Anchor) -> Option<f64> {
+        let saved = anchor.content.as_ref()?;
+        let container = self
+            .containers
+            .borrow()
+            .iter()
+            .find(|entry| {
+                entry.index >= 0
+                    && self.metrics.borrow().id(entry.index as usize) == Some(anchor.id)
+            })
+            .map(|entry| entry.control.clone())?;
+        let item = container.cast::<ContentControl>()?.content()?;
+        let current = &item.downcast_ref::<Row>()?.article;
+        if !Rc::ptr_eq(current, &saved.article)
+            && (current.reading_content() != saved.article.reading_content()
+                || current.reading_base_url() != saved.article.reading_base_url()
+                || current.summary != saved.article.summary
+                || current.note != saved.article.note)
+        {
+            return None;
+        }
+        let control = saved
+            .control
+            .upgrade()
+            .filter(|control| container.is_visual_ancestor_of(control))
+            .or_else(|| {
+                let index = saved.block_index?;
+                let body = body_root(&container)?;
+                (index < body.children().count()).then(|| body.children().get(index))
+            })?;
+        control
+            .translate_point(Point::default(), self)
+            .map(|point| point.y - saved.relative_y)
+    }
+
     /// Whole-row anchors cannot preserve a paragraph below a newly decoded
     /// image in the same article. Offer visible text blocks to the same native
     /// anchor provider, with a strict bound independent of article/feed length.
@@ -63,12 +130,7 @@ impl ArticlePanel {
         for container in self.presenter.get_realized_elements() {
             // ArticleBody is before its content in the visual traversal. Do not
             // enumerate thousands of paragraphs merely to find a visible one.
-            let Some(body) = container
-                .get_visual_descendants()
-                .take(96)
-                .find(|visual| visual.has_name("ArticleBody"))
-                .and_then(|visual| visual.cast::<StackPanel>())
-            else {
+            let Some(body) = body_root(&container) else {
                 continue;
             };
             let Some(origin) = body.translate_point(Point::default(), self) else {
@@ -133,4 +195,12 @@ impl ArticlePanel {
             }
         }
     }
+}
+
+fn body_root(container: &Ref<Control>) -> Option<Ref<StackPanel>> {
+    container
+        .get_visual_descendants()
+        .take(96)
+        .find(|visual| visual.has_name("ArticleBody"))
+        .and_then(|visual| visual.cast::<StackPanel>())
 }

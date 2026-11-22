@@ -14,7 +14,7 @@ pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64, selected: bool) 
     let mut body = stack_panel()
         .name("ArticleBody")
         .max_width(650.0)
-        .horizontal_alignment(H::Stretch)
+        .horizontal_alignment(H::Left)
         .spacing(14.0);
     if blocks.is_empty() {
         body = body.child(reader_controls::paragraph(article.summary.clone()));

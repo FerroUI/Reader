@@ -53,7 +53,13 @@ struct Anchor {
     route: View,
     epoch: u64,
     generation: u64,
-    content: Option<(WeakRef<ferroui_controls::Control>, f64)>,
+    content: Option<anchors::ContentAnchor>,
+}
+
+#[derive(Clone, Copy)]
+struct RequestedViewport {
+    index: i32,
+    offset: f64,
 }
 
 #[repr(C)]
@@ -70,6 +76,7 @@ pub(super) struct ArticlePanel {
     anchor: RefCell<Option<Anchor>>,
     epoch: Cell<u64>,
     jumping: Cell<bool>,
+    requested: Cell<Option<RequestedViewport>>,
     body_anchors: RefCell<Vec<Ref<ferroui_controls::Control>>>,
     anchor_provider: RefCell<Option<WeakRef<Visual>>>,
     anchors_queued: Cell<bool>,
@@ -93,6 +100,7 @@ impl ArticlePanel {
             anchor: RefCell::new(None),
             epoch: Cell::new(0),
             jumping: Cell::new(false),
+            requested: Cell::new(None),
             body_anchors: RefCell::new(Vec::new()),
             anchor_provider: RefCell::new(None),
             anchors_queued: Cell::new(false),
@@ -118,6 +126,7 @@ impl ArticlePanel {
     fn cancel_restore(&self) {
         self.epoch.set(self.epoch.get().wrapping_add(1));
         self.anchor.borrow_mut().take();
+        self.requested.set(None);
     }
 }
 

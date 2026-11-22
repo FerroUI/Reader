@@ -1,8 +1,10 @@
 //! Automation snapshots reflect live native controls, including hit testing.
+mod rich_text;
+
 use ferroui_base::{input::InputElement, Point, Visual};
 use ferroui_controls::{
     automation::AutomationProperties, Application, Button, Control, ListBox, MenuItem,
-    ScrollViewer, TextBlock, TextBox,
+    RichTextBlock, ScrollViewer, TextBlock, TextBox,
 };
 use serde_json::json;
 use wasm_bindgen::prelude::*;
@@ -50,6 +52,8 @@ pub fn inspect_view() -> String {
                 .and_then(|tag| tag.downcast_ref::<u64>().copied());
             let text = if let Some(t) = visual.cast::<TextBlock>() {
                 t.text().or_else(|| t.inlines().and_then(|inlines| inlines.text()))
+            } else if let Some(t) = visual.cast::<RichTextBlock>() {
+                Some(t.document().text())
             } else if let Some(t) = visual.cast::<TextBox>() {
                 t.text()
             } else if let Some(item) = visual.cast::<MenuItem>() {
@@ -80,6 +84,12 @@ pub fn inspect_view() -> String {
                         || visual.is_visual_ancestor_of(h)
                         || h.is_visual_ancestor_of(&visual)
                 });
+            let selection = visual.cast::<TextBox>().map(|field| json!({
+                "start":field.selection_start(),"end":field.selection_end(),"caret":field.caret_index()
+            })).or_else(|| visual.cast::<RichTextBlock>().map(|text| json!({
+                "start":text.selection_start(),"end":text.selection_end(),"caret":text.caret_index(),
+                "text":text.selected_text()
+            })));
             Some(
                 json!({"type":visual.get_type().name(),"name":name,"text":text,
             "automationName":AutomationProperties::get_name(&visual),"articleId":article_id,
@@ -89,8 +99,8 @@ pub fn inspect_view() -> String {
                 "offsetX":scroll.offset().x,"offsetY":scroll.offset().y,
                 "viewportWidth":scroll.viewport().width,"viewportHeight":scroll.viewport().height,
                 "extentWidth":scroll.extent().width,"extentHeight":scroll.extent().height})),
-            "textSelection":visual.cast::<TextBox>().map(|field|json!({
-                "start":field.selection_start(),"end":field.selection_end(),"caret":field.caret_index()})),
+            "textSelection":selection,
+            "links":visual.cast::<RichTextBlock>().map(|text|rich_text::links(&text,p)),
             "x":p.x,"y":p.y,"width":b.width,"height":b.height,"hit":hit}),
             )
         })

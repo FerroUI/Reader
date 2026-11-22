@@ -22,7 +22,7 @@ pub(super) fn view(vm: Rc<AppViewModel>, row: &Row) -> Element {
     let cancel = vm.clone();
     let feed = vm.clone();
     let reload = vm;
-    rsx! {StackPanel{name:"ArticleReadingControls",max_width:650.0,horizontal_alignment:H::Stretch,spacing:4.0,
+    rsx! {StackPanel{name:"ArticleReadingControls",max_width:650.0,horizontal_alignment:H::Left,spacing:4.0,
         WrapPanel{orientation:Orientation::Horizontal,
             if row.article_loading {
                 TextBlock{text:"Loading full article…",font_size:12.0,foreground:"#666666",vertical_alignment:V::Center,margin:(0.0,0.0,12.0,0.0)}

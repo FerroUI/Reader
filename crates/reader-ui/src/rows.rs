@@ -15,6 +15,9 @@ pub struct Row {
     pub source: Rc<str>,
     pub selected: bool,
     pub expanded: bool,
+    /// Re-project fixed-width media on same-breakpoint resizes. Widths beyond
+    /// the reading cap and collapsed headline rows need no template changes.
+    pub media_width: f64,
     pub density: Density,
     pub font_size: f64,
     pub narrow: bool,
@@ -29,6 +32,7 @@ impl PartialEq for Row {
             && self.source == other.source
             && self.selected == other.selected
             && self.expanded == other.expanded
+            && (!self.expanded || self.media_width == other.media_width)
             && self.density == other.density
             && self.font_size == other.font_size
             && self.narrow == other.narrow
@@ -86,6 +90,7 @@ impl Rows {
             .map(|f| (f.id, Rc::from(f.title)))
             .collect();
         let narrow = vm.viewport() < 700.0;
+        let media_width = crate::images::available_width(vm.viewport());
         let single_source = matches!(vm.view(), reader_domain::View::Feed(_));
         let next = vm
             .visible_shared()
@@ -105,6 +110,7 @@ impl Rows {
                     article,
                     source,
                     expanded,
+                    media_width,
                     density: settings.density,
                     font_size: settings.font_size,
                     narrow,

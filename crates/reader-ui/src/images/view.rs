@@ -13,8 +13,7 @@ pub fn with_metadata(
     metadata: reader_content::projection::Image,
     body_key: String,
 ) -> Element {
-    let available =
-        (vm.viewport() - if vm.viewport() < 700.0 { 70.0 } else { 330.0 }).clamp(100.0, 650.0);
+    let available = layout::available_width(vm.viewport());
     let key = format!("image-{body_key}-{:016x}", available.to_bits());
     // A keyed component owns the lease. Parent row patches keep the same hook,
     // while another article/body/image or width remounts both metadata and the

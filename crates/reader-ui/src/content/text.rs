@@ -1,5 +1,5 @@
 use ferroui_base::media::{FontFamily, FontStyle, FontWeight, TextWrapping};
-use ferroui_controls::documents::{Hyperlink, InlineCollection, Run};
+use ferroui_controls::documents::{Hyperlink, Paragraph, Run};
 use ferroui_view::prelude::*;
 use reader_content::projection::Span;
 use reader_state::{AppViewModel, HostRequest};
@@ -20,7 +20,9 @@ pub(super) fn view(
     } else {
         size
     };
-    selectable_text_block()
+    // RichTextBlock supplies native inline hit testing, hyperlink focus and
+    // activation alongside selection, copying, and context-menu behavior.
+    rich_text_block()
         .key(key)
         .name("ArticleBodyText")
         .font_size(font_size)
@@ -37,8 +39,8 @@ pub(super) fn view(
         })
         .line_height(font_size * if pre { 1.4 } else { 1.5 })
         .with(move |text| {
-            let inlines = InlineCollection::new();
-            text.set_inlines(Some(inlines.clone()));
+            let paragraph = Paragraph::new();
+            let inlines = paragraph.inlines();
             for segment in &spans {
                 let run = Run::with_text(Some(&segment.text));
                 if segment.bold {
@@ -66,6 +68,7 @@ pub(super) fn view(
                     inlines.add(run);
                 }
             }
+            text.blocks().add(paragraph);
         })
         .into()
 }

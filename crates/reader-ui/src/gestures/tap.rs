@@ -1,6 +1,7 @@
 use ferroui_base::input::{InputElement, MouseButton, PointerType};
-use ferroui_base::Ref;
-use ferroui_controls::Control;
+use ferroui_base::interactivity::RoutingStrategies;
+use ferroui_base::{FerroObject, Ref};
+use ferroui_controls::{Button, Control, RichTextBlock, SelectableTextBlock, TextBox};
 use ferroui_view::on_cleanup;
 use reader_domain::Id;
 use reader_state::AppViewModel;
@@ -13,15 +14,43 @@ use std::rc::Rc;
 pub(crate) fn attach_article_tap(control: &Ref<Control>, vm: Rc<AppViewModel>) {
     let mouse_vm = vm.clone();
     let mouse_control = control.downgrade();
-    let pressed = control.add_handler(InputElement::pointer_pressed_event(), move |_, event| {
-        if event.pointer().type_() == PointerType::Mouse
-            && event.properties().is_left_button_pressed
-        {
-            if let Some(id) = mouse_control.upgrade().as_ref().and_then(current_article) {
-                mouse_vm.select(Some(id));
+    let pressed = control.add_handler_with(
+        InputElement::pointer_pressed_event(),
+        move |_, event| {
+            if event.pointer().type_() == PointerType::Mouse
+                && event.properties().is_left_button_pressed
+                && (!event.handled() || body_text_source(event.source()).is_some())
+            {
+                if let Some(id) = mouse_control.upgrade().as_ref().and_then(current_article) {
+                    mouse_vm.select(Some(id));
+                }
             }
-        }
-    });
+        },
+        RoutingStrategies::BUBBLE,
+        true,
+    );
+    let text_vm = vm.clone();
+    let text_control = control.downgrade();
+    // The top-level guard tunnels first and handles rejected contacts. Observe
+    // only its accepted rich-text releases before RichTextBlock handles them
+    // for native selection or hyperlink navigation. Never consume the event.
+    let text_released = control.add_handler_with(
+        InputElement::pointer_released_event(),
+        move |_, event| {
+            if event.pointer().type_() != PointerType::Mouse
+                && event.pointer().is_primary()
+                && event.initial_press_mouse_button() == MouseButton::Left
+                && body_text_source(event.source())
+                    .is_some_and(|text| text.cast::<RichTextBlock>().is_some())
+            {
+                if let Some(id) = text_control.upgrade().as_ref().and_then(current_article) {
+                    text_vm.select(Some(id));
+                }
+            }
+        },
+        RoutingStrategies::TUNNEL,
+        false,
+    );
     let touch_control = control.downgrade();
     let released = control.add_handler(InputElement::pointer_released_event(), move |_, event| {
         if event.pointer().type_() != PointerType::Mouse
@@ -37,9 +66,23 @@ pub(crate) fn attach_article_tap(control: &Ref<Control>, vm: Rc<AppViewModel>) {
     on_cleanup(move || {
         if let Some(control) = weak.upgrade() {
             control.remove_handler(InputElement::pointer_pressed_event(), pressed);
+            control.remove_handler(InputElement::pointer_released_event(), text_released);
             control.remove_handler(InputElement::pointer_released_event(), released);
         }
     });
+}
+
+/// Native text controls handle their press to establish selection/capture.
+/// Observe that completed native handling without replacing or consuming it.
+/// Other handled sources, including editor and button descendants, stay local.
+fn body_text_source(source: Option<Ref<FerroObject>>) -> Option<Ref<Control>> {
+    let text = source?.cast::<Control>()?;
+    (text.has_name("ArticleBodyText")
+        && (text.cast::<SelectableTextBlock>().is_some() || text.cast::<RichTextBlock>().is_some())
+        && !text.get_visual_ancestors().any(|ancestor| {
+            ancestor.cast::<Button>().is_some() || ancestor.cast::<TextBox>().is_some()
+        }))
+    .then_some(text)
 }
 
 fn current_article(control: &Ref<Control>) -> Option<Id> {

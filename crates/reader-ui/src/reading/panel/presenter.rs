@@ -68,8 +68,14 @@ impl TreeDataGridPresenterHooks for ArticlePanel {
         &self,
         start: f64,
         _: f64,
-        _: i32,
+        count: i32,
     ) -> (i32, f64) {
+        if let Some(target) = self.requested.get().filter(|target| target.index < count) {
+            return (
+                target.index,
+                self.metrics.borrow().extents.start(target.index as usize),
+            );
+        }
         self.metrics
             .borrow()
             .extents
@@ -83,6 +89,31 @@ impl TreeDataGridPresenterHooks for ArticlePanel {
     }
 
     fn get_measure_viewport(&self, viewport: Rect) -> Rect {
+        let viewport = if let Some(target) = self.requested.get() {
+            let height = self
+                .scroll_viewer()
+                .map_or(viewport.height, |scroll| scroll.viewport().height);
+            let height = if height.is_finite() && height > 0.0 {
+                height
+            } else {
+                1.0
+            };
+            let metrics = self.metrics.borrow();
+            let start = metrics.extents.start(target.index as usize);
+            // EffectiveViewportChanged can still carry the previous offset in
+            // this pass. Use the requested finite window, never the intervening
+            // range between the old viewport and the explicit target. Measure
+            // the target's start first: an old pixel deep inside an article that
+            // shrank must not realize thousands of following rows to reach it.
+            Rect::new(
+                0.0,
+                target.offset.clamp((start - height).max(0.0), start),
+                metrics.width,
+                height,
+            )
+        } else {
+            viewport
+        };
         // TreeDataGrid-style overscan: half a viewport on each side, redistributed
         // at the ends. Rapid wheel/touch frames inside this range only translate.
         if viewport.height <= 0.0 || !viewport.height.is_finite() {

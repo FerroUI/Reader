@@ -1,7 +1,15 @@
-use super::ArticlePanel;
+use super::{ArticlePanel, RequestedViewport};
 use ferroui_base::input::{InputElement, NavigationDirection};
 use ferroui_base::{Rect, Ref, Vector};
 use ferroui_controls::{Control, ScrollViewer};
+use std::cell::Cell;
+
+struct RequestedScope<'a>(&'a Cell<Option<RequestedViewport>>);
+impl Drop for RequestedScope<'_> {
+    fn drop(&mut self) {
+        self.0.set(None);
+    }
+}
 
 impl ArticlePanel {
     pub(super) fn scroll_viewer(&self) -> Option<Ref<ScrollViewer>> {
@@ -27,11 +35,9 @@ impl ArticlePanel {
         let result = if let Some(control) = self.presenter.try_get_element(index) {
             self.bring_start_into_view(&control);
             Some(control)
-        } else if let Some(scroll) = self.scroll_viewer() {
+        } else if self.scroll_viewer().is_some() {
             let offset = self.metrics.borrow().extents.start(index as usize);
-            scroll.set_offset(Vector::new(scroll.offset().x, offset));
-            self.invalidate_measure();
-            self.update_layout();
+            self.measure_requested(index, offset);
             let control = self.presenter.try_get_element(index);
             if let Some(control) = &control {
                 self.bring_start_into_view(control);
@@ -42,6 +48,30 @@ impl ArticlePanel {
         };
         self.jumping.set(false);
         result
+    }
+
+    /// Match TreeDataGrid's explicit-target realization through its public
+    /// hooks. Starting at the target guarantees an underestimated preceding
+    /// article cannot consume the whole window before that target is realized.
+    pub(super) fn measure_requested(&self, index: i32, offset: f64) {
+        let Some(scroll) = self.scroll_viewer() else {
+            return;
+        };
+        if index < 0
+            || index as usize >= self.items().count()
+            || !offset.is_finite()
+            || self.presenter.is_in_layout()
+        {
+            return;
+        }
+        self.requested
+            .set(Some(RequestedViewport { index, offset }));
+        let _scope = RequestedScope(&self.requested);
+        scroll.set_offset(Vector::new(scroll.offset().x, offset));
+        self.invalidate_measure();
+        self.update_layout();
+        // The scope clears on every exit; subsequent wheel/touch frames resume
+        // ordinary indexed viewport anchoring and never retain a forced row.
     }
 
     fn bring_start_into_view(&self, control: &Ref<Control>) {

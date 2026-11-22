@@ -94,6 +94,8 @@ function body(index, origin) {
     "Reader preserves the current reading position while articles wrap, expand and load images. ".repeat(5) + "</p>";
   if (index === DELAYED) return `<p>Before delayed image ${index}.</p><img src="${origin}/image-${index}.png" alt="Delayed tall image">` +
     Array.from({length: 24}, (_, n) => paragraph(n)).join("");
+  if (index === 1000) return `<img src="${origin}/known.png" width="320" height="800" alt="Tall preceding image">`.repeat(3)
+    + paragraph(0);
   switch (index % 6) {
     case 0: return `<p>Brief item ${index}.</p>`;
     case 1: return Array.from({length: 5}, (_, n) => paragraph(n)).join("");
@@ -124,7 +126,10 @@ export async function scrollingChecks(h, check) {
       await replace(h, data);
       await h.clickNavigation("All items");
       await h.page.press("1");
-      await seek(h, 1000);
+      // This fresh target follows 2,400px of images whose unvisited HTML-length
+      // estimate is much smaller than a viewport. The target must be realized
+      // directly instead of getting stranded inside its tall predecessor.
+      await seek(h, 1001);
       await seek(h, 37);
       await seek(h, 1002);
       const before = (await h.snapshot()).articleScroll.offsetY;
@@ -190,19 +195,56 @@ export async function scrollingChecks(h, check) {
     await check("phone resize and touch retain long-article position without opening another item", async () => {
       await seek(h, 602);
       await h.page.wheel(950, 500, 0, 420);
+      const before = await settled(h), beforeList = stream(before);
+      const paragraph = before.elements.filter(element => element.name === "ArticleBodyText"
+        && element.text?.startsWith("Mixed paragraph 602.") && element.y < beforeList.y + beforeList.height
+        && element.y + element.height > beforeList.y)
+        .sort((a, b) => Math.abs(a.y - beforeList.y) - Math.abs(b.y - beforeList.y))[0];
+      assert(paragraph, "a concrete paragraph is visible before the width changes");
       touch = await createTouch(h.page);
       await h.page.evaluate("readerApp.setTouchMode(true)");
       await h.resize(390, 844);
       const resized = await settled(h);
       assert(entry(resized, BASE + 602), "resizing preserves the article identity");
+      const restored = resized.elements.find(element => element.name === "ArticleBodyText" && element.text === paragraph.text);
+      const beforeY = paragraph.y - beforeList.y;
+      const restoredY = restored && restored.y - stream(resized).y;
+      assert(restored && Math.abs(restoredY - beforeY) <= 3,
+        `resizing changed the reading paragraph's viewport position: ${beforeY} -> ${restoredY}`);
       bounded(resized);
-      const readCount = (await h.state()).articles.filter(article => article.read).length;
-      const from = [350, 650], to = [350, 240];
+      const state = await h.state(), articleId = BASE + 602;
+      assert.equal(state.articles.find(article => article.id === articleId).read, false,
+        "the earlier Keep unread action leaves the target article unread before touch input");
+      const readCount = state.articles.filter(article => article.read).length;
+      const list = stream(resized);
+      const panText = resized.elements.find(element => element.name === "ArticleBodyText"
+        && /RichTextBlock$/.test(element.type) && element.hit
+        && element.text?.startsWith("Mixed paragraph 602.")
+        && element.y < list.y + list.height - 40
+        && element.y + element.height > list.y + 200);
+      assert(panText, "trusted touch starts inside a visible native rich-text paragraph");
+      const from = [panText.x + Math.min(24, panText.width / 2),
+        Math.min(panText.y + panText.height - 12, list.y + list.height - 30)];
+      const to = [from[0], Math.max(list.y + 24, from[1] - 280)];
+      assert(from[1] > panText.y && from[1] < panText.y + panText.height && from[1] - to[1] > 80,
+        "the pan begins on rich text with enough travel to trigger native scrolling");
       await touch.start(from); await touch.travel(from, to); await touch.end();
       const after = await settled(h);
-      assert(after.articleScroll.offsetY > resized.articleScroll.offsetY + 30, "native touch scrolls nonuniform article content");
-      assert.equal((await h.state()).articles.filter(article => article.read).length, readCount, "touch movement does not select another article");
+      assert(after.articleScroll.offsetY > resized.articleScroll.offsetY + 30, "a touch pan starting on native rich text scrolls nonuniform content");
+      assert.equal((await h.state()).articles.filter(article => article.read).length, readCount, "rich-text touch movement does not mark articles read");
       bounded(after);
+      const afterList = stream(after);
+      const tapText = after.elements.find(element => element.name === "ArticleBodyText"
+        && /RichTextBlock$/.test(element.type) && element.hit
+        && element.text?.startsWith("Mixed paragraph 602.")
+        && element.y >= afterList.y + 12 && element.y + 24 < afterList.y + afterList.height);
+      assert(tapText, "a fresh rich-text paragraph is available after the pan settles");
+      await touch.tap(tapText.x + Math.min(24, tapText.width / 2), tapText.y + Math.min(12, tapText.height / 2));
+      await h.until(async () => (await h.state()).articles.find(article => article.id === articleId).read,
+        "an accepted rich-text touch tap selects the intended article");
+      assert.equal((await h.state()).articles.filter(article => article.read).length, readCount + 1,
+        "the fresh touch tap marks only its article read");
+      bounded(await settled(h));
       await h.capture("15-phone-long-article");
     });
     passed = true;

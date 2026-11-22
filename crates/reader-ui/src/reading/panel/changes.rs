@@ -20,6 +20,8 @@ impl VirtualizingPanelImpl for ArticlePanel {
     }
 
     fn on_items_changed(this: &Self, _: &Rc<ItemsSourceView>, event: &ItemsChangedEventArgs<'_>) {
+        // An index belongs to the source snapshot that requested it.
+        this.requested.set(None);
         // Read/star/cursor updates retain the same container, its native scroll
         // anchor and its component instance. Only its projected item changes.
         if event.action == Action::Replace
@@ -145,7 +147,7 @@ impl ArticlePanel {
                         (
                             entry.index,
                             viewport.y - entry.control.bounds().y,
-                            Some((control.downgrade(), relative)),
+                            Self::remember_block(&entry.control, &control, relative),
                         )
                     })
             })
@@ -184,47 +186,56 @@ impl ArticlePanel {
         Dispatcher::ui_thread().post_local(
             move || {
                 let Some(panel) = weak.upgrade() else { return };
-                if !panel.is_attached_to_visual_tree()
-                    || panel.epoch.get() != anchor.epoch
-                    || panel.vm.upgrade().is_none_or(|vm| {
-                        vm.view() != anchor.route || vm.library_generation() != anchor.generation
-                    })
-                {
+                if !panel.can_restore(&anchor) {
                     return;
                 }
                 // When a paragraph survives resize/reflow, preserve its screen
                 // position. Restoring the old pixel within the article would
                 // undo the native provider's more precise block correction.
-                let target = anchor
-                    .content
-                    .as_ref()
-                    .and_then(|(weak, relative)| {
-                        let content = weak.upgrade()?;
-                        let valid = panel.containers.borrow().iter().any(|entry| {
-                            entry.index >= 0
-                                && panel.metrics.borrow().id(entry.index as usize)
-                                    == Some(anchor.id)
-                                && entry.control.is_visual_ancestor_of(&content)
-                        });
-                        valid
-                            .then(|| {
-                                content
-                                    .translate_point(Point::default(), &*panel)
-                                    .map(|point| point.y - relative)
-                            })
-                            .flatten()
-                    })
-                    .or_else(|| panel.metrics.borrow().restore(anchor.id, anchor.within));
-                if let (Some(target), Some(scroll)) = (target, panel.scroll_viewer()) {
-                    if (scroll.offset().y - target).abs() > 0.5 {
-                        if let Some(ui) = panel.ui.upgrade() {
-                            ui.programmatic_scroll.set(Some(Instant::now()));
-                        }
-                        scroll.set_offset(Vector::new(scroll.offset().x, target));
+                let exact = panel.block_anchor_offset(&anchor);
+                let target =
+                    exact.or_else(|| panel.metrics.borrow().restore(anchor.id, anchor.within));
+                let Some(target) = target else { return };
+                panel.apply_restored_offset(target);
+                if exact.is_none() && panel.can_restore(&anchor) {
+                    // The first offset can use estimates for unvisited overscan
+                    // rows. Measure once at the new viewport, then correct the
+                    // same block/pixel using the resulting actual prefix. This
+                    // is bounded and never recursively schedules restoration.
+                    let index = panel.metrics.borrow().index(anchor.id);
+                    let Some(index) = index else { return };
+                    panel.measure_requested(index as i32, target);
+                    if !panel.can_restore(&anchor) {
+                        return;
+                    }
+                    if let Some(target) = panel
+                        .block_anchor_offset(&anchor)
+                        .or_else(|| panel.metrics.borrow().restore(anchor.id, anchor.within))
+                    {
+                        panel.apply_restored_offset(target);
                     }
                 }
             },
             DispatcherPriority::BACKGROUND,
         );
+    }
+
+    fn can_restore(&self, anchor: &Anchor) -> bool {
+        self.is_attached_to_visual_tree()
+            && self.epoch.get() == anchor.epoch
+            && self.vm.upgrade().is_some_and(|vm| {
+                vm.view() == anchor.route && vm.library_generation() == anchor.generation
+            })
+    }
+
+    fn apply_restored_offset(&self, target: f64) {
+        if let Some(scroll) = self.scroll_viewer() {
+            if target.is_finite() && (scroll.offset().y - target).abs() > 0.5 {
+                if let Some(ui) = self.ui.upgrade() {
+                    ui.programmatic_scroll.set(Some(Instant::now()));
+                }
+                scroll.set_offset(Vector::new(scroll.offset().x, target));
+            }
+        }
     }
 }

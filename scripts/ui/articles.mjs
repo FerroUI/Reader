@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import http from "node:http";
+import { articleLink, articleSelection } from "./article-interactions.mjs";
 
 const replace = (h, data) => h.page.evaluate(`readerApp.importData(${JSON.stringify(JSON.stringify(data))})`);
 const flush = h => h.page.evaluate("readerApp.flushSave(); import('./host.js').then(m => m.flush())");
@@ -15,7 +16,7 @@ async function publisher() {
     '<table><thead><tr><th>Feature</th><th>Result</th></tr></thead><tbody><tr><td rowspan="2">Saved article</td><td>Available offline</td></tr><tr><td>Feed copy retained</td></tr></tbody></table>' +
     '<pre><code>fn read_article() {\n    let message = &quot;' + 'preserved code indentation and horizontal scrolling; '.repeat(12) + '&quot;;\n}</code></pre>' +
     '<blockquote><p>Quoted publisher text remains distinct.</p></blockquote><ul><li>Outer item<ul><li>Nested item</li></ul></li></ul>' +
-    '<p><a href="details">Publisher reference link</a></p><img src="pixel.png" alt="Publisher image" width="600" height="300">' +
+    '<p>Before the <a href="details#reference">publisher reference link</a> after the link.</p><img src="pixel.png" alt="Publisher image" width="600" height="300">' +
     '<p>' + prose.repeat(5) + '</p><script>globalThis.publisherExecution = true</script></article><footer>Unrelated footer</footer></body></html>';
   const send = (response, type, body) => {
     response.writeHead(200, {"content-type": type, "cache-control": "no-store", "access-control-allow-origin": "*"});
@@ -35,6 +36,8 @@ async function publisher() {
         '<audio src="' + origin + '/journal/audio.mp3"></audio>]]></description></item></channel></rss>');
     } else if (pathname === "/journal/pixel.png") {
       send(response, "image/png", Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64"));
+    } else if (pathname === "/journal/details") {
+      send(response, "text/html", "<!doctype html><title>Publisher reference fixture</title><p id='reference'>Opened from a native Reader inline.</p>");
     } else {
       response.writeHead(404); response.end();
     }
@@ -73,7 +76,7 @@ async function reveal(h, name) {
 
 export async function articleChecks(h, check) {
   const baseline = await h.state(), network = await publisher();
-  let passed = false, articleId, cached;
+  let passed = false, articleId, cached, selection;
   try {
     await check("publisher article downloads into native selectable reading controls", async () => {
       const data = {...structuredClone(baseline), feeds: [], articles: [], folders: [], stream_settings: {}};
@@ -99,6 +102,14 @@ export async function articleChecks(h, check) {
       assert(cached.html.includes("Available offline"));
       assert(!cached.html.includes("<script"));
       await h.until(async () => bodyText(await h.snapshot()).includes("Publisher body marker."), "publisher text is rendered by native controls");
+      selection = await articleSelection(h);
+      const native = await h.snapshot();
+      const nativeEntry = native.elements.find(e => e.name === "ArticleEntry" && e.articleId === articleId);
+      for (const name of ["ArticleBody", "ArticleReadingControls"]) {
+        const content = native.elements.find(e => e.name === name);
+        assert(content && nativeEntry && content.x >= nativeEntry.x && content.x <= nativeEntry.x + 24,
+          `${name} keeps the original left-aligned reading column`);
+      }
       await reveal(h, "ArticleTableScroll");
       assert(bodyText(await h.snapshot()).includes("Available offline"), "table cells retain their readable values");
       const code = await reveal(h, "ArticleCodeScroll");
@@ -108,6 +119,7 @@ export async function articleChecks(h, check) {
       await h.capture("14-article-native");
       assert.equal(await h.page.evaluate("!!globalThis.publisherExecution || !!document.querySelector('article,iframe,video')"), false,
         "publisher content must not execute or replace the native surface with a DOM page");
+      await articleLink(h, `${network.origin}/journal/details#reference`);
       await top(h);
       const count = network.count();
       await h.clickLabel("Show feed content");
@@ -151,6 +163,19 @@ export async function articleChecks(h, check) {
       const code = await reveal(h, "ArticleCodeScroll");
       assert(code.x >= 0 && code.x + code.width <= 390, "code overflow uses its own horizontal viewport");
       await h.capture("14-article-mobile");
+      // All three widths remain in the phone breakpoint. A row whose equality
+      // tracks only narrow/touch would keep the first image's explicit width.
+      for (const [width, expected] of [[390, 320], [320, 250], [390, 320]]) {
+        await h.resize(width, 844);
+        await top(h);
+        await reveal(h, "ArticleImage");
+        await h.until(async () => {
+          const image = (await h.snapshot()).elements.find(e => e.name === "ArticleImage");
+          return image && Math.abs(image.width - expected) <= 1
+            && image.x >= -1 && image.x + image.width <= width + 1;
+        }, `publisher image follows same-breakpoint resize to ${width}px`);
+        if (width === 320) await h.capture("14-article-mobile-small-image");
+      }
       await top(h);
       const count = network.count();
       await h.page.send("Network.emulateNetworkConditions", {offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0});
@@ -162,7 +187,8 @@ export async function articleChecks(h, check) {
       assert(network.requests.every(request => !request.cookie && !request.authorization));
       await h.record("14-article-verification", {articleId, sourceUrl: restored.full_content.source_url,
         fullContentRetained: true, offlineReopen: true, cancellationPreserved: true,
-        extractionFailurePreserved: true, requests: network.requests});
+        extractionFailurePreserved: true, sameBreakpointImageWidths: [320, 250, 320],
+        nativeInlineLinkOpened: true, selection, requests: network.requests});
     });
     passed = true;
   } finally {

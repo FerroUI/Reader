@@ -33,7 +33,7 @@ The desktop host fetches directly with curl and runs the same Rust extractor in 
 
 ## Content, offline behavior and limits
 
-The HTML5/Readability extractor is [dom_smoothie 0.19.0](https://github.com/niklak/dom_smoothie). Its output is projected into native FerroUI controls. Publisher CSS and scripts are not applied to Reader. Headings, paragraphs, emphasis, links, nested lists, quotes, code, structured tables and images are supported. Media links open the original destination; there is no embedded publisher player or iframe.
+The HTML5/Readability extractor is [dom_smoothie 0.19.0](https://github.com/niklak/dom_smoothie). Its output is projected into native FerroUI controls. Publisher CSS and scripts are not applied to Reader. Headings, paragraphs, emphasis, links, nested lists, quotes, code, structured tables and images are supported. Native rich-text controls support selection and copying, pointer activation of inline links, and Tab/Enter link navigation. Media links open the original destination; there is no embedded publisher player or iframe.
 
 Full text is saved in the local library. It remains readable offline after storage succeeds and is included in exported JSON backups. Images have a separate bounded memory cache and may still require a connection after reload; the “saved” label refers to article text. The offline application cache includes the extraction worker and its version-matched WASM module.
 
@@ -41,6 +41,6 @@ Publisher pages are limited to 4 MiB, extracted article HTML to 2 MiB and the li
 
 ## Scrolling through unequal article sizes
 
-The reading list uses FerroUI's reusable TreeDataGrid presenter with a measured-height index, native anchoring and bounded recycling. Each visited article contributes its actual height. Unseen articles keep independent estimates, so measuring one long article does not rescale every short article in the library. Keyboard jumps use indexed offsets and the actual reading width. Width/content changes invalidate geometry, while read/star updates retain it.
+The reading list uses FerroUI's reusable TreeDataGrid presenter with a measured-height index, native anchoring and bounded recycling. Each visited article contributes its actual height. Unseen articles keep independent estimates, so measuring one long article does not rescale every short article in the library. Keyboard jumps explicitly realize their target at the actual reading width, including when a tall unseen predecessor was underestimated. Width/content changes invalidate geometry, while read/star updates retain it. Resizing preserves the current paragraph when the document is unchanged, including after its controls have been recycled; pending restoration is cancelled by a new user gesture or navigation.
 
-Image placeholders reserve declared dimensions, and each image completion updates its own control instead of every image in the stream. Parsed body data is cached across annotation and viewport changes. The [verification record](verification.md) distinguishes the automated mixed-height tests, rendered browser evidence and remaining platform limits.
+Image placeholders reserve declared dimensions, and each image completion updates its own control instead of every image in the stream. Image widths follow resizing within a layout breakpoint as well as changes between phone and desktop layouts. Parsed body data is cached across annotation and viewport changes. The [verification record](verification.md) distinguishes the automated mixed-height tests, rendered browser evidence and remaining platform limits.
