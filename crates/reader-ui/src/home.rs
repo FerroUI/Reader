@@ -1,3 +1,4 @@
+mod preview;
 use crate::session::{Panel, Session};
 use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
 use ferroui_base::media::{FontWeight, TextWrapping};
@@ -61,7 +62,7 @@ fn welcome(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             let id = feed.id;
             let mut group = stack_panel()
                 .key(format!("overview-feed:{id}"))
-                .spacing(10.0)
+                .spacing(8.0)
                 .margin((0.0, 0.0, 0.0, 16.0))
                 .child(
                     button()
@@ -76,15 +77,7 @@ fn welcome(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
                         .on_click(move |_| navigate.navigate(View::Feed(id))),
                 );
             for article in articles {
-                let model = vm.clone();
-                let id = article.id;
-                group=group.child(rsx!{StackPanel{key:format!("overview-entry:{id}"),spacing:0.0,
-                    Button{class:"reader-link",horizontal_content_alignment:H::Stretch,on_click:move |_|{model.navigate(View::All);model.select(Some(id));},
-                        TextBlock{text:article.title.clone(),font_size:13.0,line_height:15.0,font_weight:FontWeight::Bold,foreground:"#444444",text_wrapping:TextWrapping::Wrap}
-                    }
-                    TextBlock{text:crate::article::full_date(article.published),font_size:13.0,line_height:15.0,foreground:"#777777",margin:(0.0,0.0,0.0,1.0)}
-                    TextBlock{text:article.summary.clone(),font_size:13.0,foreground:"#555555",text_wrapping:TextWrapping::Wrap,line_height:18.0}
-                }});
+                group = group.child(preview::view(vm.clone(), article));
             }
             content = content.child(group);
             groups += 1;

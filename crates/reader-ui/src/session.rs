@@ -1,4 +1,5 @@
-use ferroui_controls::{Button, ListBox, TextBox};
+use crate::sidebar::tree::TreeNode;
+use ferroui_controls::{Button, ListBox, ScrollViewer, TextBox};
 use ferroui_view::prelude::*;
 use reader_domain::{Id, View};
 use std::{
@@ -24,7 +25,7 @@ pub enum Panel {
     Move(Id),
     Unsubscribe(Id),
     NewFolder,
-    MarkAll,
+    MarkAll(Option<i64>),
     About,
 }
 /// Transient presentation state is separate from the persisted feed document.
@@ -33,9 +34,15 @@ pub struct Session {
     pub search: Signal<String>,
     pub search_scope: Signal<View>,
     pub last_view: RefCell<Option<View>>,
+    pub last_library_generation: Cell<u64>,
     pub search_input: NodeRef<TextBox>,
     pub article_list: NodeRef<ListBox>,
     pub drawer_close: NodeRef<Button>,
+    pub subscribe_button: NodeRef<Button>,
+    pub navigation_scroll: NodeRef<ScrollViewer>,
+    pub tree_cursor: Signal<Option<TreeNode>>,
+    pub tree_opened: RefCell<Option<TreeNode>>,
+    pub skip_mark_all_confirmation: Signal<bool>,
     pub collapsed: Signal<BTreeSet<String>>,
     pub all_open: Signal<bool>,
     pub explore_open: Signal<bool>,
@@ -59,9 +66,15 @@ impl Session {
             search: signal(String::new()),
             search_scope: signal(View::All),
             last_view: RefCell::new(None),
+            last_library_generation: Cell::new(0),
             search_input: NodeRef::new(),
             article_list: NodeRef::new(),
             drawer_close: NodeRef::new(),
+            subscribe_button: NodeRef::new(),
+            navigation_scroll: NodeRef::new(),
+            tree_cursor: signal(None),
+            tree_opened: RefCell::new(None),
+            skip_mark_all_confirmation: signal(false),
             collapsed: signal(BTreeSet::new()),
             all_open: signal(false),
             explore_open: signal(false),
@@ -84,6 +97,7 @@ impl Session {
         self.focus_epoch.set(self.focus_epoch.get().wrapping_add(1));
         crate::gestures::cancel_active();
         self.draft.borrow_mut().clear();
+        self.skip_mark_all_confirmation.set(false);
         self.form_error.set(String::new());
         *self.form_for.borrow_mut() = None;
         self.panel.set(panel);
@@ -133,6 +147,13 @@ impl Session {
         );
     }
     pub fn toggle_folder(&self, folder: &str) {
+        if !self.collapsed.get_untracked().contains(folder) {
+            if matches!(self.tree_cursor.get_untracked(), Some(TreeNode::Feed { folder: ref parent, .. }) if parent == folder)
+            {
+                self.tree_cursor
+                    .set(Some(TreeNode::Folder(folder.to_string())));
+            }
+        }
         self.collapsed.update(|folders| {
             if !folders.remove(folder) {
                 folders.insert(folder.to_string());

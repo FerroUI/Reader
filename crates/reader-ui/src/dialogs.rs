@@ -1,17 +1,20 @@
 mod folders;
+mod form;
 mod navigate;
+mod placement;
 mod shortcuts;
+mod subscribe;
+mod tags;
 use crate::{
     session::{Panel, Session},
     settings,
 };
-use ferroui_base::input::text_input::{TextInputContentType, TextInputReturnKeyType};
 use ferroui_base::input::{Key, KeyboardNavigationMode};
 use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
-use ferroui_base::media::{TextTrimming, TextWrapping};
+use ferroui_base::media::{BoxShadows, TextTrimming};
 use ferroui_controls::primitives::ScrollBarVisibility;
 use ferroui_view::prelude::*;
-use reader_controls::{action, action_row, icon_action, paragraph, primary, Icon};
+use reader_controls::{action, action_row, paragraph, primary, Icon};
 use reader_state::AppViewModel;
 use std::rc::Rc;
 
@@ -23,13 +26,26 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     if panel == Panel::Shortcuts {
         return shortcuts::overlay(ui, &vm);
     }
+    let popup = desktop_popup(&vm, &ui);
+    if panel == Panel::Subscribe && popup {
+        return subscribe::popup(vm, ui);
+    }
+    if popup {
+        if let Panel::Tags(id) = panel {
+            if let Some(anchor) =
+                tags::anchor(&ui, &vm, id).or_else(|| tags::existing_anchor(&ui, id))
+            {
+                return tags::popup(vm, ui, id, anchor);
+            }
+        }
+    }
     let focus_dialog = matches!(
         panel,
         Panel::Preferences
             | Panel::Subscriptions
             | Panel::ImportExport
             | Panel::About
-            | Panel::MarkAll
+            | Panel::MarkAll(_)
             | Panel::Unsubscribe(_)
             | Panel::Move(_)
     );
@@ -51,7 +67,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         Panel::Move(_) => "Change folders",
         Panel::Unsubscribe(_) => "Unsubscribe",
         Panel::NewFolder => "Create a new folder",
-        Panel::MarkAll => "Mark all as read?",
+        Panel::MarkAll(_) => "Mark all as read?",
         Panel::About => "About Reader",
         Panel::None => "",
     };
@@ -73,166 +89,91 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         Panel::GoToSubscription => navigate::view(vm.clone(), ui.clone(), false),
         Panel::GoToTag => navigate::view(vm.clone(), ui.clone(), true),
         Panel::Move(id) => folders::view(vm.clone(), ui.clone(), id),
-        Panel::MarkAll | Panel::Unsubscribe(_) => {
+        Panel::MarkAll(_) | Panel::Unsubscribe(_) => {
             confirmation(vm.clone(), ui.clone(), panel.clone())
         }
-        _ => form(vm.clone(), ui.clone(), panel.clone()),
+        _ => form::view(vm.clone(), ui.clone(), panel.clone()),
     };
     rsx! {
-        Grid {key:dialog_key,name:"DialogOverlay",background:"#66000000",keyboard_navigation_tab_navigation:KeyboardNavigationMode::Cycle,
+        Grid {key:dialog_key,name:"DialogOverlay",background:"#80FFFFFF",keyboard_navigation_tab_navigation:KeyboardNavigationMode::Cycle,
             on_key_down:move |e|{if e.key==Key::Escape{close_key.close();e.set_handled(true);}},
-            Border {name:"ReaderDialog",focusable:true,is_tab_stop:false,on_loaded:move |event|{if focus_dialog{if let Some(control)=event.source().and_then(|source|source.cast::<ferroui_controls::Control>()){control.focus();}}},background:"White",border_brush:"#888888",border_thickness:1.0,width:metrics.width,max_height:metrics.height,padding:metrics.padding,horizontal_alignment:H::Center,vertical_alignment:V::Center,
-                Grid {row_definitions:"Auto,*",row_spacing:metrics.gap,
-                    Grid {column_definitions:"*,Auto",column_spacing:8.0,
-                        TextBlock {text:title,font_size:if crate::responsive::narrow(&vm){18.0}else{20.0},foreground:"#222222",text_trimming:<dyn TextTrimming>::character_ellipsis(),vertical_alignment:V::Center}
-                        Border {Grid.column:1,{icon_action(Icon::Close,"Close dialog",move||close.close())}}
+            Border {name:"ReaderDialog",focusable:true,is_tab_stop:false,on_loaded:move |event|{if focus_dialog{if let Some(control)=event.source().and_then(|source|source.cast::<ferroui_controls::Control>()){control.focus();}}},background:"White",border_brush:"#ABABAB",border_thickness:1.0,box_shadow:BoxShadows::parse("0 4 16 #33000000").unwrap_or_default(),width:metrics.width,max_height:metrics.height,horizontal_alignment:H::Center,vertical_alignment:V::Center,
+                Grid {
+                    Border {padding:metrics.padding,
+                        Grid {row_definitions:"Auto,*",row_spacing:metrics.gap,
+                            TextBlock {text:title,font_size:16.0,line_height:24.0,min_height:24.0,margin:(0.0,0.0,18.0,0.0),foreground:"#000000",text_trimming:<dyn TextTrimming>::character_ellipsis(),vertical_alignment:V::Center}
+                            ScrollViewer {name:"DialogScroll",Grid.row:1,max_height:metrics.body_height.min(520.0),horizontal_scroll_bar_visibility:ScrollBarVisibility::Disabled,vertical_scroll_bar_visibility:ScrollBarVisibility::Auto,
+                                {content}
+                            }
+                        }
                     }
-                    ScrollViewer {name:"DialogScroll",Grid.row:1,max_height:metrics.body_height.min(520.0),horizontal_scroll_bar_visibility:ScrollBarVisibility::Disabled,vertical_scroll_bar_visibility:ScrollBarVisibility::Auto,
-                        {content}
-                    }
+                    Button {class:"reader-flat",width:45.0,height:45.0,horizontal_alignment:H::Right,vertical_alignment:V::Top,automation_properties_name:"Close dialog",on_click:move |_|close.close(),{reader_controls::icon(Icon::Close,11.0,"#777777")}}
                 }
             }
         }
     }
 }
-fn form(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Element {
-    if ui.form_for.borrow().as_ref() != Some(&panel) {
-        let value = match &panel {
-            Panel::Rename(id) => vm.feed(*id).map(|f| f.title).unwrap_or_default(),
-            Panel::RenameFolder(name) => name.clone(),
-            Panel::Tags(id) => vm
-                .article(*id)
-                .map(|a| a.tags.join(", "))
-                .unwrap_or_default(),
-            Panel::Note(id) => vm.article(*id).map(|a| a.note).unwrap_or_default(),
-            _ => String::new(),
-        };
-        *ui.form_for.borrow_mut() = Some(panel.clone());
-        ui.entry.set(value);
-    }
-    let label = match panel {
-        Panel::Subscribe => "Enter a feed or website URL:",
-        Panel::Move(_) => "Folder name (leave blank for no folder):",
-        Panel::Tags(_) => "Separate tags with commas:",
-        Panel::Note(_) => "Your note:",
-        _ => "Name:",
+
+/// Keep the active native editor mounted while the input method owns a preedit.
+/// A completed edit can switch presentation on the next responsive update.
+fn desktop_popup(vm: &AppViewModel, ui: &Session) -> bool {
+    let Some(field) = ui
+        .field
+        .get_untracked()
+        .filter(|field| field.is_attached_to_visual_tree() && field.is_composing_text())
+    else {
+        return !crate::responsive::touch(vm);
     };
-    let action_text = if panel == Panel::Subscribe {
-        "Add"
-    } else {
-        "Save"
-    };
-    let save_vm = vm.clone();
-    let save_ui = ui.clone();
-    let save_panel = panel.clone();
-    let save: Rc<dyn Fn()> = Rc::new(move || {
-        let value = save_ui.entry.get_untracked().trim().to_string();
-        if value.is_empty()
-            && !matches!(save_panel, Panel::Move(_) | Panel::Tags(_) | Panel::Note(_))
-        {
-            save_ui.form_error.set("Please enter a value.".into());
-            if let Some(field) = save_ui.field.get_untracked() {
-                field.focus();
-            }
-            return;
-        }
-        save_ui.close();
-        match save_panel {
-            Panel::Subscribe => save_vm.subscribe(value),
-            Panel::Rename(id) => save_vm.rename_feed(id, value),
-            Panel::RenameFolder(ref name) => save_vm.rename_folder(name.clone(), value),
-            Panel::Move(id) => save_vm.move_feed(id, value),
-            Panel::Tags(id) => save_vm.set_tags(
-                id,
-                value
-                    .split(',')
-                    .map(str::trim)
-                    .filter(|s| !s.is_empty())
-                    .map(str::to_string)
-                    .collect(),
-            ),
-            Panel::Note(id) => save_vm.set_note(id, value),
-            Panel::NewFolder => save_vm.create_folder(value),
-            _ => {}
-        }
-    });
-    let enter = save.clone();
-    let cancel = ui.clone();
-    let field = ui.field;
-    let validation = ui.form_error;
-    let mut input = reader_controls::input(label)
-        .name("DialogInput")
-        .node_ref(field)
-        .text(ui.entry.two_way())
-        .on_text_changed(move |_| validation.set(String::new()))
-        .horizontal_alignment(H::Stretch)
-        .on_loaded(move |_| {
-            if let Some(field) = field.get_untracked() {
-                field.focus();
-                field.select_all();
-            }
-        });
-    let note = matches!(panel, Panel::Note(_));
-    if panel == Panel::Subscribe {
-        input = input
-            .text_input_options_content_type(TextInputContentType::Url)
-            .text_input_options_return_key_type(TextInputReturnKeyType::Go)
-            .text_input_options_auto_capitalization(false)
-            .text_input_options_show_suggestions(Some(false));
-    }
-    if note {
-        input = input
-            .height(150.0)
-            .accepts_return(true)
-            .text_wrapping(TextWrapping::Wrap);
-    } else {
-        input = input.on_key_down(move |e| {
-            if e.key == Key::Return {
-                e.set_handled(true);
-                enter();
-            }
-        });
-    }
-    let mut form = stack_panel()
-        .spacing(14.0)
-        .child(paragraph(label))
-        .child(input);
-    if matches!(panel, Panel::Subscribe) {
-        form=form.child(paragraph("Follow your favorite websites in one place. Paste an RSS or Atom feed address, or a website that advertises one."));
-    }
-    if !ui.form_error.get().is_empty() {
-        form = form.child(
-            text_block()
-                .name("FormError")
-                .text(ui.form_error.get())
-                .foreground("#B3261E")
-                .font_size(13.0)
-                .text_wrapping(TextWrapping::Wrap),
-        );
-    }
-    form.child(border().margin((0.0, 12.0, 0.0, 0.0)).child(action_row(
-        [
-            primary(action_text, move || save()),
-            action("Cancel", move || cancel.close()),
-        ],
-        10.0,
-    )))
-    .into()
+    field
+        .find_ancestor_of_type_where::<ferroui_controls::Control>(false, |control| {
+            matches!(
+                control.name().as_deref(),
+                Some("SubscribePopup" | "ArticleTagsPopup")
+            )
+        })
+        .is_some()
 }
+
 fn confirmation(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Element {
     let confirm = ui.clone();
     let cancel = ui.clone();
-    let text = if let Panel::Unsubscribe(id) = panel {
-        format!("Are you sure you want to unsubscribe from {}? Starred and tagged items will remain in your library.",vm.feed(id).map(|f|f.title).unwrap_or_default())
-    } else {
-        format!("Mark all items in {} as read?", vm.title())
+    let skip = ui.skip_mark_all_confirmation;
+    let generation = vm.library_generation();
+    let route = vm.view();
+    let text = match &panel {
+        Panel::Unsubscribe(id) => format!("Are you sure you want to unsubscribe from {}? Starred and tagged items will remain in your library.", vm.feed(*id).map(|f| f.title).unwrap_or_default()),
+        Panel::MarkAll(Some(cutoff)) => {
+            let date = chrono::DateTime::from_timestamp(*cutoff, 0)
+                .map(|date| date.format("%b %-d, %Y at %H:%M UTC").to_string())
+                .unwrap_or_else(|| cutoff.to_string());
+            format!("Mark all items in {} published before {date} as read?", vm.title())
+        }
+        _ => format!("Mark all items in {} as read?", vm.title()),
     };
-    rsx! {StackPanel {spacing:22.0,
+    rsx! {StackPanel {spacing:16.0,
         {paragraph(text)}
+        if matches!(panel,Panel::MarkAll(_)) {CheckBox {class:"reader-check",content:"Don't ask me again",automation_properties_name:"Don't ask me again",font_size:13.0,min_height:28.0,padding:0.0,is_checked:Some(skip.get()),on_click:move |_|skip.update(|value|*value=!*value)}}
         {action_row([
-            primary(if matches!(panel,Panel::Unsubscribe(_)){"Unsubscribe"}else{"Mark all as read"},move||{confirm.close();if let Panel::Unsubscribe(id)=panel{vm.unsubscribe(id);}else{vm.mark_all_read(None);}}),
+            primary(if matches!(panel,Panel::Unsubscribe(_)){"Unsubscribe"}else{"Mark all as read"},move||{
+                if confirm.panel.get_untracked() != panel { return; }
+                let suppress_confirmation = skip.get_untracked();
+                confirm.close();
+                if vm.library_generation() != generation || vm.view() != route { return; }
+                match panel {
+                    Panel::Unsubscribe(id) => vm.unsubscribe(id),
+                    Panel::MarkAll(cutoff) => {
+                        if suppress_confirmation {
+                            let mut settings=vm.state().settings.clone();
+                            settings.confirm_mark_all=false;
+                            vm.set_settings(settings);
+                        }
+                        vm.mark_all_read(cutoff);
+                    }
+                    _ => {}
+                }
+            }),
             action("Cancel",move||cancel.close())
-        ],10.0)}
+        ],16.0)}
     }}
 }
 fn about() -> Element {

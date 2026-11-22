@@ -3,6 +3,7 @@ import { writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { createHarness } from "./ui/harness.mjs";
 import { mobileChecks } from "./ui/mobile.mjs";
+import { refinementChecks } from "./ui/refinement.mjs";
 import { sleep } from "../FerroUI/scripts/browser/harness.mjs";
 
 const site = path.resolve(process.argv[2] || "target/browser/reader-browser");
@@ -54,6 +55,7 @@ try {
       await h.page.press("n");
       const before = (await h.state()).articles;
       await h.page.press("s", ["alt"]);
+      await h.page.press("m", ["shift"]);
       await h.page.press("z", ["ctrl", "shift"]);
       await h.page.evaluate(`(() => {
         const host = document.getElementById('out');
@@ -112,6 +114,7 @@ try {
       assert.match(result.message, /changed in another tab/);
       assert(result.preserved, "a stale writer must preserve the committed library");
     });
+    await refinementChecks(h, check);
     await mobileChecks(h, check);
     await check("expanded read tracking follows user scrolling and preserves Keep unread", async () => {
       const data = await h.state();

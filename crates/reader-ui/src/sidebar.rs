@@ -1,16 +1,19 @@
+pub(crate) mod cursor;
 mod feed;
 mod navigation;
+pub(crate) mod tree;
 use crate::session::{Panel, Session};
 use feed::feed_row;
 use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
 use ferroui_base::media::{FontWeight, TextTrimming};
 use ferroui_controls::primitives::ScrollBarVisibility;
 use ferroui_view::prelude::*;
-use navigation::{group, nav};
+use navigation::{group, nav, row_class};
 use reader_controls::{icon, Icon};
 use reader_domain::{Density, View};
 use reader_state::AppViewModel;
 use std::{collections::HashMap, rc::Rc};
+use tree::TreeNode;
 
 pub fn width(density: Density) -> f64 {
     match density {
@@ -35,9 +38,18 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let subscribe = ui.clone();
     let manage = ui.clone();
     let mut content = stack_panel().spacing(0.0);
-    content = content.child(nav(vm.clone(), View::Home, "Home", None, 0, inset));
+    content = content.child(nav(
+        vm.clone(),
+        ui.clone(),
+        View::Home,
+        "Home",
+        None,
+        0,
+        inset,
+    ));
     content = content.child(group(
         vm.clone(),
+        ui.clone(),
         ui.all_open,
         View::All,
         "All items",
@@ -47,6 +59,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     if ui.all_open.get() {
         content = content.child(nav(
             vm.clone(),
+            ui.clone(),
             View::Starred,
             "Starred items",
             Some(Icon::Starred),
@@ -55,6 +68,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         ));
         content = content.child(nav(
             vm.clone(),
+            ui.clone(),
             View::Trends,
             "Trends",
             None,
@@ -65,6 +79,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     content = content.child(border().key("explore-gap").height(12.0));
     content = content.child(group(
         vm.clone(),
+        ui.clone(),
         ui.explore_open,
         View::Explore,
         "Explore",
@@ -74,6 +89,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     if ui.explore_open.get() {
         content = content.child(nav(
             vm.clone(),
+            ui.clone(),
             View::Explore,
             "Browse for stuff",
             None,
@@ -104,6 +120,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         .map(|feed| (feed.id, vm.count(&View::Feed(feed.id))))
         .collect();
     let show_all = vm.state().settings.show_all_subscriptions;
+    let keyboard_cursor = cursor::current(&cursor::visible(&vm, &ui), &ui);
     for feed in feeds.iter().filter(|f| f.folder_names().is_empty()) {
         let count = counts.get(&feed.id).copied().unwrap_or(0);
         if show_all || count > 0 {
@@ -114,6 +131,11 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
                 count,
                 inset + 6.0,
                 "",
+                keyboard_cursor.as_ref()
+                    == Some(&TreeNode::Feed {
+                        id: feed.id,
+                        folder: String::new(),
+                    }),
             ));
         }
     }
@@ -131,15 +153,17 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         let drop_folder = folder.clone();
         let folder_vm = vm.clone();
         let folder_name = folder.clone();
+        let folder_ui = ui.clone();
+        let folder_cursor = keyboard_cursor.as_ref() == Some(&TreeNode::Folder(folder.clone()));
         let disclosure_ui = ui.clone();
         let disclosure_folder = folder.clone();
         let selected = vm.view() == View::Folder(folder.clone());
         content=content.child(rsx! {
-            Grid {key:format!("folder:{folder}"),with:move |target|crate::drag::attach_target(&target.clone().upcast(),drop_vm.clone(),drop_folder.clone()),column_definitions:if touch{"44,*"}else{"20,*"},margin:((inset-18.0).max(0.0),0.0,8.0,0.0),height:if touch{44.0}else{27.0},
+            Grid {key:format!("folder:{folder}"),with:move |target|crate::drag::attach_target(&target.clone().upcast(),drop_vm.clone(),drop_folder.clone()),column_definitions:if touch{"44,*"}else{"20,*"},margin:((inset-18.0).max(0.0),0.0,8.0,0.0),height:if touch{44.0}else{23.0},
                 Button {class:"reader-flat",automation_properties_name:format!("Toggle {folder}"),on_click:move |_|disclosure_ui.toggle_folder(&disclosure_folder),
                     {icon(if collapsed.contains(&folder){Icon::ChevronRight}else{Icon::ChevronDown},8.0,"#777777")}
                 }
-                Button {Grid.column:1,class:if selected {"reader-nav selected"}else{"reader-nav"},horizontal_content_alignment:H::Stretch,automation_properties_name:folder.clone(),on_click:move |_|{folder_vm.navigate(View::Folder(folder_name.clone()));if folder_vm.viewport()<700.0{folder_vm.set_sidebar_open(false);}},
+                Button {Grid.column:1,name:"SubscriptionFolder",class:row_class(selected,folder_cursor),horizontal_content_alignment:H::Stretch,automation_properties_name:folder.clone(),on_click:move |_|cursor::open(&folder_vm,&folder_ui,TreeNode::Folder(folder_name.clone())),
                     Grid {column_definitions:"20,*,Auto",
                         {icon(Icon::Folder,14.0,"#A1A1A1")}
                         TextBlock {Grid.column:1,text:folder.clone(),text_trimming:<dyn TextTrimming>::character_ellipsis(),vertical_alignment:V::Center,font_weight:if count>0{FontWeight::Bold}else{FontWeight::Normal}}
@@ -159,6 +183,11 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
                         n,
                         inset + 20.0,
                         &folder,
+                        keyboard_cursor.as_ref()
+                            == Some(&TreeNode::Feed {
+                                id: feed.id,
+                                folder: folder.clone(),
+                            }),
                     ));
                 }
             }
@@ -168,8 +197,12 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     if !tags.is_empty() {
         content = content.child(border().height(15.0));
         for tag in tags {
+            if !show_all && vm.count(&View::Tag(tag.clone())) == 0 {
+                continue;
+            }
             content = content.child(nav(
                 vm.clone(),
+                ui.clone(),
                 View::Tag(tag.clone()),
                 &tag,
                 Some(Icon::Tag),
@@ -182,9 +215,9 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let restore = ui.clone();
     rsx! {
         Grid {key:"navigation-pane",name:"NavigationPane",row_definitions:if touch{"56,*,48"}else if density==Density::Compact{"43,*,40"}else{"57,*,40"},background:"White",
-            Button {class:"reader-subscribe",name:"SubscribeButton",content:"SUBSCRIBE",height:if touch{44.0}else{27.0},min_height:if touch{44.0}else{27.0},min_width:90.0,horizontal_alignment:H::Left,vertical_alignment:V::Top,margin:(inset,if touch{6.0}else if density==Density::Compact{8.0}else{17.0},0.0,0.0),automation_properties_name:"Subscribe",on_click:move |_|subscribe.show(Panel::Subscribe)}
+            Button {class:"reader-subscribe",name:"SubscribeButton",node_ref:ui.subscribe_button,content:"SUBSCRIBE",height:if touch{44.0}else{29.0},min_height:if touch{44.0}else{29.0},min_width:98.0,horizontal_alignment:H::Left,vertical_alignment:V::Top,margin:(inset,if touch{6.0}else if density==Density::Compact{7.0}else{16.5},0.0,0.0),automation_properties_name:"Subscribe",on_click:move |_|subscribe.show(Panel::Subscribe)}
             if narrow {Button{class:"reader-flat",name:"CloseSubscriptions",node_ref:ui.drawer_close,width:44.0,height:44.0,margin:(0.0,6.0,4.0,0.0),horizontal_alignment:H::Right,vertical_alignment:V::Top,automation_properties_name:"Close subscriptions",on_loaded:move |event|{if let Some(control)=event.source().and_then(|source|source.cast::<ferroui_controls::Control>()){control.focus();}},on_click:move |_|{close.set_sidebar_open(false);restore.restore_article_focus();},{icon(Icon::Close,16.0,"#666666")}}}
-            ScrollViewer {Grid.row:1,horizontal_scroll_bar_visibility:ScrollBarVisibility::Disabled,vertical_scroll_bar_visibility:ScrollBarVisibility::Auto,
+            ScrollViewer {name:"SubscriptionScroll",node_ref:ui.navigation_scroll,Grid.row:1,horizontal_scroll_bar_visibility:ScrollBarVisibility::Disabled,vertical_scroll_bar_visibility:ScrollBarVisibility::Auto,
                 {content}
             }
             Border {Grid.row:2,margin:(inset,0.0,0.0,0.0),vertical_alignment:V::Center,

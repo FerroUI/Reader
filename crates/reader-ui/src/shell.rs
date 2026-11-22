@@ -142,15 +142,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
                 .padding(0.0),
         );
         if rows.len() == 0 {
-            let all = vm.clone();
-            let add = ui.clone();
-            stream=stream.child(rsx!{ScrollViewer{horizontal_scroll_bar_visibility:ScrollBarVisibility::Disabled,vertical_scroll_bar_visibility:ScrollBarVisibility::Auto,
-                StackPanel{margin:if narrow{(16.0,24.0)}else{(30.0,40.0)},spacing:16.0,horizontal_alignment:H::Stretch,
-                TextBlock{text:if matches!(vm.view(),View::Search(_)){"No matching items"}else if vm.state().settings.unread_only{"No unread items"}else{"No items to display"},font_size:22.0,text_wrapping:TextWrapping::Wrap}
-                TextBlock{text:if matches!(vm.view(),View::Search(_)){"Try another search. You can use title:, author:, feed:, tag:, is:starred and is:unread."}else{"You're all caught up. Refresh your subscriptions or add something new to read."},font_size:13.0,foreground:"#666666",text_wrapping:TextWrapping::Wrap,max_width:550.0}
-                {reader_controls::link("Show all items",move||{all.set_unread_only(false);all.navigate(View::All);})}
-                {reader_controls::link("Add a subscription",move||add.show(Panel::Subscribe))}
-            }}});
+            stream = stream.child(crate::empty::view(vm.clone()));
         }
         main = main.child(stream);
     }
@@ -199,6 +191,25 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
 /// same native ListBox, ScrollViewer and recycling collection (including its offset).
 fn retain_route_scroll(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) {
     let route = vm.view();
+    let generation_changed =
+        ui.last_library_generation.replace(vm.library_generation()) != vm.library_generation();
+    let route_changed = ui
+        .last_view
+        .borrow()
+        .as_ref()
+        .is_some_and(|previous| previous != &route);
+    if generation_changed || route_changed {
+        // This is shared by native and browser hosts. Async navigation must not
+        // leave an editor or confirmation targeting a replaced stream/library.
+        crate::transient::dismiss_menu();
+        if ui.panel.get_untracked() != Panel::None {
+            ui.close();
+        }
+        if generation_changed {
+            ui.tree_cursor.set(None);
+            *ui.tree_opened.borrow_mut() = None;
+        }
+    }
     if ui.last_view.borrow().as_ref() == Some(&route) {
         return;
     }

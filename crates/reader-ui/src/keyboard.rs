@@ -42,6 +42,10 @@ fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
     }
     if vm.viewport() < 700.0 && vm.sidebar_open() {
         ui.cancel_prefix();
+        if !ctrl && shift && tree_key(vm, ui, event.key) {
+            event.set_handled(true);
+            return;
+        }
         if !ctrl && !shift && event.key == Key::U {
             vm.set_sidebar_open(false);
             ui.restore_article_focus();
@@ -87,6 +91,30 @@ fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
             return;
         }
     }
+    // A modified letter is a separate shortcut in Reader, not the unmodified
+    // command with Shift ignored. Keep only the explicitly supported chords.
+    if shift
+        && !matches!(
+            event.key,
+            Key::N
+                | Key::P
+                | Key::J
+                | Key::K
+                | Key::O
+                | Key::X
+                | Key::S
+                | Key::T
+                | Key::A
+                | Key::U
+                | Key::OemQuestion
+                | Key::Space
+                | Key::OemPlus
+                | Key::Add
+        )
+    {
+        ui.cancel_prefix();
+        return;
+    }
     if !shift && matches!(event.key, Key::J | Key::K | Key::N | Key::P) {
         if let Some(list) = ui.article_list.get_untracked() {
             list.focus();
@@ -101,19 +129,8 @@ fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
         Key::N if !shift => vm.scan_article(1),
         Key::K if !shift => vm.next_article(-1),
         Key::P if !shift => vm.scan_article(-1),
-        Key::N | Key::P if shift => {
-            let feeds = vm.feeds();
-            if feeds.is_empty() {
-                return;
-            }
-            let current = feeds.iter().position(|f| vm.view() == View::Feed(f.id));
-            let index = match (current, event.key) {
-                (Some(current), Key::N) => (current + 1).min(feeds.len() - 1),
-                (Some(current), _) => current.saturating_sub(1),
-                (None, Key::N) => 0,
-                (None, _) => feeds.len() - 1,
-            };
-            vm.navigate(View::Feed(feeds[index].id));
+        Key::N | Key::P | Key::J | Key::K | Key::O | Key::X if shift => {
+            tree_key(vm, ui, event.key);
         }
         Key::S if shift => {
             if let Some(id) = vm.cursor().or(vm.selected()) {
@@ -159,8 +176,8 @@ fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
         }
         Key::R => vm.refresh(),
         Key::A if shift => {
-            if vm.state().settings.confirm_mark_all {
-                ui.show(Panel::MarkAll);
+            if vm.should_confirm_mark_all() {
+                ui.show(Panel::MarkAll(None));
             } else {
                 vm.mark_all_read(None);
             }
@@ -228,4 +245,16 @@ pub(crate) fn editing_source(event: &KeyEventArgs) -> bool {
                     .any(|ancestor| ancestor.cast::<TextBox>().is_some())
             })
     })
+}
+
+fn tree_key(vm: &AppViewModel, ui: &Session, key: Key) -> bool {
+    use crate::sidebar::cursor;
+    match key {
+        Key::N | Key::J => cursor::move_cursor(vm, ui, true),
+        Key::P | Key::K => cursor::move_cursor(vm, ui, false),
+        Key::O => cursor::open_cursor(vm, ui),
+        Key::X => cursor::toggle(vm, ui),
+        _ => return false,
+    }
+    true
 }

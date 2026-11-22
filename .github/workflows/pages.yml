@@ -119,6 +119,8 @@ jobs:
           cargo test --locked -p reader-domain -p reader-state
           rustc --edition=2021 --test crates/reader-ui/src/gestures/motion.rs -o target/reader-motion-tests
           target/reader-motion-tests
+          rustc --edition=2021 --test crates/reader-ui/src/sidebar/tree.rs -o target/reader-tree-tests
+          target/reader-tree-tests
           rustc --edition=2021 --test crates/reader-desktop/src/operations.rs -o target/reader-operation-tests
           target/reader-operation-tests
           node --test scripts/*.test.mjs

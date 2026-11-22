@@ -113,6 +113,11 @@ impl AppViewModel {
     pub fn set_note(&self, id: Id, note: String) {
         self.dispatch(Action::SetNote { id, note });
     }
+    /// Reader asked only for large streams. The count belongs to the current
+    /// stream, including for an age-limited mark operation, not the global inbox.
+    pub fn should_confirm_mark_all(&self) -> bool {
+        self.state().settings.confirm_mark_all && self.count(&self.view()) > 50
+    }
     pub fn mark_all_read(&self, older_than: Option<i64>) {
         let state = self.state();
         let ids = state

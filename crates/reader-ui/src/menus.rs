@@ -27,7 +27,9 @@ pub fn checked(label: &str, value: bool, action: impl Fn() + 'static) -> Element
         .into()
 }
 pub fn separator() -> Element {
-    ferroui_view::prelude::separator().into_element()
+    ferroui_view::prelude::separator()
+        .class("reader-menu-separator")
+        .into_element()
 }
 pub fn button(vm: &AppViewModel, label: &str, items: Vec<Element>) -> Element {
     attach(vm, reader_controls::dropdown(label), items)

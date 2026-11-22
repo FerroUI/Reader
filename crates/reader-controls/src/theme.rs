@@ -154,6 +154,11 @@ pub fn install_theme(app: &Application) {
             .build(),
     );
     app.styles().add(
+        style("Button.reader-nav.keyboard-cursor")
+            .set(TemplatedControl::background_property(), "#DDDDDD")
+            .build(),
+    );
+    app.styles().add(
         style("Button.reader-button.selected")
             .set(TemplatedControl::background_property(), "#D9D9D9")
             .set(TemplatedControl::border_brush_property(), "#BEBEBE")

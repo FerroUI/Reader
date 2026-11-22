@@ -83,6 +83,7 @@ pub fn inspect_view() -> String {
             Some(
                 json!({"type":visual.get_type().name(),"name":name,"text":text,
             "automationName":AutomationProperties::get_name(&visual),"articleId":article_id,
+            "treeCursor":visual.classes().contains("keyboard-cursor"),
             "focused":visual.cast::<InputElement>().is_some_and(|i|i.is_focused()),
             "x":p.x,"y":p.y,"width":b.width,"height":b.height,"hit":hit}),
             )

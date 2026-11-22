@@ -22,6 +22,7 @@ pub(super) fn filter_menu(vm: Rc<AppViewModel>) -> Element {
     menus::attach(
         &vm,
         filter
+            .name("StreamFilter")
             .width(if touch { 96.0 } else { 72.0 })
             .padding((if touch { 6.0 } else { 2.0 }, 5.0)),
         vec![
@@ -36,15 +37,18 @@ pub(super) fn mark_menu(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let touch = crate::responsive::touch(&vm);
     rsx! {Grid{column_definitions:if touch{"99,44"}else{"99,20"},height:if touch{44.0}else{29.0},
         Button{class:"reader-button",padding:(6.0,5.0),content:"Mark all as read",automation_properties_name:"Mark all as read",on_click:move |_|{
-            if mark.state().settings.confirm_mark_all{confirm.show(Panel::MarkAll);}else{mark.mark_all_read(None);}
+            request_mark_all(&mark,&confirm,None);
         }}
         Border{Grid.column:1,{menus::attach(&vm,reader_controls::toolbar_icon(Icon::ChevronDown,"Mark all read options").width(if touch{44.0}else{20.0}).padding(5.0),mark_items(vm.clone(),ui,false))}}
     }}
 }
 fn mark_items(vm: Rc<AppViewModel>, ui: Rc<Session>, standalone: bool) -> Vec<Element> {
     let all = vm.clone();
+    let confirm_all = ui.clone();
     let day = vm.clone();
+    let confirm_day = ui.clone();
     let week = vm.clone();
+    let confirm_week = ui.clone();
     let fortnight = vm.clone();
     vec![
         menus::item(
@@ -54,11 +58,7 @@ fn mark_items(vm: Rc<AppViewModel>, ui: Rc<Session>, standalone: bool) -> Vec<El
                 "All items"
             },
             move || {
-                if all.state().settings.confirm_mark_all {
-                    ui.show(Panel::MarkAll);
-                } else {
-                    all.mark_all_read(None);
-                }
+                request_mark_all(&all, &confirm_all, None);
             },
         ),
         menus::item(
@@ -67,7 +67,7 @@ fn mark_items(vm: Rc<AppViewModel>, ui: Rc<Session>, standalone: bool) -> Vec<El
             } else {
                 "Items older than a day"
             },
-            move || day.mark_all_read(Some(day.now() - 86400)),
+            move || request_mark_all(&day, &confirm_day, Some(day.now() - 86400)),
         ),
         menus::item(
             if standalone {
@@ -75,7 +75,7 @@ fn mark_items(vm: Rc<AppViewModel>, ui: Rc<Session>, standalone: bool) -> Vec<El
             } else {
                 "Items older than a week"
             },
-            move || week.mark_all_read(Some(week.now() - 7 * 86400)),
+            move || request_mark_all(&week, &confirm_week, Some(week.now() - 7 * 86400)),
         ),
         menus::item(
             if standalone {
@@ -83,9 +83,16 @@ fn mark_items(vm: Rc<AppViewModel>, ui: Rc<Session>, standalone: bool) -> Vec<El
             } else {
                 "Items older than two weeks"
             },
-            move || fortnight.mark_all_read(Some(fortnight.now() - 14 * 86400)),
+            move || request_mark_all(&fortnight, &ui, Some(fortnight.now() - 14 * 86400)),
         ),
     ]
+}
+fn request_mark_all(vm: &AppViewModel, ui: &Session, cutoff: Option<i64>) {
+    if vm.should_confirm_mark_all() {
+        ui.show(Panel::MarkAll(cutoff));
+    } else {
+        vm.mark_all_read(cutoff);
+    }
 }
 pub(super) fn sort_menu(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let label = if matches!(vm.view(), View::Feed(_)) {

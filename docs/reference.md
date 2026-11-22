@@ -11,6 +11,7 @@ Reader's implementation in this repository is original Rust using FerroUI. The p
 The following publicly served reference resources provide exact values:
 
 - [Main stylesheet](https://readerisdead.com/reader/ui/2139832829-en-scroll.css).
+- [Preserved final client behavior](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/3564210627-en-scroll.js).
 - [Comfortable density](https://readerisdead.com/reader/ui/2159580021-en-scroll_large_density.css).
 - [Cozy density](https://readerisdead.com/reader/ui/1771541332-en-scroll_medium_density.css).
 - [Compact density](https://readerisdead.com/reader/ui/2617741944-en-scroll_small_density.css).
@@ -74,6 +75,30 @@ The Mark all as read dropdown offers all items, items older than a day, older th
 
 Feed settings include newest/oldest/magic sorting, rename, unsubscribe, translation, details/statistics and folder membership. Folder settings include rename/delete and unsubscribe from all. Subscription-section settings include alphabetical/manual ordering, all/updated visibility, favicon/default icon preference, add and manage subscriptions.
 
+## Secondary surfaces and interaction details
+
+The following contracts were checked against the preserved source in the additional 22 November 2026 review. They describe the historical reference; they are not claims that every surface has already been reproduced. CSS selectors and JavaScript function names identify the exact evidence in the [stylesheet](https://readerisdead.com/reader/ui/2139832829-en-scroll.css) and [saved client](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/3564210627-en-scroll.js).
+
+| Surface | Original geometry and appearance | Evidence |
+|---|---|---|
+| Dropdown | White, 1 px translucent black border, 6 px vertical outer padding, shadow `0 2px 4px rgba(0,0,0,.2)` | `.goog-menu` |
+| Menu item | 13 px text; 6 px vertical padding; hover `#eee`; disabled text `#ccc` | `.goog-menuitem`, hover/disabled rules |
+| Menu separator | 1 px `#ebebeb` rule, 6 px space above and below | `.goog-menuseparator` |
+| Standard dialog | White, 1 px border, 42 px horizontal / 30 px vertical padding, shadow `0 4px 16px rgba(0,0,0,.2)` | `.modal-dialog` |
+| Dialog heading/body | Heading 16 px normal, 24 px line height, 16 px bottom gap; body line height 1.4; 16 px gap before buttons | `.modal-dialog-title`, content/buttons rules |
+| Dialog backdrop | White at **50% opacity at runtime**; the stylesheet's 75% is overridden | `xy` prototype `mj=0.5`, `Ey`, dialog render; `.modal-dialog-bg` |
+| Empty stream | Centered heading inside a white box; 2 px `#ccc` border; 5 px radius; margin `1em`; padding `1.5em 2em 3em` | `#no-entries-msg`, `kE.Xt` |
+| Subscribe popup | Anchored below Subscribe; width 300 px; `#f7f7f7`; 1 px `#d0d0d0`; form inset 8 px | `#quick-add-bubble-holder`, `#quick-add-form`, `Iv.kb` |
+| Tag editor | Anchored at the article action; width 260 px plus 8 px padding; `#f7f7f7`; 1 px `#d0d0d0` | `.tags-edit`, `oE.cA`, `VG` |
+
+An empty unread stream offers **View all items** by changing the current stream's filter. It preserves the feed, folder or tag rather than jumping to All items. The message distinguishes an empty reading list, no starred articles, a named stream with no articles, and a stream with no unread articles. A search with no results identifies its query. These distinctions come from `as` and `kE.Xt`; the obsolete Google Blog Search link is not a useful modern recovery action.
+
+Opening a Home article resolves its containing feed stream and then selects that article (`zv.fx`). The [preservation README](https://github.com/mihaip/readerisdead#zombie_reader) explicitly says that its Home page was repurposed for archive statistics. Archive-specific Home contents are therefore not evidence for the original product's content.
+
+Mark-all uses the current stream's unread count. The client asks for confirmation only above 50 unread items when confirmation is enabled; the dialog includes the affected stream, count or age condition, and a preference to stop asking (`Ts`, `kE.xs`, `kE.iy`). The older-than choices use that same confirmation path. The age cutoff remains part of the pending operation through confirmation.
+
+The Subscribe and tag editors support focused input, Enter to save, Escape to close, and dismissal outside their popup. An article without tags has an add action; an article with tags exposes an edit action followed by individually navigable tag names (`OG`, `PG`). Preserve these relationships when adapting the controls to narrow screens; historical small close glyphs do not define a suitable touch target.
+
 ## Keyboard map
 
 This table transcribes behavior from the preserved final keyboard-help resource. A space-separated sequence means successive keys, not a simultaneous chord.
@@ -114,6 +139,14 @@ This table transcribes behavior from the preserved final keyboard-help resource.
 | `?` | Keyboard help |
 
 Shortcut handlers must respect text input, composition, open dialogs and platform modifier keys. A partial `g` sequence expires and unrelated keys cancel it.
+
+### Subscription cursor and help overlay
+
+The [saved client](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/3564210627-en-scroll.js) separates the subscription keyboard cursor from the opened stream (`RF`, `ZF`, `iG`, `VF`). Shift+N/P traverses the Subscriptions tree in visible depth-first order, including folders, feed occurrences and standalone tags. It excludes Home, Starred and Explore. Collapsed descendants are skipped; the updated-only setting skips entries with no unread items. The cursor is gray `#ddd`; the open stream keeps its red selection treatment.
+
+Traversal does not wrap. Without a cursor, it starts relative to the opened tree occurrence. With neither cursor nor opened occurrence, Shift+N chooses the first eligible entry and Shift+P does nothing. Shift+O opens the cursor entry and retains it; opening an already open entry refreshes it. Shift+X toggles the cursor's folder or, from a child feed, the nearest ancestor with children. Rebuilding the visible tree preserves the same occurrence or its closest surviving ancestor. Shift+J/K are aliases of Shift+N/P in `wE`.
+
+The [keyboard-help template](https://readerisdead.com/reader/ui/2662170544-en-keyboard-help-banner?hl=en) has four groups arranged as a two-by-two table: Navigation/Application, then Jumping/Acting on items. Its [CSS](https://readerisdead.com/reader/ui/2139832829-en-scroll.css) places the banner at 5% from the top and left, width 90%, with a black 80%-opaque background, 10 px radius, white text and `#dd0` group headings. Keys are bold and right-aligned; descriptions are normal weight. It includes separate-window and close links and scrolls when the viewport is too short (`VC`). Narrow layouts may stack groups while retaining the command meanings and reachable close action.
 
 ## Historical scope and additional primary sources
 

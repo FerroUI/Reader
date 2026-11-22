@@ -19,7 +19,7 @@ pub fn preferences(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             0,
         ),
         (
-            "Confirm when marking all items as read",
+            "Confirm before marking a stream with more than 50 unread items as read",
             settings.confirm_mark_all,
             1,
         ),

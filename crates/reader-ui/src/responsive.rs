@@ -14,7 +14,7 @@ pub fn touch(vm: &AppViewModel) -> bool {
 pub struct DialogMetrics {
     pub width: f64,
     pub height: f64,
-    pub padding: f64,
+    pub padding: (f64, f64),
     pub gap: f64,
     pub body_height: f64,
 }
@@ -24,14 +24,14 @@ impl DialogMetrics {
         let small = narrow(vm);
         let inset = if small { 8.0 } else { 16.0 };
         let padding = if small || vm.viewport_height() < 450.0 {
-            16.0
+            (16.0, 16.0)
         } else {
-            26.0
+            (42.0, 30.0)
         };
-        let gap = if small { 12.0 } else { 20.0 };
+        let gap = if small { 12.0 } else { 16.0 };
         let width = preferred_width.min((vm.viewport() - 2.0 * inset).max(1.0));
         let height = preferred_height.min((vm.viewport_height() - 2.0 * inset).max(1.0));
-        let body_height = (height - padding * 2.0 - TOUCH_TARGET - gap - 2.0).max(1.0);
+        let body_height = (height - padding.1 * 2.0 - 24.0 - gap - 2.0).max(1.0);
         Self {
             width,
             height,

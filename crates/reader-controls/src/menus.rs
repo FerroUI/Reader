@@ -7,13 +7,19 @@ use ferroui_view::style;
 
 pub fn install(app: &Application) {
     app.styles().add(
+        style("Separator.reader-menu-separator")
+            .set(TemplatedControl::background_property(), "#EBEBEB")
+            .set(Layoutable::margin_property(), (0.0, 6.0))
+            .build(),
+    );
+    app.styles().add(
         style("ContextMenu")
             .set(TemplatedControl::background_property(), "White")
             .set(TemplatedControl::foreground_property(), "#333333")
             .set(TemplatedControl::border_brush_property(), "#CCCCCC")
             .set(TemplatedControl::border_thickness_property(), 1.0)
             .set(TemplatedControl::corner_radius_property(), 0.0)
-            .set(TemplatedControl::padding_property(), (0.0, 4.0))
+            .set(TemplatedControl::padding_property(), (0.0, 6.0))
             .set(Layoutable::margin_property(), 0.0)
             .set(Layoutable::min_height_property(), 0.0)
             .build(),
@@ -25,10 +31,10 @@ pub fn install(app: &Application) {
                 FontFamily::new("fonts:Reader#Liberation Sans"),
             )
             .set(TemplatedControl::font_size_property(), 13.0)
-            .set(TemplatedControl::padding_property(), (9.0, 3.0))
+            .set(TemplatedControl::padding_property(), (9.0, 6.0))
             .set(TemplatedControl::foreground_property(), "#333333")
             .set(TemplatedControl::background_property(), "White")
-            .set(Layoutable::min_height_property(), 27.0)
+            .set(Layoutable::min_height_property(), 28.0)
             .build(),
     );
     app.styles().add(
