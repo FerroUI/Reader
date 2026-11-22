@@ -54,7 +54,7 @@ impl AppViewModel {
             }
             self.kept_unread
                 .borrow_mut()
-                .retain(|id| state.article(*id).is_some());
+                .retain(|id| state.article(*id).is_some_and(|article| !article.read));
             if matches!(self.view(), View::Feed(id) if state.feed(id).is_none()) {
                 *self.view.borrow_mut() = View::All;
             }

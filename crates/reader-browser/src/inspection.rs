@@ -1,7 +1,8 @@
 //! Automation snapshots reflect live native controls, including hit testing.
 use ferroui_base::{input::InputElement, Point, Visual};
 use ferroui_controls::{
-    automation::AutomationProperties, Application, Button, MenuItem, TextBlock, TextBox,
+    automation::AutomationProperties, Application, Button, Control, ListBox, MenuItem,
+    ScrollViewer, TextBlock, TextBox,
 };
 use serde_json::json;
 use wasm_bindgen::prelude::*;
@@ -19,6 +20,16 @@ pub fn inspect_view() -> String {
     };
     let viewport = root.bounds();
     let visual_count = root.get_visual_descendants().count();
+    let article_scroll = root
+        .get_visual_descendants()
+        .filter_map(|visual| visual.cast::<ListBox>())
+        .find(|list| list.has_name("ArticleList"))
+        .and_then(|list| list.scroll())
+        .and_then(|scroll| scroll.cast::<ScrollViewer>())
+        .map(|scroll| {
+            json!({"offsetY":scroll.offset().y,"viewportHeight":scroll.viewport().height,
+                "extentHeight":scroll.extent().height})
+        });
     let article_containers = root
         .get_visual_descendants()
         .filter(|v| {
@@ -31,6 +42,12 @@ pub fn inspect_view() -> String {
         .get_visual_descendants()
         .filter_map(|visual| {
             let name = visual.name();
+            let article_id = name
+                .as_deref()
+                .filter(|name| matches!(*name, "ArticleEntry" | "ArticleRow"))
+                .and_then(|_| visual.cast::<Control>())
+                .and_then(|control| control.tag())
+                .and_then(|tag| tag.downcast_ref::<u64>().copied());
             let text = if let Some(t) = visual.cast::<TextBlock>() {
                 t.text()
             } else if let Some(t) = visual.cast::<TextBox>() {
@@ -65,13 +82,13 @@ pub fn inspect_view() -> String {
                 });
             Some(
                 json!({"type":visual.get_type().name(),"name":name,"text":text,
-            "automationName":AutomationProperties::get_name(&visual),
+            "automationName":AutomationProperties::get_name(&visual),"articleId":article_id,
             "focused":visual.cast::<InputElement>().is_some_and(|i|i.is_focused()),
             "x":p.x,"y":p.y,"width":b.width,"height":b.height,"hit":hit}),
             )
         })
         .collect::<Vec<_>>();
     json!({"width":viewport.width,"height":viewport.height,"visualCount":visual_count,
-        "articleContainers":article_containers,"elements":elements})
+        "articleContainers":article_containers,"articleScroll":article_scroll,"elements":elements})
     .to_string()
 }

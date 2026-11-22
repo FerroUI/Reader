@@ -1,5 +1,5 @@
 use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
-use ferroui_base::media::FontWeight;
+use ferroui_base::media::{FontWeight, TextTrimming};
 use ferroui_view::prelude::*;
 use reader_controls::{icon, Icon};
 use reader_domain::View;
@@ -39,6 +39,7 @@ pub(super) fn nav(
         text_block()
             .grid_column(1)
             .text(label)
+            .text_trimming(<dyn TextTrimming>::character_ellipsis())
             .vertical_alignment(V::Center)
             .font_weight(if count > 0 || selected {
                 FontWeight::Bold
@@ -67,7 +68,11 @@ pub(super) fn nav(
                 } else {
                     "reader-nav"
                 })
-                .height(32.0)
+                .height(if crate::responsive::touch(&vm) {
+                    44.0
+                } else {
+                    32.0
+                })
                 .horizontal_content_alignment(H::Stretch)
                 .automation_properties_name(label)
                 .on_click(move |_| {
@@ -91,6 +96,15 @@ pub(super) fn group(
     let key = format!("group:{target:?}");
     let selected = vm.view() == target;
     let toggle = open;
+    let touch = crate::responsive::touch(&vm);
+    if touch {
+        return rsx! {Grid{key,column_definitions:"44,*",
+            Button{class:"reader-flat",width:44.0,height:44.0,automation_properties_name:format!("{} {}",if open.get(){"Collapse"}else{"Expand"},title),on_click:move |_|toggle.update(|value|*value=!*value),
+                {icon(if open.get(){Icon::ChevronDown}else{Icon::ChevronRight},10.0,if selected{"#DD4B39"}else{"#777777"})}
+            }
+            Border{Grid.column:1,{nav(vm,target,title,None,count,4.0)}}
+        }};
+    }
     grid()
         .key(key)
         .child(nav(vm, target, title, None, count, inset))

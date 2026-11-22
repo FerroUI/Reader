@@ -20,10 +20,10 @@ The following describes the checked-in implementation. It is a source-level feat
 | Import/export | OPML merge/export with multiple memberships; validated complete JSON backup/restore; recent-change undo | Google Takeout social JSON and account recovery are not supported; undo is session-only |
 | Preferences | Density, text size, start page, automatic read tracking, bulk-read confirmation, all/updated subscriptions, proxy | No localization, complete historical settings tabs or custom Send to services |
 | Keyboard | Core article/stream/share/view keys, timed `g` prefix, subscription/tag jump dialogs, `g Shift+t` Trends, text-size keys and input exclusions | Original folder-tree cursor/toggle semantics are incomplete; subscription traversal opens feeds directly |
-| Browser integration | History, downloads/uploads, clipboard, supported native sharing, email drafts, sanitized print document | Availability follows browser permissions and platform capabilities; no account, social or server email delivery |
+| Browser integration | Stream history, Back-dismissed dialogs/drawer, downloads/uploads, focus-preserving clipboard fallback, supported native sharing, email drafts, sanitized print document; article URL fragments retained | Availability follows browser permissions and platform capabilities; no account, social or server email delivery |
 | Browser persistence | IndexedDB transactions with generation checks; localStorage fallback; recovery handling; offline application snapshot | No cross-device synchronization; fallback storage lacks transactional multi-tab conflict protection |
 | Desktop integration | Shared UI, native pickers/clipboard/launcher, asynchronous curl, coalesced atomic file writes | Requires curl; feed decoder currently UTF-8-only; share copies text, print opens a text preview, and one process should use a data directory |
-| Narrow screen | Overlay subscriptions, compact toolbar and responsive article widths | A new adaptation of the desktop design; not a reproduction of Google's separate original mobile UI |
+| Narrow screen | Overlay subscriptions, compact toolbar, responsive article widths, coarse-pointer targets, safe-area and visual-viewport layout, browser pinch magnification | An adaptation of the desktop design; not a reproduction of Google's separate original mobile UI. Physical iOS keyboard/device testing is distinct from synthetic viewport checks |
 
 The app is an independent local reader built from the historical design. It must not be advertised as an operational replacement for every retired Google backend, nor as a fully validated pixel-perfect replica.
 
@@ -76,7 +76,7 @@ Compare the same viewport, device scale, font, density, stream and content again
 
 The key layout is a fixed-width subscription tree beside a flexible reading pane, a compact reading toolbar, thin separators and restrained red selection accents. The Material base must not leak unrelated shapes, elevation, spacing or typography into Reader controls. The source measurements are recorded in [reference.md](reference.md#layout-measurements).
 
-The original desktop client had a separate mobile interface, not a modern single responsive screen. The narrow adaptation keeps the desktop information model and reading commands accessible. It should be described as an adaptation unless checked separately against the original mobile client.
+The original desktop client had a separate mobile interface. The narrow adaptation keeps the desktop information model and reading commands accessible. [The primary mobile sources](reference.md#original-mobile-reader-and-touch-evidence) confirm tap-to-expand and inline actions, and a later More menu; they do not establish left/right article swipe commands. Those gestures must not be attributed to Reader merely because third-party Reeder implemented them. Safe-area, keyboard-viewport and browser Back integration are explicit modern adaptations.
 
 ## Original service boundaries
 

@@ -87,6 +87,18 @@ pub fn resize_window(width: f64) {
         }
     }
 }
+#[wasm_bindgen(js_name = resizeViewport)]
+pub fn resize_viewport(width: f64, height: f64) {
+    if let Ok(vm) = vm() {
+        vm.set_viewport_size(width, height);
+    }
+}
+#[wasm_bindgen(js_name = setTouchMode)]
+pub fn set_touch_mode(enabled: bool) {
+    if let Ok(vm) = vm() {
+        vm.set_touch_mode(enabled);
+    }
+}
 #[wasm_bindgen(js_name = tick)]
 pub fn tick(now: f64) {
     if now.is_finite() {
@@ -115,9 +127,37 @@ pub fn current_view() -> String {
         .and_then(|v| serde_json::to_string(&v.view()).ok())
         .unwrap_or_default()
 }
+#[wasm_bindgen(js_name = libraryGeneration)]
+pub fn library_generation() -> f64 {
+    vm().map(|vm| vm.library_generation() as f64)
+        .unwrap_or_default()
+}
 #[wasm_bindgen(js_name = navigate)]
 pub fn navigate(view: &str) -> Result<(), JsValue> {
     let view = serde_json::from_str::<View>(view).map_err(|e| error(e.to_string()))?;
+    for _ in 0..8 {
+        if !dismiss_overlay() {
+            break;
+        }
+    }
     vm()?.navigate(view);
     Ok(())
+}
+#[wasm_bindgen(js_name = hasOverlay)]
+pub fn has_overlay() -> bool {
+    reader_ui::has_transient_ui() || vm().is_ok_and(|vm| vm.viewport() < 700.0 && vm.sidebar_open())
+}
+#[wasm_bindgen(js_name = dismissOverlay)]
+pub fn dismiss_overlay() -> bool {
+    if reader_ui::dismiss_transient_ui() {
+        return true;
+    }
+    let mut dismissed = false;
+    if let Ok(vm) = vm() {
+        if vm.viewport() < 700.0 && vm.sidebar_open() {
+            vm.set_sidebar_open(false);
+            dismissed = true;
+        }
+    }
+    dismissed
 }

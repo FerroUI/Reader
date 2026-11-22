@@ -1,90 +1,146 @@
-//! Marks the entry crossing the reading line after a user scroll, without doing
-//! document mutations inside layout or collection notifications.
-use crate::session::Session;
-use ferroui_base::threading::{Dispatcher, DispatcherPriority};
-use ferroui_base::{Point, Ref};
-use ferroui_controls::{Control, ListBox, ScrollViewer};
-use ferroui_view::on_cleanup;
-use reader_domain::ViewMode;
-use reader_state::AppViewModel;
-use std::{cell::Cell, rc::Rc};
+//! Auto-read follows actual input and an observed offset change in the same frame.
+//! Layout, image reflow, route restoration and keyboard scanning alone never read.
+mod input;
 
-pub fn attach(list: &Ref<ListBox>, vm: Rc<AppViewModel>, ui: Rc<Session>) {
-    let queued = Rc::new(Cell::new(false));
-    let weak_list = list.downgrade();
-    let weak_vm = Rc::downgrade(&vm);
-    let weak_ui = Rc::downgrade(&ui);
-    let token = list.add_handler(ScrollViewer::scroll_changed_event(), move |_, event| {
-        if weak_ui.upgrade().is_some_and(|ui| {
-            ui.programmatic_scroll
-                .get()
-                .is_some_and(|at| at.elapsed().as_millis() < 250)
-        }) {
+use crate::session::{Panel, Session};
+use ferroui_base::threading::{Dispatcher, DispatcherPriority};
+use ferroui_base::{Point, Ref, WeakRef};
+use ferroui_controls::{Control, ListBox};
+pub use input::attach;
+use reader_domain::{View, ViewMode};
+use reader_state::AppViewModel;
+use std::{
+    cell::{Cell, RefCell},
+    rc::{Rc, Weak},
+    time::Instant,
+};
+
+struct InputIntent {
+    at: Instant,
+    route: View,
+    viewport: (f64, f64),
+}
+struct Reading {
+    list: WeakRef<ListBox>,
+    vm: Weak<AppViewModel>,
+    ui: Weak<Session>,
+    queued: Cell<bool>,
+    frame: Cell<Frame>,
+    intent: RefCell<Option<InputIntent>>,
+}
+#[derive(Clone, Copy, Default)]
+struct Frame {
+    input: bool,
+    offset_changed: bool,
+}
+ferroui_base::ferro_thread_local! {
+    static CURRENT: RefCell<Weak<Reading>> = const { RefCell::new(Weak::new()) };
+}
+
+/// Space can page the list while keyboard focus is on the application root.
+pub(crate) fn user_scroll() {
+    let reading = CURRENT.with(|current| current.borrow().upgrade());
+    if let Some(reading) = reading {
+        reading.input();
+    }
+}
+impl Reading {
+    fn input(self: &Rc<Self>) {
+        let (Some(vm), Some(ui)) = (self.vm.upgrade(), self.ui.upgrade()) else {
+            return;
+        };
+        if blocked(&vm, &ui) {
             return;
         }
-        if event.offset_delta().y.abs() < 0.5 || queued.replace(true) {
+        *self.intent.borrow_mut() = Some(InputIntent {
+            at: Instant::now(),
+            route: vm.view(),
+            viewport: (vm.viewport(), vm.viewport_height()),
+        });
+        let mut frame = self.frame.get();
+        frame.input = true;
+        self.frame.set(frame);
+        self.queue();
+    }
+    fn changed(self: &Rc<Self>) {
+        let mut frame = self.frame.get();
+        frame.offset_changed = true;
+        self.frame.set(frame);
+        self.queue();
+    }
+    fn queue(self: &Rc<Self>) {
+        if self.queued.replace(true) {
             return;
         }
-        let list = weak_list.clone();
-        let vm = weak_vm.clone();
-        let ui = weak_ui.clone();
-        let queued = queued.clone();
+        let weak = Rc::downgrade(self);
         Dispatcher::ui_thread().post_local(
             move || {
-                queued.set(false);
-                let (Some(list), Some(vm), Some(ui)) = (list.upgrade(), vm.upgrade(), ui.upgrade())
-                else {
-                    return;
-                };
-                if ui
-                    .programmatic_scroll
-                    .get()
-                    .is_some_and(|at| at.elapsed().as_millis() < 250)
-                {
-                    return;
-                }
-                if !list.is_attached_to_visual_tree() {
-                    return;
-                }
-                let settings = vm.state().settings.clone();
-                if !settings.mark_read_on_scroll || settings.view_mode != ViewMode::Expanded {
-                    return;
-                }
-                let mut candidate = None;
-                for visual in list.get_visual_descendants() {
-                    let Some(control) = visual.cast::<Control>() else {
-                        continue;
-                    };
-                    let Some(id) = control
-                        .has_name("ArticleEntry")
-                        .then(|| control.tag())
-                        .flatten()
-                        .and_then(|value| value.downcast_ref::<u64>().copied())
-                    else {
-                        continue;
-                    };
-                    let Some(position) = control.translate_point(Point::new(0.0, 0.0), &list)
-                    else {
-                        continue;
-                    };
-                    let bottom = position.y + control.bounds().height;
-                    if position.y <= 40.0 && bottom > 40.0 {
-                        candidate = Some(id);
-                        break;
-                    }
-                }
-                if let Some(id) = candidate {
-                    // Explicit Keep unread is sticky until a different entry is opened.
-                    vm.select_from_scroll(id);
+                if let Some(reading) = weak.upgrade() {
+                    reading.flush();
                 }
             },
             DispatcherPriority::BACKGROUND,
         );
-    });
-    let weak = list.downgrade();
-    on_cleanup(move || {
-        if let Some(list) = weak.upgrade() {
-            list.remove_handler(ScrollViewer::scroll_changed_event(), token);
+    }
+    fn flush(&self) {
+        self.queued.set(false);
+        let frame = self.frame.take();
+        let intent = self.intent.borrow_mut().take();
+        if !frame.input || !frame.offset_changed {
+            return;
         }
-    });
+        let (Some(intent), Some(list), Some(vm), Some(ui)) = (
+            intent,
+            self.list.upgrade(),
+            self.vm.upgrade(),
+            self.ui.upgrade(),
+        ) else {
+            return;
+        };
+        if !list.is_attached_to_visual_tree()
+            || blocked(&vm, &ui)
+            || vm.view() != intent.route
+            || (vm.viewport(), vm.viewport_height()) != intent.viewport
+            || ui
+                .programmatic_scroll
+                .get()
+                .is_some_and(|at| at >= intent.at)
+        {
+            return;
+        }
+        let settings = vm.state().settings.clone();
+        if !settings.mark_read_on_scroll || settings.view_mode != ViewMode::Expanded {
+            return;
+        }
+        if let Some(id) = reading_line(&list) {
+            vm.select_from_scroll(id);
+        }
+    }
+}
+fn blocked(vm: &AppViewModel, ui: &Session) -> bool {
+    ui.panel.get_untracked() != Panel::None
+        || crate::transient::has_menu()
+        || (vm.viewport() < 700.0 && vm.sidebar_open())
+}
+fn reading_line(list: &Ref<ListBox>) -> Option<reader_domain::Id> {
+    for visual in list.get_visual_descendants() {
+        let Some(control) = visual.cast::<Control>() else {
+            continue;
+        };
+        let Some(id) = control
+            .has_name("ArticleEntry")
+            .then(|| control.tag())
+            .flatten()
+            .and_then(|value| value.downcast_ref::<u64>().copied())
+        else {
+            continue;
+        };
+        let Some(position) = control.translate_point(Point::new(0.0, 0.0), list) else {
+            continue;
+        };
+        if position.y <= 40.0 && position.y + control.bounds().height > 40.0 {
+            return Some(id);
+        }
+    }
+    None
 }

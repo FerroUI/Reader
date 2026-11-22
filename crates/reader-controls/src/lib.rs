@@ -6,6 +6,7 @@ mod icons;
 mod menus;
 mod templates;
 mod theme;
+mod touch;
 pub use buttons::*;
 pub use icons::{icon, Icon};
 pub use theme::install_theme;

@@ -1,6 +1,63 @@
 use reader_domain::{AppState, SortOrder, View, ViewMode};
-use reader_state::AppViewModel;
+use reader_state::{AppViewModel, HostServices};
 use std::rc::Rc;
+
+#[test]
+fn viewport_and_pointer_mode_are_transient_validated_and_coalesce_notifications() {
+    let vm = AppViewModel::new(AppState::new(), 1000, Rc::new(|_| Ok(())));
+    let before = vm.revision();
+    vm.set_viewport_size(390.0, 420.0);
+    assert_eq!((vm.viewport(), vm.viewport_height()), (390.0, 420.0));
+    assert_eq!(vm.revision(), before + 1);
+    vm.set_viewport_size(f64::NAN, -10.0);
+    vm.set_viewport_size(390.3, 420.4);
+    assert_eq!(vm.revision(), before + 1);
+    vm.set_viewport(1024.0);
+    assert_eq!(vm.viewport_height(), 420.0);
+    vm.set_viewport_size(f64::INFINITY, 640.0);
+    assert_eq!((vm.viewport(), vm.viewport_height()), (1024.0, 640.0));
+    vm.set_touch_mode(true);
+    let revision = vm.revision();
+    vm.set_touch_mode(true);
+    assert_eq!(vm.revision(), revision);
+    assert!(vm.touch_mode());
+    let restored = AppViewModel::new(
+        AppState::from_json(&vm.export_json().unwrap()).unwrap(),
+        1000,
+        Rc::new(|_| Ok(())),
+    );
+    assert_eq!(restored.viewport_height(), 900.0);
+    assert!(!restored.touch_mode());
+}
+
+#[test]
+fn restoring_backup_clears_contact_selection_and_manual_unread_for_reused_ids() {
+    let vm = AppViewModel::new(AppState::sample(1000), 1000, Rc::new(|_| Ok(())));
+    vm.set_services(HostServices::default());
+    vm.navigate(View::All);
+    let backup = vm.export_json().unwrap();
+    assert_eq!(vm.library_generation(), 0);
+    vm.next_article(1);
+    let id = vm.cursor().unwrap();
+    vm.keep_unread(id);
+    vm.refresh();
+    assert!(vm.is_refreshing());
+    vm.import_json(&backup).unwrap();
+    assert!(!vm.is_refreshing());
+    assert_eq!(vm.library_generation(), 1);
+    assert_eq!(vm.selected(), None);
+    assert_eq!(vm.cursor(), None);
+    assert!(!vm.is_kept_unread(id));
+    vm.refresh();
+    assert!(vm.is_refreshing());
+    vm.undo();
+    assert!(!vm.is_refreshing());
+    assert_eq!(vm.library_generation(), 2);
+    assert_eq!(vm.cursor(), None);
+    assert!(!vm.is_kept_unread(id));
+    vm.select_from_scroll(id);
+    assert!(vm.article(id).unwrap().read);
+}
 
 #[test]
 fn stream_presentation_is_independent_and_survives_backup_restore() {

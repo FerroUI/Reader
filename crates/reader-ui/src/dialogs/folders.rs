@@ -1,7 +1,8 @@
 use crate::session::{Panel, Session};
-use ferroui_base::layout::Orientation;
+use ferroui_base::input::Key;
+use ferroui_base::layout::HorizontalAlignment as H;
 use ferroui_view::prelude::*;
-use reader_controls::{action, paragraph, primary, separator};
+use reader_controls::{action, action_row, paragraph, primary, separator};
 use reader_domain::Id;
 use reader_state::AppViewModel;
 use std::rc::Rc;
@@ -27,6 +28,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, id: Id) -> Element {
                 .class("reader-check")
                 .key(format!("folder-choice:{folder}"))
                 .content(folder)
+                .horizontal_alignment(H::Stretch)
                 .is_checked(Some(current))
                 .font_size(13.0)
                 .min_height(26.0)
@@ -49,36 +51,55 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, id: Id) -> Element {
     let new_ui = ui.clone();
     let done = ui.clone();
     let unfiled = vm.clone();
+    let create: Rc<dyn Fn()> = Rc::new(move || {
+        let name = new_ui.entry.get_untracked().trim().to_owned();
+        if name.is_empty() {
+            new_ui.form_error.set("Enter a folder name.".into());
+            return;
+        }
+        let Some(feed) = new_vm.feed(id) else {
+            return;
+        };
+        let mut folders = feed.folder_names();
+        folders.push(name.clone());
+        new_vm.create_folder(name);
+        new_vm.set_feed_folders(id, folders);
+        new_ui.entry.set(String::new());
+        new_ui.form_error.set(String::new());
+    });
+    let enter = create.clone();
+    let error = ui.form_error;
     form.child(separator())
         .child(
             reader_controls::input("New folder name")
                 .name("NewFolderName")
+                .node_ref(ui.field)
                 .text(ui.entry.two_way())
-                .placeholder_text("New folder name"),
+                .placeholder_text("New folder name")
+                .on_text_changed(move |_| error.set(String::new()))
+                .on_key_down(move |event| {
+                    if event.key == Key::Return {
+                        event.set_handled(true);
+                        enter();
+                    }
+                }),
         )
-        .child(action("Create and add to folder", move || {
-            let name = new_ui.entry.get_untracked().trim().to_owned();
-            if name.is_empty() {
-                return;
-            }
-            let Some(feed) = new_vm.feed(id) else {
-                return;
-            };
-            let mut folders = feed.folder_names();
-            folders.push(name.clone());
-            new_vm.create_folder(name);
-            new_vm.set_feed_folders(id, folders);
-            new_ui.entry.set(String::new());
-        }))
         .child(
-            stack_panel()
-                .orientation(Orientation::Horizontal)
-                .spacing(10.0)
-                .margin((0.0, 12.0, 0.0, 0.0))
-                .child(primary("Done", move || done.close()))
-                .child(action("Remove from all folders", move || {
-                    unfiled.set_feed_folders(id, Vec::new())
-                })),
+            text_block()
+                .is_visible(!ui.form_error.get().is_empty())
+                .text(ui.form_error.get())
+                .foreground("#B3261E")
+                .text_wrapping(ferroui_base::media::TextWrapping::Wrap),
         )
+        .child(action("Create and add to folder", move || create()))
+        .child(border().margin((0.0, 12.0, 0.0, 0.0)).child(action_row(
+            [
+                primary("Done", move || done.close()),
+                action("Remove from all folders", move || {
+                    unfiled.set_feed_folders(id, Vec::new())
+                }),
+            ],
+            10.0,
+        )))
         .into()
 }

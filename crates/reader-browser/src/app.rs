@@ -49,7 +49,7 @@ impl ApplicationImpl for App {
                 crate::host::save(json).map_err(crate::host::error_message)
             }),
         );
-        vm.set_viewport(crate::host::width());
+        vm.set_viewport_size(crate::host::width(), crate::host::height());
         vm.set_services(HostServices {
             request: Rc::new(|request| {
                 if let Ok(json) = serde_json::to_string(&request) {
@@ -58,6 +58,7 @@ impl ApplicationImpl for App {
             }),
         });
         VIEW_MODEL.with(|slot| *slot.borrow_mut() = Some(vm.clone()));
+        reader_ui::set_navigation_notifier(Rc::new(|| crate::host::navigation_changed()));
         if let Some(error) = error {
             vm.report_error(error);
         }

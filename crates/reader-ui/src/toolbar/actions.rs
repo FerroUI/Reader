@@ -1,0 +1,150 @@
+use crate::{
+    menus,
+    session::{Panel, Session},
+};
+use ferroui_view::prelude::*;
+use reader_controls::Icon;
+use reader_domain::{Density, SortOrder, View, ViewMode};
+use reader_state::AppViewModel;
+use std::rc::Rc;
+
+pub(super) fn filter_menu(vm: Rc<AppViewModel>) -> Element {
+    let unread = vm.state().settings.unread_only;
+    let all = vm.clone();
+    let fresh = vm.clone();
+    menus::attach(
+        &vm,
+        reader_controls::dropdown(if unread { "New items" } else { "All items" })
+            .width(72.0)
+            .padding((6.0, 5.0)),
+        vec![
+            menus::checked("All items", !unread, move || all.set_unread_only(false)),
+            menus::checked("New items", unread, move || fresh.set_unread_only(true)),
+        ],
+    )
+}
+pub(super) fn mark_menu(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
+    let mark = vm.clone();
+    let confirm = ui.clone();
+    let touch = crate::responsive::touch(&vm);
+    rsx! {Grid{column_definitions:if touch{"99,44"}else{"99,20"},height:if touch{44.0}else{29.0},
+        Button{class:"reader-button",padding:(6.0,5.0),content:"Mark all as read",automation_properties_name:"Mark all as read",on_click:move |_|{
+            if mark.state().settings.confirm_mark_all{confirm.show(Panel::MarkAll);}else{mark.mark_all_read(None);}
+        }}
+        Border{Grid.column:1,{menus::attach(&vm,reader_controls::toolbar_icon(Icon::ChevronDown,"Mark all read options").width(if touch{44.0}else{20.0}).padding(5.0),mark_items(vm.clone(),ui))}}
+    }}
+}
+fn mark_items(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Vec<Element> {
+    let all = vm.clone();
+    let day = vm.clone();
+    let week = vm.clone();
+    let fortnight = vm.clone();
+    vec![
+        menus::item("All items", move || {
+            if all.state().settings.confirm_mark_all {
+                ui.show(Panel::MarkAll);
+            } else {
+                all.mark_all_read(None);
+            }
+        }),
+        menus::item("Items older than a day", move || {
+            day.mark_all_read(Some(day.now() - 86400))
+        }),
+        menus::item("Items older than a week", move || {
+            week.mark_all_read(Some(week.now() - 7 * 86400))
+        }),
+        menus::item("Items older than two weeks", move || {
+            fortnight.mark_all_read(Some(fortnight.now() - 14 * 86400))
+        }),
+    ]
+}
+pub(super) fn sort_menu(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
+    let label = if matches!(vm.view(), View::Feed(_)) {
+        "Feed settings"
+    } else {
+        "View settings"
+    };
+    menus::attach(
+        &vm,
+        reader_controls::dropdown(label).width(115.0),
+        sort_items(vm.clone(), ui),
+    )
+}
+fn sort_items(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Vec<Element> {
+    let order = vm.state().settings.sort;
+    let newest = vm.clone();
+    let oldest = vm.clone();
+    let mut items = vec![
+        menus::checked("Sort by newest", order == SortOrder::Newest, move || {
+            newest.set_sort(SortOrder::Newest)
+        }),
+        menus::checked("Sort by oldest", order == SortOrder::Oldest, move || {
+            oldest.set_sort(SortOrder::Oldest)
+        }),
+    ];
+    if let View::Feed(id) = vm.view() {
+        let rename = ui.clone();
+        let folders = ui.clone();
+        let unsubscribe = ui.clone();
+        items.push(menus::separator());
+        items.push(menus::item("Rename subscription...", move || {
+            rename.show(Panel::Rename(id))
+        }));
+        items.push(menus::item("Change folders...", move || {
+            folders.show(Panel::Move(id))
+        }));
+        items.push(menus::item("Unsubscribe...", move || {
+            unsubscribe.show(Panel::Unsubscribe(id))
+        }));
+    }
+    items
+}
+pub(super) fn more_items(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Vec<Element> {
+    let list = vm.clone();
+    let expanded = vm.clone();
+    let previous = vm.clone();
+    let next = vm.clone();
+    let mut items = vec![
+        menus::item("List view", move || list.set_view_mode(ViewMode::List)),
+        menus::item("Expanded view", move || {
+            expanded.set_view_mode(ViewMode::Expanded)
+        }),
+        menus::item("Previous item", move || previous.next_article(-1)),
+        menus::item("Next item", move || next.next_article(1)),
+        menus::separator(),
+    ];
+    items.extend(mark_items(vm.clone(), ui.clone()));
+    items.push(menus::separator());
+    items.extend(sort_items(vm, ui));
+    items
+}
+
+pub(super) fn settings_items(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Vec<Element> {
+    let pref = ui.clone();
+    let sub = ui.clone();
+    let imports = ui.clone();
+    let keys = ui.clone();
+    let about = ui.clone();
+    let comfortable = vm.clone();
+    let cozy = vm.clone();
+    let compact = vm.clone();
+    let density = vm.state().settings.density;
+    vec![
+        menus::item("Reader settings", move || pref.show(Panel::Preferences)),
+        menus::item("Subscriptions", move || sub.show(Panel::Subscriptions)),
+        menus::item("Import/Export", move || imports.show(Panel::ImportExport)),
+        menus::separator(),
+        menus::checked("Comfortable", density == Density::Comfortable, move || {
+            comfortable.set_density(Density::Comfortable)
+        }),
+        menus::checked("Cozy", density == Density::Cozy, move || {
+            cozy.set_density(Density::Cozy)
+        }),
+        menus::checked("Compact", density == Density::Compact, move || {
+            compact.set_density(Density::Compact)
+        }),
+        menus::separator(),
+        menus::item("Keyboard shortcuts", move || keys.show(Panel::Shortcuts)),
+        menus::item("About Reader", move || about.show(Panel::About)),
+    ]
+}

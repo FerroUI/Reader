@@ -37,7 +37,7 @@ Transient presentation state uses FerroUI signals. It is deliberately distinct f
 
 Feeds and articles have application-assigned IDs. Feed merges deduplicate source identities and update publisher content while retaining the user's read state, star, tags, notes and recorded reading time. Refresh errors attach to the affected subscription without deleting its cached entries.
 
-Hosts recheck a refresh's original feed ID and URL before applying its result. An unsubscribe while a network request is pending therefore cannot recreate the removed subscription. Feed parsing and a successful merge do not navigate: the host explicitly selects the resulting feed only for a successful user subscription. Background refresh leaves the current destination alone.
+Hosts recheck a refresh's original feed ID and URL before applying its result. An unsubscribe while a network request is pending therefore cannot recreate the removed subscription. A transient library generation advances on full backup replacement and its undo; both hosts reject earlier-generation responses even when the replacement reuses the same IDs and URLs. Pending-operation counts are separated by library generation so obsolete requests cannot hold open or finish the new library's busy state. Feed parsing and a successful merge do not navigate: a host may select a newly subscribed feed only when that request is the latest subscription and the user has stayed at its starting reading location. Background refresh leaves the current destination alone.
 
 One subscription can belong to several folder labels. The legacy `folder` field remains as the primary compatibility label; normalized `folders` carries all memberships. OPML imports merge and deduplicate subscriptions while combining memberships, and export represents a feed in each applicable folder. Removing a folder removes its labels rather than deleting unrelated subscriptions.
 
@@ -71,7 +71,11 @@ This is a constrained HTML renderer. Publisher CSS, arbitrary table geometry/lay
 
 ## Browser host
 
-`main.js` loads the canonical FerroUI runtime, prepares storage, loads shared font bytes, attaches exports and starts the Rust application. A resize observer updates the view-model width. Browser history is bridged separately from library mutations, and file import/export, sharing and printing remain small host modules.
+`main.js` loads the canonical FerroUI runtime, prepares storage, loads shared font bytes, attaches exports and starts the Rust application. `viewport.js` tracks the host's measured width and height, visual-viewport resize/pan events and the primary-pointer media query. The host rectangle excludes CSS safe-area insets. Keyboard shrinkage therefore reaches the retained view and dialog layout; pinch magnification keeps the existing logical layout instead of reflowing it to the zoomed viewport. The native desktop host publishes both client dimensions through the same view-model API.
+
+Browser history is bridged separately from library mutations. View-model notifications and presentation-panel/menu changes schedule a small host reconciliation rather than polling the current view. An open menu, modal or narrow subscription drawer adds a transient history guard; Back dismisses the top layer before leaving the stream, retaining a guard while another layer remains. Closing the final overlay in the UI consumes that entry, and changing streams closes the layers and replaces the guard without introducing an empty Back stop. In-flight close traversal does not overwrite a newer native route. Reload/Forward does not reconstruct discarded dialog drafts. Article selection and read/star changes do not add history entries.
+
+`input.js` captures only composition-related keyboard events before the framework's generic key callback, leaving browser default behavior and composition/beforeinput/input events intact. This prevents Enter/Escape or candidate-selection keys from executing application shortcuts while an IME is composing. The framework's persistent text-input bridge continues to own text editing. Normal browser modifier shortcuts remain governed by native keyboard routing.
 
 The application persistence module is named **`reader-storage.js`**. FerroUI stages its own platform module named `storage.js` into the same output directory; naming the Reader adapter `storage.js` overwrote that framework module and broke runtime imports. App adapters must use distinct names when sharing the generated output namespace. Imports and the service-worker manifest use the renamed Reader module; the framework's own `storage.js` remains in the built site.
 
@@ -83,11 +87,13 @@ The `HostRequest` enum is serialized with an explicit operation kind. Requests c
 
 Browser CORS, mixed-content rules, network permissions and publisher availability still apply. There is no poller running on a server and no cross-device historical feed store. See [the README connection instructions](../README.md#connecting-live-feeds).
 
+A subscription completion opens its new feed only if it is the latest subscription request and the user is still at the reading location where it started. The feed is added even when navigation has moved elsewhere. External article, email/share and printed links preserve URL fragments; feed-identity normalization still strips fragments. Clipboard fallback restores the prior focus/selection and does not activate a phone keyboard. Print uses a sanitized, offscreen printable iframe instead of a `display:none` frame.
+
 ### Persistence and offline updates
 
 `reader-storage.js` keeps an in-memory serialized snapshot and queues IndexedDB transactions. Each transaction checks the saved generation before replacing the document. A competing tab's successful write therefore produces a visible conflict instead of a silent overwrite. A localStorage fallback supports more limited environments without pretending to offer the same concurrency guarantee.
 
-Save requests are coalesced by the host. Visibility/page lifecycle hooks request a flush, and errors are reported to the view model. Abrupt process termination or storage eviction can still lose changes that have not reached persistent storage. Portable JSON backups are the explicit export boundary.
+Save requests are coalesced by the host. Visibility/pagehide hooks request a flush, and errors are reported to the view model. There is no permanent `beforeunload` listener, allowing browsers to retain the page in their back/forward cache; `pageshow` refreshes time, viewport and navigation state. IndexedDB version changes and unexpected connection closure report the failure immediately and block writes until reload. Abrupt process termination or storage eviction can still lose changes that have not reached persistent storage. Portable JSON backups are the explicit export boundary.
 
 The service-worker cache name derives deterministically from normalized build inputs and the worker template. `prepare-site.mjs` first computes that identifier, stamps the index, then generates `{ path, sha256, size }` entries from each asset's **final bytes**, including the stamped index. This sequence avoids a circular build-identifier/index-hash dependency.
 
@@ -98,6 +104,8 @@ Only successful activation removes older Reader cache generations. There is no `
 ## Desktop host
 
 The native host creates the same view model and shared view in a FerroUI `Window`. A small four-thread worker pool executes blocking curl requests and file operations. A future communicates each completion to the dispatcher without moving `Rc` controls or view models across threads.
+
+`FeedOperations` keeps a ticket for each refresh or subscription, rather than cancelling every older request when a new one starts. All successful concurrent subscriptions can merge; only the latest subscription may change navigation. The last current-generation operation clears the busy state. Two small tests exercise concurrent subscription completion and replacement-generation isolation without linking the UI test profile.
 
 The default transport invokes the operating system's `curl` executable with HTTP(S)-only redirects, a connection timeout, a total timeout and response limits. It captures the final URL for relative feed/discovery links. The current native decoder accepts UTF-8. Browser proxy settings do not affect native requests.
 

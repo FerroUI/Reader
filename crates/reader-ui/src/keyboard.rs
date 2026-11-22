@@ -1,74 +1,31 @@
+mod attach;
 use crate::session::{Panel, Session};
-use ferroui_base::input::{InputElement, Key, KeyEventArgs, KeyModifiers};
-use ferroui_base::interactivity::{RoutedEventHandlerToken, RoutingStrategies};
+pub use attach::attach;
+use ferroui_base::input::{Key, KeyEventArgs, KeyModifiers};
 use ferroui_base::threading::{Dispatcher, DispatcherPriority};
-use ferroui_base::{Ref, WeakRef};
-use ferroui_controls::{Control, Grid, ScrollViewer, TextBox, TopLevel};
-use ferroui_view::prelude::*;
+use ferroui_controls::{Control, ScrollViewer, TextBox};
 use reader_domain::{View, ViewMode};
 use reader_state::AppViewModel;
-use std::{cell::RefCell, rc::Rc};
 
-pub fn attach(root: &Ref<Grid>, vm: Rc<AppViewModel>, ui: Rc<Session>) {
-    let route = Rc::new(RefCell::new(
-        None::<(WeakRef<TopLevel>, RoutedEventHandlerToken)>,
-    ));
-    let connect: Rc<dyn Fn()> = {
-        let route = route.clone();
-        let root = root.downgrade();
-        let vm = Rc::downgrade(&vm);
-        let ui = Rc::downgrade(&ui);
-        Rc::new(move || {
-            clear(&route);
-            let Some(root) = root.upgrade().filter(|r| r.is_attached_to_visual_tree()) else {
-                return;
-            };
-            let Some(top) = TopLevel::get_top_level(Some(&root)) else {
-                return;
-            };
-            let model = vm.clone();
-            let session = ui.clone();
-            let token = top.add_handler_with(
-                InputElement::key_down_event(),
-                move |_, event| {
-                    if let (Some(vm), Some(ui)) = (model.upgrade(), session.upgrade()) {
-                        handle(&vm, &ui, event);
-                    }
-                },
-                RoutingStrategies::BUBBLE,
-                false,
-            );
-            *route.borrow_mut() = Some((top.downgrade(), token));
-        })
-    };
-    let mounted = connect.clone();
-    let attached = root.attached_to_visual_tree(move |_| mounted());
-    let detached_route = route.clone();
-    let detached = root.detached_from_visual_tree(move |_| clear(&detached_route));
-    connect();
-    on_cleanup(move || {
-        attached.dispose();
-        detached.dispose();
-        clear(&route);
-    });
-}
-fn clear(route: &RefCell<Option<(WeakRef<TopLevel>, RoutedEventHandlerToken)>>) {
-    if let Some((top, token)) = route.borrow_mut().take() {
-        if let Some(top) = top.upgrade() {
-            top.remove_handler(InputElement::key_down_event(), token);
-        }
-    }
-}
 fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
+    let modifiers = event.key_modifiers;
+    let ctrl = modifiers.intersects(KeyModifiers::CONTROL | KeyModifiers::META);
+    let shift = modifiers.contains(KeyModifiers::SHIFT);
+    // Alt/AltGr belong to the platform and text input, including non-Latin layouts.
+    if modifiers.contains(KeyModifiers::ALT) {
+        ui.cancel_prefix();
+        return;
+    }
     if event.key == Key::Escape {
         if ui.panel.get_untracked() != Panel::None {
             ui.close();
             event.set_handled(true);
             return;
         }
-        ui.close();
+        ui.cancel_prefix();
         if vm.sidebar_open() {
             vm.set_sidebar_open(false);
+            ui.restore_article_focus();
         } else {
             vm.select(None);
         }
@@ -76,23 +33,25 @@ fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
         return;
     }
     if ui.panel.get_untracked() != Panel::None {
+        ui.cancel_prefix();
         return;
     }
-    let modifiers = event.key_modifiers;
-    let ctrl = modifiers.intersects(KeyModifiers::CONTROL | KeyModifiers::META);
-    let shift = modifiers.contains(KeyModifiers::SHIFT);
-    let editing = event.source().is_some_and(|source| {
-        source.cast::<TextBox>().is_some()
-            || source.cast::<Control>().is_some_and(|c| {
-                c.get_visual_ancestors()
-                    .any(|a| a.cast::<TextBox>().is_some())
-            })
-    });
-    if editing {
+    if editing_source(event) {
+        ui.cancel_prefix();
+        return;
+    }
+    if vm.viewport() < 700.0 && vm.sidebar_open() {
+        ui.cancel_prefix();
+        if !ctrl && !shift && event.key == Key::U {
+            vm.set_sidebar_open(false);
+            ui.restore_article_focus();
+            event.set_handled(true);
+        }
         return;
     }
     if ctrl {
-        if event.key == Key::Z {
+        ui.cancel_prefix();
+        if event.key == Key::Z && !shift {
             vm.undo();
             event.set_handled(true);
         }
@@ -147,14 +106,12 @@ fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
             if feeds.is_empty() {
                 return;
             }
-            let current = feeds
-                .iter()
-                .position(|f| vm.view() == View::Feed(f.id))
-                .unwrap_or(0);
-            let index = if event.key == Key::N {
-                (current + 1).min(feeds.len() - 1)
-            } else {
-                current.saturating_sub(1)
+            let current = feeds.iter().position(|f| vm.view() == View::Feed(f.id));
+            let index = match (current, event.key) {
+                (Some(current), Key::N) => (current + 1).min(feeds.len() - 1),
+                (Some(current), _) => current.saturating_sub(1),
+                (None, Key::N) => 0,
+                (None, _) => feeds.len() - 1,
             };
             vm.navigate(View::Feed(feeds[index].id));
         }
@@ -243,6 +200,7 @@ fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
             );
         }
         Key::Space => {
+            crate::reading::user_scroll();
             if let Some(list) = ui.article_list.get_untracked() {
                 if let Some(scroll) = list
                     .get_visual_descendants()
@@ -259,4 +217,15 @@ fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
         _ => return,
     }
     event.set_handled(true);
+}
+
+pub(crate) fn editing_source(event: &KeyEventArgs) -> bool {
+    event.source().is_some_and(|source| {
+        source.cast::<TextBox>().is_some()
+            || source.cast::<Control>().is_some_and(|control| {
+                control
+                    .get_visual_ancestors()
+                    .any(|ancestor| ancestor.cast::<TextBox>().is_some())
+            })
+    })
 }

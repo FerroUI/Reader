@@ -117,17 +117,20 @@ impl AppState {
         Ok(())
     }
     pub(crate) fn reindex(&mut self) {
-        self.feed_index = self
-            .feeds
-            .iter()
-            .enumerate()
-            .map(|(i, f)| (f.id, i))
-            .collect();
+        self.reindex_feeds();
         self.article_index = self
             .articles
             .iter()
             .enumerate()
             .map(|(i, a)| (a.id, i))
+            .collect();
+    }
+    pub(crate) fn reindex_feeds(&mut self) {
+        self.feed_index = self
+            .feeds
+            .iter()
+            .enumerate()
+            .map(|(i, f)| (f.id, i))
             .collect();
     }
     pub(crate) fn allocate(&mut self) -> Id {

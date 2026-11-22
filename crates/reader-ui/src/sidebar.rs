@@ -21,10 +21,16 @@ pub fn width(density: Density) -> f64 {
 }
 pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let density = vm.state().settings.density;
-    let inset = match density {
-        Density::Comfortable => 44.0,
-        Density::Cozy => 28.0,
-        Density::Compact => 16.0,
+    let narrow = crate::responsive::narrow(&vm);
+    let touch = crate::responsive::touch(&vm);
+    let inset = if narrow {
+        16.0
+    } else {
+        match density {
+            Density::Comfortable => 44.0,
+            Density::Cozy => 28.0,
+            Density::Compact => 16.0,
+        }
     };
     let subscribe = ui.clone();
     let manage = ui.clone();
@@ -89,7 +95,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             .text("Subscriptions")
             .font_size(13.0)
             .font_weight(FontWeight::Bold)
-            .height(32.0)
+            .height(if touch { 44.0 } else { 32.0 })
             .padding((inset, 8.0, 0.0, 0.0)),
     );
     let feeds = vm.feeds();
@@ -129,11 +135,11 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         let disclosure_folder = folder.clone();
         let selected = vm.view() == View::Folder(folder.clone());
         content=content.child(rsx! {
-            Grid {key:format!("folder:{folder}"),with:move |target|crate::drag::attach_target(&target.clone().upcast(),drop_vm.clone(),drop_folder.clone()),column_definitions:"20,*",margin:(inset-18.0,0.0,8.0,0.0),height:27.0,
+            Grid {key:format!("folder:{folder}"),with:move |target|crate::drag::attach_target(&target.clone().upcast(),drop_vm.clone(),drop_folder.clone()),column_definitions:if touch{"44,*"}else{"20,*"},margin:((inset-18.0).max(0.0),0.0,8.0,0.0),height:if touch{44.0}else{27.0},
                 Button {class:"reader-flat",automation_properties_name:format!("Toggle {folder}"),on_click:move |_|disclosure_ui.toggle_folder(&disclosure_folder),
                     {icon(if collapsed.contains(&folder){Icon::ChevronRight}else{Icon::ChevronDown},8.0,"#777777")}
                 }
-                Button {Grid.column:1,class:if selected {"reader-nav selected"}else{"reader-nav"},horizontal_content_alignment:H::Stretch,automation_properties_name:folder.clone(),on_click:move |_|folder_vm.navigate(View::Folder(folder_name.clone())),
+                Button {Grid.column:1,class:if selected {"reader-nav selected"}else{"reader-nav"},horizontal_content_alignment:H::Stretch,automation_properties_name:folder.clone(),on_click:move |_|{folder_vm.navigate(View::Folder(folder_name.clone()));if folder_vm.viewport()<700.0{folder_vm.set_sidebar_open(false);}},
                     Grid {column_definitions:"20,*,Auto",
                         {icon(Icon::Folder,14.0,"#A1A1A1")}
                         TextBlock {Grid.column:1,text:folder.clone(),text_trimming:<dyn TextTrimming>::character_ellipsis(),vertical_alignment:V::Center,font_weight:if count>0{FontWeight::Bold}else{FontWeight::Normal}}
@@ -172,9 +178,12 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             ));
         }
     }
+    let close = vm.clone();
+    let restore = ui.clone();
     rsx! {
-        Grid {key:"navigation-pane",name:"NavigationPane",row_definitions:if density==Density::Compact{"43,*,40"}else{"57,*,40"},background:"White",
-            Button {class:"reader-subscribe",name:"SubscribeButton",content:"SUBSCRIBE",height:27.0,min_height:27.0,min_width:90.0,horizontal_alignment:H::Left,vertical_alignment:V::Top,margin:(inset,if density==Density::Compact{8.0}else{17.0},0.0,0.0),automation_properties_name:"Subscribe",on_click:move |_|subscribe.show(Panel::Subscribe)}
+        Grid {key:"navigation-pane",name:"NavigationPane",row_definitions:if touch{"56,*,48"}else if density==Density::Compact{"43,*,40"}else{"57,*,40"},background:"White",
+            Button {class:"reader-subscribe",name:"SubscribeButton",content:"SUBSCRIBE",height:if touch{44.0}else{27.0},min_height:if touch{44.0}else{27.0},min_width:90.0,horizontal_alignment:H::Left,vertical_alignment:V::Top,margin:(inset,if touch{6.0}else if density==Density::Compact{8.0}else{17.0},0.0,0.0),automation_properties_name:"Subscribe",on_click:move |_|subscribe.show(Panel::Subscribe)}
+            if narrow {Button{class:"reader-flat",name:"CloseSubscriptions",node_ref:ui.drawer_close,width:44.0,height:44.0,margin:(0.0,6.0,4.0,0.0),horizontal_alignment:H::Right,vertical_alignment:V::Top,automation_properties_name:"Close subscriptions",on_loaded:move |event|{if let Some(control)=event.source().and_then(|source|source.cast::<ferroui_controls::Control>()){control.focus();}},on_click:move |_|{close.set_sidebar_open(false);restore.restore_article_focus();},{icon(Icon::Close,16.0,"#666666")}}}
             ScrollViewer {Grid.row:1,horizontal_scroll_bar_visibility:ScrollBarVisibility::Disabled,vertical_scroll_bar_visibility:ScrollBarVisibility::Auto,
                 {content}
             }

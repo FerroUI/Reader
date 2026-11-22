@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { writeFile, rm } from "node:fs/promises";
 import path from "node:path";
 import { createHarness } from "./ui/harness.mjs";
+import { mobileChecks } from "./ui/mobile.mjs";
+import { sleep } from "../FerroUI/scripts/browser/harness.mjs";
 
 const site = path.resolve(process.argv[2] || "target/browser/reader-browser");
 const output = path.resolve(process.argv[3] || "target/ui-smoke");
@@ -44,6 +46,19 @@ try {
       await h.until(() => h.page.evaluate("JSON.parse(readerApp.currentView()).Search === 'is:starred tag:Verification'"), "search route");
       assert.equal((await h.state()).articles.filter(a => a.starred).length, before.articles.filter(a => a.starred).length);
       await h.capture("04-search");
+    });
+    await check("browser modifiers and composition keys do not execute Reader commands", async () => {
+      await h.clickNavigation("All items");
+      await h.page.press("n");
+      const before = (await h.state()).articles;
+      await h.page.press("s", ["alt"]);
+      await h.page.press("z", ["ctrl", "shift"]);
+      await h.page.evaluate(`(() => {
+        const host = document.getElementById('out');
+        host.dispatchEvent(new KeyboardEvent('keydown', { key: 's', code: 'KeyS', isComposing: true, bubbles: true }));
+        host.dispatchEvent(new KeyboardEvent('keyup', { key: 's', code: 'KeyS', isComposing: true, bubbles: true }));
+      })()`);
+      assert.deepEqual((await h.state()).articles, before, "modifiers and IME must preserve item annotations");
     });
     await check("feed subscription through the browser network host", async () => {
       const xml = `<?xml version="1.0"?><rss version="2.0"><channel><title>Reader verification</title><link>https://example.com/</link><description>Local test fixture</description><item><guid>reader-verification-1</guid><title>Native feed integration</title><link>https://example.com/native-feed</link><pubDate>Sun, 22 Nov 2026 10:00:00 GMT</pubDate><description><![CDATA[<p>A <strong>real feed</strong> rendered by FerroUI.</p><pre>let reader = true;\n    indented();</pre>]]></description></item></channel></rss>`;
@@ -93,13 +108,27 @@ try {
       assert.match(result.message, /changed in another tab/);
       assert(result.preserved, "a stale writer must preserve the committed library");
     });
-    await check("narrow layout and navigation drawer", async () => {
-      await h.resize(390, 844);
-      await h.capture("08-mobile");
-      await h.clickLabel("Show subscriptions");
-      await h.capture("08-mobile-navigation");
-      await h.clickNavigation("Home");
-      await h.until(async () => !(await h.snapshot()).elements.some(e => e.name === "NavigationPane"), "drawer closes after navigation");
+    await mobileChecks(h, check);
+    await check("expanded read tracking follows user scrolling and preserves Keep unread", async () => {
+      const data = await h.state();
+      for (const article of data.articles) { article.read = false; article.read_at = null; }
+      data.settings.mark_read_on_scroll = true;
+      data.stream_settings = {};
+      await h.page.evaluate(`readerApp.importData(${JSON.stringify(JSON.stringify(data))})`);
+      await h.clickNavigation("All items");
+      await h.page.press("1");
+      await h.page.press("n");
+      await h.page.press("n");
+      assert.equal((await h.state()).articles.filter(a => a.read).length, 0, "programmatic cursor scrolling must not mark read");
+      await h.resize(1363, 820);
+      assert.equal((await h.state()).articles.filter(a => a.read).length, 0, "viewport layout must not mark read");
+      await h.page.wheel(900, 500, 0, 420);
+      const read = await h.until(async () => (await h.state()).articles.find(a => a.read), "user scrolling marks the reading line");
+      await h.page.press("m");
+      await h.until(async () => !(await h.state()).articles.find(a => a.id === read.id).read, "Keep unread applies to the current entry");
+      await h.page.wheel(900, 500, 0, 15);
+      await sleep(250);
+      assert.equal((await h.state()).articles.find(a => a.id === read.id).read, false, "small scroll must not undo explicit Keep unread");
       await h.resize(1363, 936);
     });
     await check("ten thousand items keep a bounded native control tree", async () => {

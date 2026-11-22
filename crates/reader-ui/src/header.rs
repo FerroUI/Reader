@@ -11,14 +11,26 @@ use std::rc::Rc;
 pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let narrow = vm.viewport() < 700.0;
     let scoped = vm.viewport() >= 830.0;
+    let touch = crate::responsive::touch(&vm);
+    let tiny = vm.viewport() < 360.0;
     let density = vm.state().settings.density;
     let left = if narrow {
-        132.0
+        if vm.viewport() < 300.0 {
+            44.0
+        } else if tiny {
+            88.0
+        } else {
+            132.0
+        }
     } else {
         crate::sidebar::width(density)
     };
     let inset = if narrow {
-        16.0
+        if tiny {
+            8.0
+        } else {
+            16.0
+        }
     } else {
         match density {
             Density::Comfortable => 44.0,
@@ -45,16 +57,20 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
                 .vertical_alignment(V::Center)
                 .automation_properties_name("Google Reader home")
                 .on_click(move |_| home.navigate(View::Home))
-                .child(logo(narrow)),
+                .child(if vm.viewport() < 300.0 {
+                    icon(Icon::Home, 20.0, "#777777")
+                } else {
+                    logo(narrow, !tiny)
+                }),
         );
     let mut search = grid()
         .grid_column(1)
-        .column_definitions(if scoped { "*,156,72" } else { "*,56" })
-        .column_spacing(if scoped { 18.0 } else { 8.0 })
+        .column_definitions(if scoped { "*,156,72" } else { "*,44,44" })
+        .column_spacing(if scoped { 18.0 } else { 4.0 })
         .width(
             (vm.viewport() - left - 16.0)
                 .min(if scoped { 532.0 } else { 500.0 })
-                .max(120.0),
+                .max(1.0),
         )
         .horizontal_alignment(H::Left)
         .vertical_alignment(V::Center)
@@ -63,7 +79,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
                 .name("SearchReader")
                 .node_ref(ui.search_input)
                 .text(ui.search.two_way())
-                .placeholder_text("Search Reader")
+                .placeholder_text(if narrow { "Search" } else { "Search Reader" })
                 .on_key_down(move |event| {
                     if event.key == Key::Return {
                         event.set_handled(true);
@@ -71,10 +87,8 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
                     }
                 }),
         );
-    if scoped {
-        search = search.child(border().grid_column(1).child(scope(vm, ui)));
-    }
-    search = search.child(rsx!{Button {Grid.column:if scoped{2}else{1},class:"reader-primary",name:"SearchButton",height:29.0,
+    search = search.child(border().grid_column(1).child(scope(vm, ui, !scoped)));
+    search = search.child(rsx!{Button {Grid.column:2,class:"reader-primary",name:"SearchButton",height:if touch{44.0}else{29.0},padding:8.0,
         automation_properties_name:"Search Reader",on_click:move |_|submit(&submit_vm,&submit_ui),
         {icon(Icon::Search,15.0,"White")}
     }});
@@ -92,7 +106,7 @@ fn submit(vm: &AppViewModel, ui: &Session) {
     };
     vm.navigate(View::Search(format!("{query} {suffix}").trim().to_string()));
 }
-fn scope(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
+fn scope(vm: Rc<AppViewModel>, ui: Rc<Session>, compact: bool) -> Element {
     let current = ui.search_scope.get();
     let mut choices = vec![
         ("All items".to_string(), View::All),
@@ -126,15 +140,19 @@ fn scope(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             ui.search_scope.set(view.clone())
         }));
     }
-    menus::attach(
+    let control = if compact {
+        reader_controls::toolbar_icon(Icon::ChevronDown, "Search scope")
+            .width(44.0)
+            .tool_tip_tip(format!("Search in {label}"))
+    } else {
         reader_controls::dropdown(&label)
             .width(156.0)
             .max_width(156.0)
-            .automation_properties_name("Search scope"),
-        items,
-    )
+            .automation_properties_name("Search scope")
+    };
+    menus::attach(&vm, control, items)
 }
-fn logo(narrow: bool) -> Element {
+fn logo(narrow: bool, reader: bool) -> Element {
     let mut word = stack_panel()
         .orientation(Orientation::Horizontal)
         .vertical_alignment(V::Center)
@@ -156,14 +174,16 @@ fn logo(narrow: bool) -> Element {
                 .foreground(color),
         );
     }
-    word.child(
-        text_block()
-            .text("reader")
-            .font_size(if narrow { 14.0 } else { 20.0 })
-            .font_weight(FontWeight::Normal)
-            .foreground("#777777")
-            .margin((4.0, 3.0, 0.0, 0.0))
-            .vertical_alignment(V::Center),
-    )
-    .into()
+    if reader {
+        word = word.child(
+            text_block()
+                .text("reader")
+                .font_size(if narrow { 14.0 } else { 20.0 })
+                .font_weight(FontWeight::Normal)
+                .foreground("#777777")
+                .margin((4.0, 3.0, 0.0, 0.0))
+                .vertical_alignment(V::Center),
+        );
+    }
+    word.into()
 }

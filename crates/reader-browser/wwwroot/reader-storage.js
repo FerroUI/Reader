@@ -13,7 +13,14 @@ export async function prepareStorage() {
     const opening = indexedDB.open("ferroui-reader", 1);
     opening.onupgradeneeded = () => opening.result.createObjectStore("state");
     db = await request(opening);
-    db.onversionchange = () => { db.close(); failure = "Storage changed in another tab. Reload Reader."; };
+    db.onversionchange = () => {
+      db.close(); failure = "Storage changed in another tab. Export a backup, then reload Reader.";
+      report(new Error(failure));
+    };
+    db.onclose = () => {
+      failure ||= "Browser storage was closed unexpectedly. Export a backup, then reload Reader.";
+      report(new Error(failure));
+    };
     const stored = await request(db.transaction("state").objectStore("state").get(KEY));
     contents = stored?.contents || "";
     generation = stored?.generation || 0;

@@ -94,8 +94,25 @@ impl AppViewModel {
         }
     }
     pub fn set_viewport(&self, width: f64) {
-        if width.is_finite() && width > 0.0 && (self.viewport.get() - width).abs() > 0.5 {
+        self.set_viewport_size(width, self.viewport_height());
+    }
+    pub fn set_touch_mode(&self, value: bool) {
+        if self.touch_mode.replace(value) != value {
+            self.notify();
+        }
+    }
+    pub fn set_viewport_size(&self, width: f64, height: f64) {
+        let width_changed =
+            width.is_finite() && width > 0.0 && (self.viewport.get() - width).abs() > 0.5;
+        let height_changed =
+            height.is_finite() && height > 0.0 && (self.viewport_height.get() - height).abs() > 0.5;
+        if width_changed {
             self.viewport.set(width);
+        }
+        if height_changed {
+            self.viewport_height.set(height);
+        }
+        if width_changed || height_changed {
             self.notify();
         }
     }

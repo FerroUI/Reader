@@ -1,6 +1,7 @@
 mod background;
 mod discovery;
 mod files;
+mod operations;
 mod persistence;
 mod services;
 mod transport;
@@ -55,7 +56,8 @@ fn main() {
             let layout_window = window.downgrade();
             window.layout_updated(move || {
                 if let (Some(vm), Some(window)) = (layout_vm.upgrade(), layout_window.upgrade()) {
-                    vm.set_viewport(window.client_size().width);
+                    let size = window.client_size();
+                    vm.set_viewport_size(size.width, size.height);
                 }
             }).detach();
 

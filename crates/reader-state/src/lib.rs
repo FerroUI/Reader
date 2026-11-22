@@ -24,12 +24,15 @@ pub struct AppViewModel {
     reactive: ReactiveObject,
     revision: RefCell<u64>,
     document: RefCell<AppState>,
+    library_generation: Cell<u64>,
     now: Cell<i64>,
     view: RefCell<View>,
     selected: Cell<Option<Id>>,
     cursor: Cell<Option<Id>>,
     kept_unread: RefCell<BTreeSet<Id>>,
     viewport: Cell<f64>,
+    viewport_height: Cell<f64>,
+    touch_mode: Cell<bool>,
     sidebar: Cell<bool>,
     status: RefCell<String>,
     refreshing: Cell<bool>,
@@ -80,12 +83,15 @@ impl AppViewModel {
                 reactive: ReactiveObject::new(),
                 revision: RefCell::new(0),
                 document: RefCell::new(state),
+                library_generation: Cell::new(0),
                 now: Cell::new(now),
                 view: RefCell::new(start_page),
                 selected: Cell::new(None),
                 cursor: Cell::new(None),
                 kept_unread: RefCell::new(BTreeSet::new()),
                 viewport: Cell::new(1440.0),
+                viewport_height: Cell::new(900.0),
+                touch_mode: Cell::new(false),
                 sidebar: Cell::new(false),
                 status: RefCell::new(error.unwrap_or_default()),
                 refreshing: Cell::new(false),
@@ -119,6 +125,11 @@ impl AppViewModel {
     pub fn state(&self) -> Ref<'_, AppState> {
         self.document.borrow()
     }
+    /// Hosts reject network completions belonging to a replaced library, even if
+    /// an imported document happens to reuse the same subscription IDs and URLs.
+    pub fn library_generation(&self) -> u64 {
+        self.library_generation.get()
+    }
     pub fn revision(&self) -> u64 {
         *self.revision.borrow()
     }
@@ -139,6 +150,12 @@ impl AppViewModel {
     }
     pub fn viewport(&self) -> f64 {
         self.viewport.get()
+    }
+    pub fn viewport_height(&self) -> f64 {
+        self.viewport_height.get()
+    }
+    pub fn touch_mode(&self) -> bool {
+        self.touch_mode.get()
     }
     pub fn sidebar_open(&self) -> bool {
         self.sidebar.get()

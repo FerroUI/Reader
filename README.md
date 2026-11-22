@@ -18,7 +18,7 @@ Actual browser verification captures: [Home](docs/screenshots/home.png) · [Expa
 - Search saved article text, titles, authors, feed names, tags and notes. Query operators include `is:unread`, `is:starred`, `feed:`, `author:`, `title:`, `tag:`, `before:` and `after:`; quoted phrases and excluded terms are supported.
 - Import and export OPML subscriptions with folders. Export or restore a complete JSON library containing cached articles, read state, stars, tags, notes and preferences. Undo recent library changes.
 - See local reading totals, a 30-day activity chart and per-subscription reading percentages. Browse a small explicit starter catalog in Explore.
-- Choose Comfortable, Cozy or Compact density, article text size and a start page. Use keyboard navigation, subscription/tag jump dialogs, a collapsible subscription pane and a reading focus mode. At narrow widths the sidebar becomes an overlay.
+- Choose Comfortable, Cozy or Compact density, article text size and a start page. Use keyboard navigation, subscription/tag jump dialogs, a collapsible subscription pane and a reading focus mode. At narrow widths the sidebar becomes an overlay; browser Back dismisses it or an open dialog before leaving the stream. Touch targets adapt to a coarse primary pointer, and the host respects safe areas and the visible keyboard viewport.
 - Open original articles, copy their links, invoke the browser's sharing interface where supported, open an email draft and print an article.
 - Keep a local library between launches. The browser caches the application for offline use after a complete successful installation; already saved article text remains readable offline.
 

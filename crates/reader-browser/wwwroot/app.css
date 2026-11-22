@@ -1,8 +1,15 @@
 :root { color-scheme: light; font-family: Arial, sans-serif; }
 * { box-sizing: border-box; }
-html, body, #out { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
 body { background: #fff; color: #222; overscroll-behavior: none; }
-#out { position: fixed; inset: 0; height: 100dvh; touch-action: none; }
+#out {
+  position: fixed; overflow: hidden;
+  left: calc(var(--reader-viewport-left, 0px) + env(safe-area-inset-left, 0px));
+  top: calc(var(--reader-viewport-top, 0px) + env(safe-area-inset-top, 0px));
+  width: calc(var(--reader-viewport-width, 100vw) - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+  height: calc(var(--reader-viewport-height, 100dvh) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  touch-action: pinch-zoom !important;
+}
 .ferroui-splash { position: absolute; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: #fff; }
 .ferroui-splash h1 { margin: 0; font-size: 24px; font-weight: 400; color: #dd4b39; }
 .ferroui-splash p { margin: 0; max-width: 440px; padding: 0 20px; text-align: center; font-size: 13px; line-height: 1.6; color: #666; }

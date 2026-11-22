@@ -40,6 +40,9 @@ impl AppViewModel {
     pub fn import_json(&self, json: &str) -> Result<(), String> {
         let state = AppState::from_json(json)?;
         let previous = self.document.replace(state);
+        self.library_generation
+            .set(self.library_generation.get().wrapping_add(1));
+        self.refreshing.set(false);
         self.restore_stream_settings();
         let changes = Changes {
             changed: true,
@@ -59,6 +62,8 @@ impl AppViewModel {
             .borrow_mut()
             .push_back(UndoEntry::snapshot(previous));
         self.selected.set(None);
+        self.cursor.set(None);
+        self.kept_unread.borrow_mut().clear();
         self.publish(&changes);
         self.schedule_save();
         self.set_status("Reader backup restored. You can undo this change.".into());

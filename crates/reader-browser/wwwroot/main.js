@@ -1,8 +1,10 @@
 import { FerroExports } from "./ferroui.js";
 import { loadModule } from "./ferroui-loader.js";
-import { attachRuntime, width, now, flush, reportError } from "./host.js";
+import { attachRuntime, now, flush, reportError } from "./host.js";
 import { prepareStorage } from "./reader-storage.js";
 import { attachNavigation } from "./navigation.js";
+import { attachViewport } from "./viewport.js";
+import { attachInputGuard } from "./input.js";
 
 const fontNames = ["LiberationSans-Regular.ttf", "LiberationSans-Bold.ttf", "LiberationSans-Italic.ttf", "LiberationSans-BoldItalic.ttf", "LiberationSerif-Regular.ttf"];
 try {
@@ -21,13 +23,14 @@ try {
     attachRuntime(runtime);
     globalThis.readerApp = runtime;
     runtime.runMain(location.search, ...fonts);
+    attachInputGuard(document.getElementById("out"));
     attachNavigation(runtime);
-    new ResizeObserver(() => runtime.resizeWindow(width())).observe(document.getElementById("out"));
+    attachViewport(runtime, document.getElementById("out"));
     const update = () => runtime.tick(now());
     setInterval(update, 30000);
     document.addEventListener("visibilitychange", () => { if (document.hidden) void flush(); else update(); });
     addEventListener("pagehide", () => void flush());
-    addEventListener("beforeunload", () => void flush());
+    addEventListener("pageshow", update);
     addEventListener("online", () => runtime.hostStatus("Back online. Refresh your subscriptions to get new articles."));
     addEventListener("offline", () => runtime.hostStatus("You're offline. Your saved articles are still available."));
     if ("serviceWorker" in navigator && !new URLSearchParams(location.search).has("nooffline")) {

@@ -4,8 +4,10 @@ use crate::{
     session::{Panel, Session},
     sidebar, toolbar,
 };
+use ferroui_base::input::KeyboardNavigationMode;
 use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
 use ferroui_base::media::TextWrapping;
+use ferroui_controls::primitives::ScrollBarVisibility;
 use ferroui_view::prelude::*;
 use reader_controls::{icon_action, Icon};
 use reader_domain::View;
@@ -15,6 +17,11 @@ use std::rc::Rc;
 pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
     retain_route_scroll(vm.clone(), ui.clone(), rows.clone());
     let narrow = vm.viewport() < 700.0;
+    let touch = crate::responsive::touch(&vm);
+    let article_stream = !matches!(
+        vm.view(),
+        View::Home | View::Trends | View::Explore | View::Settings
+    );
     let focus = ui.focus_mode.get();
     let show_sidebar = !narrow && ui.desktop_sidebar.get() && !focus;
     let width = if show_sidebar {
@@ -29,6 +36,11 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
     let menu = vm.clone();
     let mut root = grid()
         .name("ReaderApp")
+        .class(if touch {
+            "reader-touch"
+        } else {
+            "reader-desktop"
+        })
         .background("White")
         .row_definitions(if focus { "0,*" } else { "60,*" })
         .focusable(true)
@@ -47,11 +59,15 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
     let mut main = grid()
         .key("main")
         .grid_column(1)
-        .row_definitions("Auto,*,Auto");
+        .row_definitions("Auto,*,Auto,Auto");
     let mut top = grid()
         .key("viewer-header")
         .column_definitions(if narrow || !show_sidebar {
-            "40,*"
+            if touch {
+                "48,*"
+            } else {
+                "40,*"
+            }
         } else {
             "0,*"
         });
@@ -60,7 +76,14 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
         top = top.child(
             border()
                 .vertical_alignment(V::Top)
-                .margin((4.0, 14.0, 0.0, 0.0))
+                .height(if touch {
+                    56.0
+                } else if vm.state().settings.density == reader_domain::Density::Compact {
+                    43.0
+                } else {
+                    57.0
+                })
+                .padding((4.0, if touch { 0.0 } else { 6.0 }, 0.0, 0.0))
                 .child(icon_action(Icon::Menu, "Show subscriptions", move || {
                     if menu.viewport() < 700.0 {
                         menu.toggle_sidebar();
@@ -88,10 +111,16 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
         );
     } else if vm.view() == View::Settings {
         main = main.child(
-            grid()
-                .key("settings-view")
-                .grid_row(1)
-                .child(crate::settings::preferences(vm.clone(), ui.clone())),
+            grid().key("settings-view").grid_row(1).child(
+                scroll_viewer()
+                    .horizontal_scroll_bar_visibility(ScrollBarVisibility::Disabled)
+                    .vertical_scroll_bar_visibility(ScrollBarVisibility::Auto)
+                    .child(
+                        border()
+                            .padding(if narrow { 16.0 } else { 26.0 })
+                            .child(crate::settings::preferences(vm.clone(), ui.clone())),
+                    ),
+            ),
         );
     } else {
         let reading_vm = vm.clone();
@@ -115,33 +144,44 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
         if rows.len() == 0 {
             let all = vm.clone();
             let add = ui.clone();
-            stream=stream.child(rsx!{StackPanel{margin:(30.0,40.0),spacing:16.0,horizontal_alignment:H::Left,
-                TextBlock{text:if matches!(vm.view(),View::Search(_)){"No matching items"}else if vm.state().settings.unread_only{"No unread items"}else{"No items to display"},font_size:22.0}
+            stream=stream.child(rsx!{ScrollViewer{horizontal_scroll_bar_visibility:ScrollBarVisibility::Disabled,vertical_scroll_bar_visibility:ScrollBarVisibility::Auto,
+                StackPanel{margin:if narrow{(16.0,24.0)}else{(30.0,40.0)},spacing:16.0,horizontal_alignment:H::Stretch,
+                TextBlock{text:if matches!(vm.view(),View::Search(_)){"No matching items"}else if vm.state().settings.unread_only{"No unread items"}else{"No items to display"},font_size:22.0,text_wrapping:TextWrapping::Wrap}
                 TextBlock{text:if matches!(vm.view(),View::Search(_)){"Try another search. You can use title:, author:, feed:, tag:, is:starred and is:unread."}else{"You're all caught up. Refresh your subscriptions or add something new to read."},font_size:13.0,foreground:"#666666",text_wrapping:TextWrapping::Wrap,max_width:550.0}
                 {reader_controls::link("Show all items",move||{all.set_unread_only(false);all.navigate(View::All);})}
                 {reader_controls::link("Add a subscription",move||add.show(Panel::Subscribe))}
-            }});
+            }}});
         }
         main = main.child(stream);
     }
     if !vm.status().is_empty() {
         main=main.child(rsx!{
         Border{Grid.row:2,background:"#FFF8CE",border_brush:"#F0C36D",border_thickness:(0.0,1.0,0.0,0.0),padding:(14.0,7.0),
-            Grid{column_definitions:"*,Auto,Auto",column_spacing:12.0,
-                TextBlock{text:vm.status(),font_size:12.0,text_wrapping:TextWrapping::Wrap,vertical_alignment:V::Center}
-                if vm.can_undo(){Border{Grid.column:1,{reader_controls::link("Undo",move||undo.undo())}}}
-                Border{Grid.column:2,{reader_controls::link("Dismiss",move||close.clear_status())}}
+            Grid{column_definitions:if narrow{"*,Auto"}else{"*,Auto,Auto"},row_definitions:if narrow{"Auto,Auto"}else{"Auto"},column_spacing:12.0,
+                ScrollViewer{Grid.column_span:if narrow{2}else{1},max_height:if narrow{80.0}else{110.0},horizontal_scroll_bar_visibility:ScrollBarVisibility::Disabled,vertical_scroll_bar_visibility:ScrollBarVisibility::Auto,
+                    TextBlock{text:vm.status(),font_size:12.0,text_wrapping:TextWrapping::Wrap,vertical_alignment:V::Center}
+                }
+                if vm.can_undo(){Border{Grid.column:if narrow{0}else{1},Grid.row:if narrow{1}else{0},{reader_controls::link("Undo",move||undo.undo())}}}
+                Border{Grid.column:if narrow{1}else{2},Grid.row:if narrow{1}else{0},{reader_controls::link("Dismiss",move||close.clear_status())}}
             }
         }
     });
+    }
+    if narrow && article_stream {
+        main = main.child(
+            border()
+                .grid_row(3)
+                .child(toolbar::reading_navigation(vm.clone())),
+        );
     }
     layout = layout.child(main);
     root = root.child(layout);
     if narrow && vm.sidebar_open() {
         let dismiss = vm.clone();
-        root=root.child(rsx!{Grid{key:"mobile-navigation",Grid.row:1,
-        Button{class:"reader-flat",background:"#55000000",horizontal_alignment:H::Stretch,vertical_alignment:V::Stretch,automation_properties_name:"Close subscriptions",on_click:move |_|dismiss.set_sidebar_open(false)}
-        Border{width:264.0,horizontal_alignment:H::Left,background:"White",{sidebar::view(vm.clone(),ui.clone())}}
+        let restore = ui.clone();
+        root=root.child(rsx!{Grid{key:"mobile-navigation",name:"SubscriptionsDrawer",Grid.row:1,keyboard_navigation_tab_navigation:KeyboardNavigationMode::Cycle,
+        Button{class:"reader-flat",background:"#55000000",horizontal_alignment:H::Stretch,vertical_alignment:V::Stretch,is_tab_stop:false,automation_properties_name:"Dismiss subscriptions drawer",on_click:move |_|{dismiss.set_sidebar_open(false);restore.restore_article_focus();}}
+        Border{width:(vm.viewport()-44.0).clamp(1.0,320.0),horizontal_alignment:H::Left,background:"White",{sidebar::view(vm.clone(),ui.clone())}}
     }});
     }
     if ui.panel.get() != Panel::None {

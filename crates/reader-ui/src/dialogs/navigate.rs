@@ -77,9 +77,18 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, tags: bool) -> Element {
             button()
                 .key(format!("go:{target:?}"))
                 .class("reader-link")
-                .content(label)
+                .automation_properties_name(label.clone())
+                .child(
+                    text_block()
+                        .text(label)
+                        .text_wrapping(ferroui_base::media::TextWrapping::Wrap),
+                )
                 .horizontal_content_alignment(H::Left)
-                .min_height(26.0)
+                .min_height(if crate::responsive::touch(&vm) {
+                    44.0
+                } else {
+                    26.0
+                })
                 .on_click(move |_| {
                     close.close();
                     model.navigate(target.clone());

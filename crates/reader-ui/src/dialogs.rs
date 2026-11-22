@@ -6,11 +6,11 @@ use crate::{
     settings,
 };
 use ferroui_base::input::{Key, KeyboardNavigationMode};
-use ferroui_base::layout::{HorizontalAlignment as H, Orientation, VerticalAlignment as V};
-use ferroui_base::media::TextWrapping;
+use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
+use ferroui_base::media::{TextTrimming, TextWrapping};
 use ferroui_controls::primitives::ScrollBarVisibility;
 use ferroui_view::prelude::*;
-use reader_controls::{action, icon_action, paragraph, primary, Icon};
+use reader_controls::{action, action_row, icon_action, paragraph, primary, Icon};
 use reader_state::AppViewModel;
 use std::rc::Rc;
 
@@ -20,7 +20,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         return Element::Empty;
     }
     if panel == Panel::Shortcuts {
-        return shortcuts::overlay(ui, vm.viewport());
+        return shortcuts::overlay(ui, &vm);
     }
     let focus_dialog = matches!(
         panel,
@@ -30,6 +30,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             | Panel::About
             | Panel::MarkAll
             | Panel::Unsubscribe(_)
+            | Panel::Move(_)
     );
     let dialog_key = format!("dialog:{panel:?}");
     let close = ui.clone();
@@ -61,6 +62,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     } else {
         510.0
     };
+    let metrics = crate::responsive::DialogMetrics::new(&vm, width, 650.0);
     let content = match panel.clone() {
         Panel::Shortcuts => unreachable!(),
         Panel::Subscriptions => settings::subscriptions(vm.clone(), ui.clone()),
@@ -78,13 +80,13 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     rsx! {
         Grid {key:dialog_key,name:"DialogOverlay",background:"#66000000",keyboard_navigation_tab_navigation:KeyboardNavigationMode::Cycle,
             on_key_down:move |e|{if e.key==Key::Escape{close_key.close();e.set_handled(true);}},
-            Border {name:"ReaderDialog",focusable:true,is_tab_stop:false,on_loaded:move |event|{if focus_dialog{if let Some(control)=event.source().and_then(|source|source.cast::<ferroui_controls::Control>()){control.focus();}}},background:"White",border_brush:"#888888",border_thickness:1.0,width:width.min((vm.viewport()-32.0).max(280.0)),max_height:650.0,padding:26.0,horizontal_alignment:H::Center,vertical_alignment:V::Center,
-                Grid {row_definitions:"Auto,*",row_spacing:20.0,
-                    Grid {column_definitions:"*,Auto",
-                        TextBlock {text:title,font_size:20.0,foreground:"#222222",vertical_alignment:V::Center}
+            Border {name:"ReaderDialog",focusable:true,is_tab_stop:false,on_loaded:move |event|{if focus_dialog{if let Some(control)=event.source().and_then(|source|source.cast::<ferroui_controls::Control>()){control.focus();}}},background:"White",border_brush:"#888888",border_thickness:1.0,width:metrics.width,max_height:metrics.height,padding:metrics.padding,horizontal_alignment:H::Center,vertical_alignment:V::Center,
+                Grid {row_definitions:"Auto,*",row_spacing:metrics.gap,
+                    Grid {column_definitions:"*,Auto",column_spacing:8.0,
+                        TextBlock {text:title,font_size:if crate::responsive::narrow(&vm){18.0}else{20.0},foreground:"#222222",text_trimming:<dyn TextTrimming>::character_ellipsis(),vertical_alignment:V::Center}
                         Border {Grid.column:1,{icon_action(Icon::Close,"Close dialog",move||close.close())}}
                     }
-                    ScrollViewer {Grid.row:1,max_height:520.0,horizontal_scroll_bar_visibility:ScrollBarVisibility::Disabled,vertical_scroll_bar_visibility:ScrollBarVisibility::Auto,
+                    ScrollViewer {name:"DialogScroll",Grid.row:1,max_height:metrics.body_height.min(520.0),horizontal_scroll_bar_visibility:ScrollBarVisibility::Disabled,vertical_scroll_bar_visibility:ScrollBarVisibility::Auto,
                         {content}
                     }
                 }
@@ -127,7 +129,10 @@ fn form(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Element {
         if value.is_empty()
             && !matches!(save_panel, Panel::Move(_) | Panel::Tags(_) | Panel::Note(_))
         {
-            save_vm.set_status("Please enter a value.".into());
+            save_ui.form_error.set("Please enter a value.".into());
+            if let Some(field) = save_ui.field.get_untracked() {
+                field.focus();
+            }
             return;
         }
         save_ui.close();
@@ -153,10 +158,12 @@ fn form(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Element {
     let enter = save.clone();
     let cancel = ui.clone();
     let field = ui.field;
+    let validation = ui.form_error;
     let mut input = reader_controls::input(label)
         .name("DialogInput")
         .node_ref(field)
         .text(ui.entry.two_way())
+        .on_text_changed(move |_| validation.set(String::new()))
         .horizontal_alignment(H::Stretch)
         .on_loaded(move |_| {
             if let Some(field) = field.get_untracked() {
@@ -185,14 +192,23 @@ fn form(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Element {
     if matches!(panel, Panel::Subscribe) {
         form=form.child(paragraph("Follow your favorite websites in one place. Paste an RSS or Atom feed address, or a website that advertises one."));
     }
-    form.child(
-        stack_panel()
-            .orientation(Orientation::Horizontal)
-            .spacing(10.0)
-            .margin((0.0, 12.0, 0.0, 0.0))
-            .child(primary(action_text, move || save()))
-            .child(action("Cancel", move || cancel.close())),
-    )
+    if !ui.form_error.get().is_empty() {
+        form = form.child(
+            text_block()
+                .name("FormError")
+                .text(ui.form_error.get())
+                .foreground("#B3261E")
+                .font_size(13.0)
+                .text_wrapping(TextWrapping::Wrap),
+        );
+    }
+    form.child(border().margin((0.0, 12.0, 0.0, 0.0)).child(action_row(
+        [
+            primary(action_text, move || save()),
+            action("Cancel", move || cancel.close()),
+        ],
+        10.0,
+    )))
     .into()
 }
 fn confirmation(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Element {
@@ -205,10 +221,10 @@ fn confirmation(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Element 
     };
     rsx! {StackPanel {spacing:22.0,
         {paragraph(text)}
-        StackPanel {orientation:Orientation::Horizontal,spacing:10.0,
-            {primary(if matches!(panel,Panel::Unsubscribe(_)){"Unsubscribe"}else{"Mark all as read"},move||{confirm.close();if let Panel::Unsubscribe(id)=panel{vm.unsubscribe(id);}else{vm.mark_all_read(None);}})}
-            {action("Cancel",move||cancel.close())}
-        }
+        {action_row([
+            primary(if matches!(panel,Panel::Unsubscribe(_)){"Unsubscribe"}else{"Mark all as read"},move||{confirm.close();if let Panel::Unsubscribe(id)=panel{vm.unsubscribe(id);}else{vm.mark_all_read(None);}}),
+            action("Cancel",move||cancel.close())
+        ],10.0)}
     }}
 }
 fn about() -> Element {

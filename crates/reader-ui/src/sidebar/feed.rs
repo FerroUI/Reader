@@ -19,18 +19,28 @@ pub(super) fn feed_row(
 ) -> Element {
     let id = feed.id;
     let drag_vm = vm.clone();
+    let target_vm = vm.clone();
+    let target_folder = group.to_string();
     let selected = vm.view() == View::Feed(id);
     let go = vm.clone();
     let rename = ui.clone();
     let folders = ui.clone();
     let remove = ui.clone();
-    let menu = rsx! {ContextMenu {
-        {menus::item("Rename subscription...",move||rename.show(Panel::Rename(id)))}
-        {menus::item("Change folders...",move||folders.show(Panel::Move(id)))}
-        {menus::item("Unsubscribe...",move||remove.show(Panel::Unsubscribe(id)))}
-    }};
+    let menu = menus::context(
+        &vm,
+        vec![
+            menus::item("Rename subscription...", move || {
+                rename.show(Panel::Rename(id))
+            }),
+            menus::item("Change folders...", move || folders.show(Panel::Move(id))),
+            menus::item("Unsubscribe...", move || {
+                remove.show(Panel::Unsubscribe(id))
+            }),
+        ],
+    );
     border().key(format!("feed:{group}:{id}")).border_thickness((3.0,0.0,0.0,0.0)).border_brush(if selected{"#DD4B39"}else{"Transparent"}).child(
-        button().with(move |button|crate::drag::attach_source(button,drag_vm.clone(),id)).class(if selected{"reader-nav selected"}else{"reader-nav"}).height(27.0).padding((inset-3.0,0.0,12.0,0.0)).horizontal_content_alignment(H::Stretch)
+        grid().name("SubscriptionRow").with(move|control|crate::drag::attach_row_target(&control.clone().upcast(),target_vm.clone(),id,target_folder.clone())).child(
+        button().with(move |button|crate::drag::attach_source(button,drag_vm.clone(),id)).class(if selected{"reader-nav selected"}else{"reader-nav"}).height(if crate::responsive::touch(&vm){44.0}else{27.0}).padding((inset-3.0,0.0,12.0,0.0)).horizontal_content_alignment(H::Stretch)
         .automation_properties_name(format!("{} ({} unread)",feed.title,crate::format::unread(count))).tool_tip_tip(feed.error.clone().unwrap_or_else(||feed.url.clone())).context_menu(menu)
         .on_click(move |_|{if crate::drag::consume_click(id){return;}go.navigate(View::Feed(id));if go.viewport()<700.0&&go.sidebar_open(){go.toggle_sidebar();}}).child(rsx!{
             Grid {column_definitions:"20,*,Auto",
@@ -39,5 +49,6 @@ pub(super) fn feed_row(
                 TextBlock {Grid.column:2,text:crate::format::unread_badge(count),font_size:11.0,foreground:"#666666",margin:(6.0,0.0,0.0,0.0),vertical_alignment:V::Center}
             }
         })
+        ).child(crate::drag::marker(false)).child(crate::drag::marker(true))
     ).into()
 }

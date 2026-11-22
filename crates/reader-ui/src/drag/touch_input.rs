@@ -3,9 +3,11 @@ use super::{
     touch::{Contact, TouchDrag},
     DragSession,
 };
+use crate::gestures::motion::Motion;
 use ferroui_base::input::gesture_recognizers::GestureRecognizerImpl;
 use ferroui_base::input::{
-    IPointer, PointerEventArgs, PointerPressedEventArgs, PointerReleasedEventArgs, PointerType,
+    ContextRequestedEventArgs, IPointer, PointerEventArgs, PointerPressedEventArgs,
+    PointerReleasedEventArgs, PointerType,
 };
 use ferroui_controls::TopLevel;
 use std::rc::Rc;
@@ -26,20 +28,18 @@ impl GestureRecognizerImpl for TouchDrag {
         let Some(drag) = DragSession::new(&vm, this.id) else {
             return;
         };
+        let start = event.get_position(None);
         *this.contact.borrow_mut() = Some(Contact {
             pointer: event.pointer().clone(),
-            start: event.get_position(None),
+            motion: Motion::new(start.x, start.y),
             drag,
             held: false,
             moved: false,
+            position: start,
         });
     }
     fn pointer_moved(this: &Self, event: &PointerEventArgs) {
         let Some(vm) = this.vm.upgrade() else {
-            this.cancel();
-            return;
-        };
-        let Some(button) = this.button.upgrade() else {
             this.cancel();
             return;
         };
@@ -56,29 +56,20 @@ impl GestureRecognizerImpl for TouchDrag {
             this.cancel();
             return;
         }
-        let distance = (point.x - contact.start.x).hypot(point.y - contact.start.y);
+        contact.motion.update(point.x, point.y);
+        contact.position = point;
         if !contact.held {
-            if distance >= 8.0 {
+            if !contact.motion.within_tap() {
                 drop(state);
                 this.cancel();
             }
             // Before the hold, scrolling keeps its ordinary native gesture arbitration.
             return;
         }
-        contact.moved |= distance >= 5.0;
-        let moved = contact.moved;
+        contact.moved |= contact.motion.traveled(5.0);
         drop(state);
         event.set_handled(true);
-        let target =
-            TopLevel::get_top_level(Some(&button)).and_then(|root| target_at(&root, &vm, point));
-        highlight(
-            &this.highlight,
-            if moved {
-                target.as_ref().map(|(control, _)| control)
-            } else {
-                None
-            },
-        );
+        this.hover();
     }
     fn pointer_released(this: &Self, event: &PointerReleasedEventArgs) {
         if !this
@@ -89,25 +80,43 @@ impl GestureRecognizerImpl for TouchDrag {
         {
             return;
         }
-        let contact = this.contact.borrow_mut().take().unwrap();
+        let mut contact = this.contact.borrow_mut().take().unwrap();
+        this.timer.borrow_mut().take();
         highlight(&this.highlight, None);
         if !contact.held {
             contact.drag.active.set(false);
             return;
         }
         event.set_handled(true);
+        let position = event.get_position(None);
+        contact.motion.update(position.x, position.y);
+        contact.moved |= contact.motion.traveled(5.0);
+        let menu_target = if !contact.moved {
+            this.vm
+                .upgrade()
+                .filter(|vm| contact.drag.valid(vm))
+                .and_then(|_| this.button.upgrade())
+                .filter(|button| button.is_attached_to_visual_tree())
+        } else {
+            None
+        };
         if contact.moved {
             if let (Some(vm), Some(button)) = (this.vm.upgrade(), this.button.upgrade()) {
-                if let Some((_, folder)) = TopLevel::get_top_level(Some(&button))
-                    .and_then(|root| target_at(&root, &vm, event.get_position(None)))
+                if let Some(target) = TopLevel::get_top_level(Some(&button))
+                    .and_then(|root| target_at(&root, &vm, event.get_position(None), &contact.drag))
                 {
-                    contact.drag.finish(&vm, &folder);
+                    contact.drag.finish(&vm, &target.operation);
                 }
             }
         }
         contact.drag.active.set(false);
         contact.pointer.capture(None);
         release_click(this.id);
+        // Releasing a stationary hold exposes the existing feed actions. Capture
+        // and the in-process drag payload are retired before opening a popup.
+        if let Some(button) = menu_target {
+            button.raise_event(&ContextRequestedEventArgs::new());
+        }
     }
     fn pointer_capture_lost(this: &Self, pointer: &Rc<dyn IPointer>) {
         if this

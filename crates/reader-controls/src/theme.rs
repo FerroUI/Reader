@@ -154,6 +154,12 @@ pub fn install_theme(app: &Application) {
             .build(),
     );
     app.styles().add(
+        style("Button.reader-button.selected")
+            .set(TemplatedControl::background_property(), "#D9D9D9")
+            .set(TemplatedControl::border_brush_property(), "#BEBEBE")
+            .build(),
+    );
+    app.styles().add(
         style("TextBox.reader-input")
             .set(
                 TemplatedControl::font_family_property(),
@@ -175,6 +181,7 @@ pub fn install_theme(app: &Application) {
     install_list(app);
     crate::menus::install(app);
     crate::checks::install(app);
+    crate::touch::install(app);
 }
 fn install_list(app: &Application) {
     app.styles().add(

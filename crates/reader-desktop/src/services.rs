@@ -1,4 +1,8 @@
-use crate::{background, files, transport};
+use crate::{
+    background, files,
+    operations::{FeedOperations, Ticket},
+    transport,
+};
 use ferroui_base::{
     input::platform::ClipboardExtensions,
     threading::{Dispatcher, DispatcherPriority, DispatcherTimer},
@@ -17,7 +21,7 @@ use std::{
 pub fn install(vm: &Rc<AppViewModel>, window: &Ref<Window>, directory: PathBuf) {
     let weak_vm = Rc::downgrade(vm);
     let weak_window = window.downgrade();
-    let generation = Rc::new(Cell::new(0_u64));
+    let operations = Rc::new(FeedOperations::default());
     let save_scheduled = Rc::new(Cell::new(false));
     vm.set_services(HostServices {
         request: Rc::new(move |request| {
@@ -42,18 +46,31 @@ pub fn install(vm: &Rc<AppViewModel>, window: &Ref<Window>, directory: PathBuf) 
                 }
                 return;
             }
-            if matches!(
+            let ticket = if matches!(
                 request,
                 HostRequest::Refresh { .. } | HostRequest::Subscribe { .. }
             ) {
-                generation.set(generation.get().wrapping_add(1));
-            }
-            let current = generation.get();
-            let generation = generation.clone();
+                Some(operations.begin(
+                    vm.library_generation(),
+                    matches!(request, HostRequest::Subscribe { .. }),
+                ))
+            } else {
+                None
+            };
+            let operations = operations.clone();
+            let starting_view = vm.view();
             let directory = directory.clone();
             Dispatcher::ui_thread().spawn_local(async move {
-                if let Err(error) =
-                    handle(&vm, &window, directory, request, generation, current).await
+                if let Err(error) = handle(
+                    &vm,
+                    &window,
+                    directory,
+                    request,
+                    operations,
+                    ticket,
+                    starting_view,
+                )
+                .await
                 {
                     vm.report_error(error);
                 }
@@ -67,19 +84,35 @@ async fn handle(
     window: &Ref<Window>,
     directory: PathBuf,
     request: HostRequest,
-    generation: Rc<Cell<u64>>,
-    current: u64,
+    operations: Rc<FeedOperations>,
+    ticket: Option<Ticket>,
+    starting_view: View,
 ) -> Result<(), String> {
+    if let Some(ticket) = ticket {
+        if ticket.generation != vm.library_generation() {
+            operations.complete(ticket);
+            return Ok(());
+        }
+    }
     match request {
-        HostRequest::Refresh { feeds, .. } => refresh(vm, feeds, generation, current),
+        HostRequest::Refresh { feeds, .. } => {
+            refresh(vm, feeds, operations, ticket.expect("refresh operation"))
+        }
         HostRequest::Subscribe { url, .. } => {
+            let ticket = ticket.expect("subscription operation");
             let now = vm.now();
             let downloaded = background::run(move || transport::feed(url, now, true)).await;
-            if generation.get() != current {
+            if vm.library_generation() != ticket.generation {
+                operations.complete(ticket);
                 return Ok(());
             }
-            vm.finish_refresh();
-            let response = downloaded?;
+            let response = match downloaded {
+                Ok(response) => response,
+                Err(error) => {
+                    finish(vm, &operations, ticket);
+                    return Err(error);
+                }
+            };
             vm.dispatch(Action::MergeFeed {
                 url: response.url.clone(),
                 feed: response.feed,
@@ -90,10 +123,13 @@ async fn handle(
                 .iter()
                 .find(|f| f.url == response.url)
                 .map(|f| f.id);
-            if let Some(id) = id {
+            if let Some(id) = id
+                .filter(|_| operations.is_latest_subscription(ticket) && vm.view() == starting_view)
+            {
                 vm.navigate(View::Feed(id));
                 vm.set_status("Subscribed.".into());
             }
+            finish(vm, &operations, ticket);
         }
         HostRequest::OpenUrl { url } => launch(window, &url).await?,
         HostRequest::Email { title, url } => {
@@ -133,9 +169,20 @@ async fn handle(
     Ok(())
 }
 
-fn refresh(vm: &Rc<AppViewModel>, feeds: Vec<Feed>, generation: Rc<Cell<u64>>, current: u64) {
-    if feeds.is_empty() {
+fn finish(vm: &AppViewModel, operations: &FeedOperations, ticket: Ticket) {
+    if operations.complete(ticket) && vm.library_generation() == ticket.generation {
         vm.finish_refresh();
+    }
+}
+
+fn refresh(
+    vm: &Rc<AppViewModel>,
+    feeds: Vec<Feed>,
+    operations: Rc<FeedOperations>,
+    ticket: Ticket,
+) {
+    if feeds.is_empty() {
+        finish(vm, &operations, ticket);
         return;
     }
     let remaining = Rc::new(Cell::new(feeds.len()));
@@ -144,7 +191,7 @@ fn refresh(vm: &Rc<AppViewModel>, feeds: Vec<Feed>, generation: Rc<Cell<u64>>, c
     let total = feeds.len();
     for feed in feeds {
         let vm = vm.clone();
-        let generation = generation.clone();
+        let operations = operations.clone();
         let remaining = remaining.clone();
         let failed = failed.clone();
         let first_error = first_error.clone();
@@ -152,11 +199,9 @@ fn refresh(vm: &Rc<AppViewModel>, feeds: Vec<Feed>, generation: Rc<Cell<u64>>, c
             let url = feed.url.clone();
             let now = vm.now();
             let result = background::run(move || transport::feed(url, now, false)).await;
-            if generation.get() != current {
-                return;
-            }
+            let current = vm.library_generation() == ticket.generation;
             // A user may unsubscribe while a request is running. Never recreate it.
-            if vm.state().feed(feed.id).is_some_and(|f| f.url == feed.url) {
+            if current && vm.state().feed(feed.id).is_some_and(|f| f.url == feed.url) {
                 match result {
                     Ok(response) => vm.dispatch(Action::MergeFeed {
                         url: feed.url,
@@ -173,17 +218,19 @@ fn refresh(vm: &Rc<AppViewModel>, feeds: Vec<Feed>, generation: Rc<Cell<u64>>, c
             }
             remaining.set(remaining.get() - 1);
             if remaining.get() == 0 {
-                vm.finish_refresh();
-                vm.set_status(if failed.get() == 0 {
-                    format!("Updated {total} subscriptions.")
-                } else {
-                    format!(
-                        "Updated {} of {total} subscriptions. {} failed: {}",
-                        total - failed.get(),
-                        failed.get(),
-                        first_error.borrow().as_deref().unwrap_or("Request failed")
-                    )
-                });
+                if current {
+                    vm.set_status(if failed.get() == 0 {
+                        format!("Updated {total} subscriptions.")
+                    } else {
+                        format!(
+                            "Updated {} of {total} subscriptions. {} failed: {}",
+                            total - failed.get(),
+                            failed.get(),
+                            first_error.borrow().as_deref().unwrap_or("Request failed")
+                        )
+                    });
+                }
+                finish(&vm, &operations, ticket);
             }
         });
     }

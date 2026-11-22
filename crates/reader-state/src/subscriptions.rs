@@ -90,6 +90,19 @@ impl AppViewModel {
     pub fn move_feed(&self, id: Id, folder: String) {
         self.dispatch(Action::MoveFeed { id, folder });
     }
+    pub fn reorder_feed(&self, id: Id, target: Id, before: bool) {
+        self.position_feed(id, target, before, None);
+    }
+    /// Position in the shared subscription order, optionally moving to the
+    /// target sidebar group. Reordering within an existing label retains others.
+    pub fn position_feed(&self, id: Id, target: Id, before: bool, folder: Option<String>) {
+        self.dispatch(Action::PositionFeed {
+            id,
+            target,
+            before,
+            folder,
+        });
+    }
     pub fn set_feed_folders(&self, id: Id, folders: Vec<String>) {
         self.dispatch(Action::SetFeedFolders { id, folders });
     }

@@ -18,6 +18,7 @@ pub struct Row {
     pub density: Density,
     pub font_size: f64,
     pub narrow: bool,
+    pub touch: bool,
 }
 impl PartialEq for Row {
     fn eq(&self, other: &Self) -> bool {
@@ -28,6 +29,7 @@ impl PartialEq for Row {
             && self.density == other.density
             && self.font_size == other.font_size
             && self.narrow == other.narrow
+            && self.touch == other.touch
     }
 }
 impl Row {
@@ -96,6 +98,7 @@ impl Rows {
                     density: settings.density,
                     font_size: settings.font_size,
                     narrow,
+                    touch: crate::responsive::touch(vm),
                 }
             })
             .collect();
