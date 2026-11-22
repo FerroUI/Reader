@@ -62,17 +62,21 @@ The default deployment uses the normal single-threaded browser profile. FerroUI'
 
 ### Connecting live feeds
 
-Use **Subscribe**, enter a feed or website URL, and choose **Add**. A desktop popup opens below Subscribe; touch layouts use a dialog. Direct browser requests work when the publisher allows cross-origin access. A static GitHub Pages application cannot bypass a publisher's CORS policy or act as a feed crawler.
+Use **Subscribe**, enter a feed or website address, and choose **Add**. Bare addresses such as `example.com/feed.xml` use HTTPS. A desktop popup opens below Subscribe; touch layouts use a dialog.
 
-For a feed that blocks direct access, open **Reader settings → Feed connection** and enter a proxy endpoint you control or trust, with `{url}` where the encoded source address belongs:
+The default **Automatic** connection tries the publisher directly. If the browser cannot connect or the request times out, eligible public RSS/Atom feed URLs can be fetched through **rss2json**, without configuring an API key. An existing saved custom proxy takes precedence over that public service. JSON Feed remains supported directly or through a custom raw proxy.
 
-```text
-https://your-service.example/feed?url={url}
-```
+Choose a policy under **Reader settings → Feed connection**, then select **Save feed connection**:
 
-The endpoint must return the raw RSS, Atom, JSON Feed or HTML response, permit requests from your deployed Reader origin, and support HTTPS when Reader is served over HTTPS. Reader tries the source directly and then the configured proxy. The proxy operator can see the requested feed URLs and responses. There is no bundled public proxy or application-owned backend. The desktop host fetches directly and does not use this browser-only setting.
+| Policy | Behavior |
+| --- | --- |
+| Automatic | Direct request, then the saved custom proxy or rss2json |
+| Direct only | Publisher requests only; the saved proxy is retained but unused |
+| Custom proxy | Direct request, then your validated raw-response endpoint containing `{url}` |
 
-Feeds are refreshed on request, with at most four concurrent browser downloads. Requests have time and size limits; a failed fetch reports an error and preserves the existing library. Publisher images can also be restricted by CORS or removed from the source; the original article link remains available.
+The public service receives requested feed URLs and may cache or limit returned items; it also has provider quotas. Use Direct only or your own trusted endpoint for private feeds. Blocked website HTML may require its actual RSS/Atom address; an accessible page or custom raw proxy supports feed autodiscovery. [Connection setup, privacy, provider limits and troubleshooting](docs/feed-connection.md) explains the behavior and the official sources.
+
+GitHub Pages hosts static assets and cannot make a publisher return CORS headers. Reader therefore uses a separate feed service when direct access fails; it does not provide a Google-style crawler or historical archive. Downloads are bounded, visible HTTP/size/encoding failures retain their actual cause, and a failed subscription does not create a placeholder feed. Existing saved articles remain intact. The desktop host fetches directly and ignores the browser connection policy.
 
 ### Storage and offline operation
 
@@ -154,7 +158,7 @@ node --test scripts/*.test.mjs
 cargo check --locked -p reader-desktop
 ```
 
-The tests cover domain and view-model invariants and focused browser-host behavior. They do not certify every original screen, pixel, browser or native operating system. The ordinary Pages workflow runs the first two commands, four pure gesture checks, five tree-cursor checks and two native request-operation checks, then builds one browser target without a platform matrix or native packaging gate. [Verification status](docs/verification.md) records executed rendered-browser checks, their exact revision, inspected visual corrections, measured control counts and offline-reload evidence. The current optional browser suite defines 23 scenarios; its definition alone does not establish a passing result.
+The tests cover domain and view-model invariants and focused browser-host behavior. They do not certify every original screen, pixel, browser or native operating system. The ordinary Pages workflow runs the first two commands, four pure gesture checks, five tree-cursor checks and two native request-operation checks, then builds one browser target without a platform matrix or native packaging gate. [Verification status](docs/verification.md) records executed rendered-browser checks, their exact revision, inspected visual corrections, measured control counts and offline-reload evidence. The optional suite also defines a true cross-origin feed scenario; a scenario's definition alone does not establish a passing result.
 
 ### Optional rendered-browser verification
 
@@ -166,7 +170,7 @@ node scripts/ui-smoke.mjs target/browser/reader-browser target/ui-smoke
 
 The harness serves the built application locally and launches a **fresh isolated Chromium profile**. It does not reuse your signed-in browser, feed library or service-worker cache. Set `CHROME` to the browser executable if automatic discovery cannot find it. Node.js 24 is sufficient; no Playwright or browser-testing package is required.
 
-The requested checks exercise first paint, actual control input, reading/annotation shortcuts, search and keyboard hints, a local feed subscription, settings, reload persistence, conflicting storage writers, touch scrolling/cancellation, in-place opening, held menus, subscription reordering/folder movement, browser Back, small/landscape/keyboard-sized dialogs, automatic reading state, a 10,000-article virtualization fixture and offline reload. PNG screenshots, control-tree JSON and a success report or failure evidence are written to `target/ui-smoke`. A passing scripted run is evidence for those exercised paths, not complete historical visual parity.
+The requested checks exercise first paint, actual control input, reading/annotation shortcuts, search and keyboard hints, feed subscription, settings, reload persistence, conflicting storage writers, touch scrolling/cancellation, in-place opening, held menus, subscription reordering/folder movement, browser Back, small/landscape/keyboard-sized dialogs, automatic reading state, a 10,000-article virtualization fixture and offline reload. A separate fixture publisher omits CORS headers, so the cross-origin scenario requires the configured relay, discovers a relative feed from HTML and checks refresh identity and failure reporting. PNG screenshots, control-tree JSON and a success report or failure evidence are written to `target/ui-smoke`. A passing scripted run is evidence for those exercised paths, not complete historical visual parity.
 
 To request this gate in GitHub Actions, include **`[verify-ui]`** in the pushed commit message or manually dispatch **Build and publish** with **`verify_ui: true`**. The workflow runs the browser script after compilation and uploads **`reader-ui-verification`** with a seven-day retention period, including available failure evidence. A failed requested gate blocks that run's deployment. Ordinary `main` pushes keep the domain/state + JavaScript checks, build and deploy path.
 

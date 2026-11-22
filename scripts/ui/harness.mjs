@@ -3,6 +3,24 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { open, sleep, colours } from "../../FerroUI/scripts/browser/harness.mjs";
 
+// Chromium reports a CORS rejection against the calling page and may classify
+// it as a security/JavaScript log. Only its exact no-ACAO sentence qualifies;
+// the blocked target and caller origin must both belong to the active fixture.
+export function expectedNetworkFailure(entry, scope) {
+  if (entry.level !== "error") return null;
+  const cors = /^Access to fetch at '([^']+)' from origin '([^']+)' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource\.$/.exec(entry.text);
+  if (cors && ["network", "security", "javascript"].includes(entry.source)
+      && scope.cors.has(cors[1]) && cors[2] === scope.origin)
+    return {kind: "cors-policy", url: cors[1], text: entry.text};
+  if (entry.source !== "network") return null;
+  const urls = [entry.url, scope.requests.get(entry.networkRequestId)].filter(Boolean);
+  const failed = urls.find(url => scope.cors.has(url) && /^Failed to load resource: net::ERR_FAILED\b/.test(entry.text));
+  if (failed) return {kind: "cors-load", url: failed, text: entry.text};
+  const status = /^Failed to load resource: the server responded with a status of (\d+)\b/.exec(entry.text)?.[1];
+  const http = status && urls.find(url => scope.http.get(url)?.has(Number(status)));
+  return http ? {kind: "http-status", url: http, text: entry.text} : null;
+}
+
 // Real browser input is delivered to the compiled FerroUI control tree.
 export async function createHarness(site, output) {
   await mkdir(output, { recursive: true });
@@ -14,23 +32,19 @@ export async function createHarness(site, output) {
     if (!session) for (const scope of networkScopes) scope.requests.set(event.requestId, event.request.url);
   });
   page.on("Log.entryAdded", ({entry}, session) => {
-    if (session || entry.level !== "error" || entry.source !== "network") return;
+    if (session) return;
     for (const scope of networkScopes) {
-      const urls = [entry.url, scope.requests.get(entry.networkRequestId)].filter(Boolean);
-      const cors = [...scope.cors].find(url => entry.text.includes(`at '${url}'`) && entry.text.includes("blocked by CORS policy"));
-      const failed = urls.find(url => scope.cors.has(url) && /^Failed to load resource: net::ERR_FAILED\b/.test(entry.text));
-      const status = /^Failed to load resource: the server responded with a status of (\d+)\b/.exec(entry.text)?.[1];
-      const http = status && urls.find(url => scope.http.get(url)?.has(Number(status)));
-      if (!cors && !failed && !http) continue;
+      const failure = expectedNetworkFailure(entry, scope);
+      if (!failure) continue;
       const line = `[log.${entry.level}] ${entry.text}${entry.url ? ` (${entry.url})` : ""}`;
       expectedErrors.set(line, (expectedErrors.get(line) || 0) + 1);
-      scope.logs.push({kind: cors ? "cors-policy" : failed ? "cors-load" : "http-status", url: cors || failed || http, text: entry.text});
+      scope.logs.push(failure);
       break;
     }
   });
   const healthy = () => {
     // Consume only recorded occurrences. A later identical error outside its
-    // explicitly scoped fixture is still unexpected; console/JS errors never qualify.
+    // explicitly scoped fixture is still unexpected; console errors/exceptions never qualify.
     const remaining = new Map(expectedErrors);
     const unexpected = page.errors.filter(line => {
       const count = remaining.get(line) || 0;
@@ -41,14 +55,14 @@ export async function createHarness(site, output) {
   };
   async function expectNetworkErrors({cors = [], http = []}, run) {
     healthy();
-    const scope = {cors: new Set(cors), http: new Map(), requests: new Map(), logs: []};
+    const scope = {origin: new URL(page.url).origin, cors: new Set(cors), http: new Map(), requests: new Map(), logs: []};
     for (const {url, status} of http) {
       if (!scope.http.has(url)) scope.http.set(url, new Set());
       scope.http.get(url).add(status);
     }
     networkScopes.add(scope);
-    try { return await run(scope.logs); }
-    finally { networkScopes.delete(scope); healthy(); }
+    try { const result = await run(scope.logs); healthy(); return result; }
+    finally { networkScopes.delete(scope); }
   }
   async function until(check, label, timeout = 15000) {
     const end = Date.now() + timeout;
