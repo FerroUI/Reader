@@ -1,0 +1,290 @@
+{
+  "date": "2026-11-23",
+  "application_revision": "41af566150c198c4716c5b4d0b217c11bd90f07e",
+  "implementation_revision": "92edbcc9a07b196ec427de1683c9b4bbe2d8c037",
+  "framework_revision": "0f5bbb50dd40522f911826efe0bc3df6e968b884",
+  "published_url": "https://ferroui.com/Reader/",
+  "build_id": "36a8a19dfb8c92c6",
+  "workflow": {
+    "id": 45212012427,
+    "url": "https://github.com/FerroUI/Reader/actions/runs/45212012427",
+    "build_job": 137823053179,
+    "deploy_job": 137829757632,
+    "build": "success",
+    "deploy": "success"
+  },
+  "tests": {
+    "rust_packages": 135,
+    "rust_standalone": 32,
+    "rust_total": 167,
+    "javascript": 66,
+    "rendered_scenarios": 75,
+    "rendered_scenario_milliseconds": 170985
+  },
+  "verification_artifact": {
+    "id": 14836273616,
+    "name": "reader-ui-verification",
+    "bytes": 6460082,
+    "sha256": "efa328c228d495d0851825fb40924ca9aa564d1acb65d02c0f7bb655373ebc0f",
+    "archive_sha256_verified": true
+  },
+  "pages_artifact": {
+    "id": 14836828734,
+    "bytes": 13952853,
+    "reported_sha256": "eb4430ef4e4109a7e50c91c98509bbbbcc4a90aa7270f7f1db8785b6aa2bf447"
+  },
+  "copied_evidence": [
+    {
+      "destination": "docs/screenshots/23-independent-folder-order.png",
+      "artifact_entry": "23-independent-folder-order.png",
+      "bytes": 61247,
+      "sha256": "2b9ef907676ad8f668ba957a4b7d2e9d60c6afc774f4f1e8fd151c17ccbf66df"
+    },
+    {
+      "destination": "docs/evidence/23-independent-folder-order.json",
+      "artifact_entry": "23-independent-folder-order.json",
+      "bytes": 138984,
+      "sha256": "2de24c31048a912eb2f26c10d81f137210f34cb790ed4f32058dfeb833b45968"
+    },
+    {
+      "destination": "docs/screenshots/23-mixed-root-order.png",
+      "artifact_entry": "23-mixed-root-order.png",
+      "bytes": 91184,
+      "sha256": "86bc93b3cfdf007743f117c33ff8e9386c7c227522b9ede92dc213734d76949d"
+    },
+    {
+      "destination": "docs/evidence/23-mixed-root-order.json",
+      "artifact_entry": "23-mixed-root-order.json",
+      "bytes": 200354,
+      "sha256": "d170e12bf105faca3651e0d81d26210432a193ed2b3192413d5ff1a6f21cf55e"
+    },
+    {
+      "destination": "docs/screenshots/23-alphabetical-order.png",
+      "artifact_entry": "23-alphabetical-order.png",
+      "bytes": 56247,
+      "sha256": "8e6160d9f07be7b5b3c96de39125fd44b2acbbb5aa35c9e5b42b1ee3a0d6ab64"
+    },
+    {
+      "destination": "docs/evidence/23-alphabetical-order.json",
+      "artifact_entry": "23-alphabetical-order.json",
+      "bytes": 133219,
+      "sha256": "5f50dbdd07fd62e02c15a3842beb6babfa21603c1831166e36ea481d0e8fe67b"
+    },
+    {
+      "destination": "docs/screenshots/23-phone-subscription-settings.png",
+      "artifact_entry": "23-phone-subscription-settings.png",
+      "bytes": 27631,
+      "sha256": "c76564ffec0457949f7f13a51edef4c15e5c2646e722bc1348e46b4112dc5c19"
+    },
+    {
+      "destination": "docs/evidence/23-phone-subscription-settings.json",
+      "artifact_entry": "23-phone-subscription-settings.json",
+      "bytes": 206578,
+      "sha256": "e726e89196e68bf407c7bc73506cb6042feca2084d2af3d3319d016c62d9b338"
+    },
+    {
+      "destination": "docs/screenshots/23-phone-folder-order.png",
+      "artifact_entry": "23-phone-folder-order.png",
+      "bytes": 25560,
+      "sha256": "c2038e9934699ccaefd64ad7d0a14f3efa8c740f6f3b7c973089440616fe611b"
+    },
+    {
+      "destination": "docs/evidence/23-phone-folder-order.json",
+      "artifact_entry": "23-phone-folder-order.json",
+      "bytes": 204192,
+      "sha256": "57dcf7789f1623421571c7b7a35369939a7a2819bb39149c26bc8d1349877a77"
+    },
+    {
+      "destination": "docs/screenshots/24-japanese-desktop.png",
+      "artifact_entry": "24-japanese-desktop.png",
+      "bytes": 79098,
+      "sha256": "812d4fb48a9d6d9966fb2c37353be56896b3e5fec47068f4e72784a7faf43ca0"
+    },
+    {
+      "destination": "docs/evidence/24-japanese-desktop.json",
+      "artifact_entry": "24-japanese-desktop.json",
+      "bytes": 143840,
+      "sha256": "f51f52524dbf31442210c13b6f6685f64dcccb43f2e27cee2baec24a3560d3d6"
+    },
+    {
+      "destination": "docs/screenshots/24-japanese-phone.png",
+      "artifact_entry": "24-japanese-phone.png",
+      "bytes": 44910,
+      "sha256": "a782a2ddedf168875bcbe7000d868e3c012e916ce69320874b88a7dde869c2dc"
+    },
+    {
+      "destination": "docs/evidence/24-japanese-phone.json",
+      "artifact_entry": "24-japanese-phone.json",
+      "bytes": 76700,
+      "sha256": "a810b6b6ffb1c2573ee9dbbb80c6db38c7557a32c9dc13a25d28f982a5b60530"
+    },
+    {
+      "destination": "docs/evidence/23-ordering-verification.json",
+      "artifact_entry": "23-ordering-verification.json",
+      "bytes": 243,
+      "sha256": "7fa6934f2d0e6c7055a628cda7a15802013b3fc1036c1c7b329c6d5e29402e88"
+    },
+    {
+      "destination": "docs/evidence/24-japanese-glyphs.json",
+      "artifact_entry": "24-japanese-glyphs.json",
+      "bytes": 22378,
+      "sha256": "7c843bf417c6bb39d50702caa61d661d948d18dc5e1c59527475ecb92994e542"
+    },
+    {
+      "destination": "docs/evidence/ordering-09-virtualized.json",
+      "artifact_entry": "09-virtualized.json",
+      "bytes": 459461,
+      "sha256": "c05091ab45861e2d830332c8dc2c76dbe8336f359b2f64bd5362464d79e28a57"
+    },
+    {
+      "destination": "docs/evidence/ordering-10-offline.json",
+      "artifact_entry": "10-offline.json",
+      "bytes": 102285,
+      "sha256": "b3a66f65c480380997775a655f24aec82bf260546bc71bbd77fe2c069686b0b7"
+    },
+    {
+      "destination": "docs/evidence/ordering-21-update-verification.json",
+      "artifact_entry": "21-update-verification.json",
+      "bytes": 256,
+      "sha256": "cb64883f80b1202f561e35ca48615d95177e16ecfd9de7b12c48a4e08b17a8c2"
+    },
+    {
+      "destination": "docs/ordering-verification-results.json",
+      "artifact_entry": "results.json",
+      "bytes": 9617,
+      "sha256": "5dc99e85fde14919636396caa69f727b93e7bb055e9c33a81d69dc6c76a78f21"
+    }
+  ],
+  "ordering": {
+    "independentOccurrences": true,
+    "mixedRootOrder": true,
+    "alphabeticalPreservesManual": true,
+    "reloadVerified": true,
+    "otherLabelsRetained": true,
+    "dragGenerationGuard": true,
+    "keyboardTraversal": true,
+    "touchCommands": true
+  },
+  "font": {
+    "family": "Noto Sans JP",
+    "release": "Sans2.004",
+    "path": "Sans/SubsetOTF/JP/NotoSansJP-Regular.otf",
+    "bytes": 4533028,
+    "git_blob": "4af556abb9cc42e585aab777b01857246a110746",
+    "sha256": "dff723ba59d57d136764a04b9b2d03205544f7cd785a711442d6d2d085ac5073",
+    "license": "SIL Open Font License 1.1",
+    "styles_and_primary_family_samples": 12,
+    "nonzero_glyph_checks": 168,
+    "primary_families": [
+      "Liberation Sans",
+      "Liberation Serif",
+      "Liberation Mono"
+    ],
+    "requested_styles": [
+      "normal",
+      "bold",
+      "italic",
+      "bold italic"
+    ],
+    "latin_primary_faces_preserved": true,
+    "latin_monospace_advances_preserved": true,
+    "scope": "Japanese fallback; not universal Unicode or CJK coverage."
+  },
+  "offline_and_updates": {
+    "previousBuild": "36a8a19dfb8c92c6",
+    "stagedBuild": "e1134a35b975b49a",
+    "stagedResources": 40,
+    "savedArticles": 10000,
+    "subscriptions": 7,
+    "explicitActivation": true,
+    "otherTabsProtected": true,
+    "deployedFilesRestoredAfterFixture": true,
+    "record": "ordering-21-update-verification.json"
+  },
+  "virtualization": {
+    "saved_articles": 10000,
+    "article_containers_in_snapshot": 56,
+    "native_visuals_in_snapshot": 1941,
+    "record": "ordering-09-virtualized.json",
+    "scope": "One final snapshot, not peak memory usage."
+  },
+  "published_integrity": {
+    "record": "ordering-published-integrity.json",
+    "resources": 40,
+    "all_verified": true,
+    "duration_seconds": 14.89
+  },
+  "corrected_gate_failure": {
+    "workflow_run": 45209546192,
+    "application_revision": "92edbcc9a07b196ec427de1683c9b4bbe2d8c037",
+    "deploy_result": "skipped",
+    "passed_scenarios_before_failure": 60,
+    "failed_assertion": "Japanese native headline",
+    "cause": "The fixture used expanded view but looked for the list-only ArticleHeadlineText control name. The captured expanded TextBlock and rich text already displayed Japanese correctly; all glyph checks had passed.",
+    "correction": "Target the native TextBlock title and explicitly require Japanese RichTextBlock content. The final phone ordering scenario also activates the heading and Move down with trusted touch events."
+  },
+  "native_check": {
+    "command": "cargo check --locked -p reader-desktop -p reader-browser",
+    "result": "success",
+    "scope": "Compilation of both application crates; no interactive native desktop session. Product code is unchanged between the implementation and final verification commits."
+  },
+  "limits": {
+    "exact_order_roundtrip": "JSON backup preserves order/mode. OPML exports effective order but imports subscriptions/memberships only.",
+    "full_historical_parity_established": false,
+    "physical_ios_verified": false,
+    "public_feed_provider_availability_established": false,
+    "scenario_durations_are_device_independent_benchmarks": false
+  },
+  "live_browser_observations": {
+    "browser": "Cloud Chrome",
+    "initial_build": "f3ffc9bb9161ea03",
+    "final_observed_build": "f3ffc9bb9161ea03",
+    "expected_build": "36a8a19dfb8c92c6",
+    "saved_subscriptions": 6,
+    "unread_items_before": 146,
+    "unread_items_after": 146,
+    "home_route_preserved": true,
+    "normal_close_and_reopen_attempted": true,
+    "closed_client_interval_included_published_integrity_check": true,
+    "current_release_activation_verified": false,
+    "update_banner_available": false,
+    "storage_reset": false,
+    "service_worker_unregistered": false,
+    "forced_activation": false,
+    "interpretation": "This cloud profile retains the same older build already documented in earlier verification entries. It is not evidence of current-release UI activation. The connected local-browser context was unavailable this turn; current-release rendering and saved-library activation were verified in isolated CI fixtures."
+  },
+  "visual_review": {
+    "captured_phone_viewports": [
+      [
+        320,
+        740
+      ],
+      [
+        320,
+        844
+      ]
+    ],
+    "phone_subscription_menu_bounds": [
+      0,
+      304,
+      214,
+      361
+    ],
+    "phone_folder_menu_bounds": [
+      44,
+      379,
+      248,
+      361
+    ],
+    "menu_action_min_height": 44,
+    "phone_actions_hit_testable": true,
+    "actionable_clipping_observed": false,
+    "japanese_fixture_missing_glyph_boxes_observed": false,
+    "scope": "The saved captures and their native control snapshots; not every device or Unicode character."
+  },
+  "local_browser_reproduction": {
+    "result": "blocked_before_tests",
+    "reason": "The workspace denied Chromium process-singleton socket creation (Operation not permitted).",
+    "verification_source": "The full GitHub Actions rendered gate passed against the same application build."
+  }
+}

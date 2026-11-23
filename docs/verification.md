@@ -1,5 +1,50 @@
 # Verification record
 
+## Subscription ordering and Japanese rendering — 23 November 2026
+
+**The complete release gate and GitHub Pages deployment succeeded.** Application revision [`41af566150c198c4716c5b4d0b217c11bd90f07e`](https://github.com/FerroUI/Reader/commit/41af566150c198c4716c5b4d0b217c11bd90f07e) contains the final verification corrections; implementation is in [`92edbcc9a07b196ec427de1683c9b4bbe2d8c037`](https://github.com/FerroUI/Reader/commit/92edbcc9a07b196ec427de1683c9b4bbe2d8c037). [Workflow 45212012427](https://github.com/FerroUI/Reader/actions/runs/45212012427) passed its build and deploy jobs. The pinned FerroUI revision remains `0f5bbb50dd40522f911826efe0bc3df6e968b884`.
+
+The published build is **`36a8a19dfb8c92c6`**, containing **40 verified application resources**. After deployment, an independent downloader checked every published resource's size and SHA-256 against the worker manifest, verified the manifest/build agreement, and checked the unqualified index's build stamp. All checks passed; the complete [published-integrity record](evidence/ordering-published-integrity.json) is retained.
+
+| Gate | Result |
+|---|---|
+| Rust domain/state/content tests | 135 passed |
+| Standalone gesture/tree/operation/geometry/image tests | 32 passed; **167 Rust tests total** |
+| JavaScript transport, persistence, cache and host tests | **66 passed** |
+| Rendered native browser scenarios | **75 passed**; [complete results](ordering-verification-results.json) |
+| Desktop and browser application compilation | `cargo check --locked -p reader-desktop -p reader-browser` passed locally |
+| Published asset integrity | **40/40** verified, including the Japanese font and its license |
+
+### Behavior exercised
+
+The new ordering scenarios use real native controls and trusted mouse, keyboard and touch events. They verify independent feed positions inside two folders, mixed folder/feed root placement, folder drag insertion, keyboard traversal and collapse, exclusive alphabetical/manual choices, saved mode and positions after reload, and disabled manual movement in alphabetical mode. Cross-folder dragging removes only the source occurrence's label, preserves another label and its order, and supports one-step Undo. Replacing the library during a drag rejects the stale operation. At 320 px, the subscription heading and folder **Move down** action are activated with actual touch input; all menu actions retain 44 px targets. [Ordering evidence](evidence/23-ordering-verification.json) records the completed contracts.
+
+The narrow update path is covered by Rust regressions that hold query/count/epoch borrows and compare article/body allocations and reactive `Rc<Article>` identities across pure ordering changes and Undo. Structural tests cover folder rename/delete, removal/reactivation, new downloads, earlier Undo aliases and backup restoration. JSON backups preserve exact order and mode; OPML exports follow the effective tree but import only subscriptions and memberships.
+
+The Japanese fixture checks **168 nonzero glyphs across 12 family/style combinations** in the active browser font manager: Liberation Sans, Serif and Mono, each with normal, bold, italic and bold-italic requests. Missing Japanese glyphs resolve to the bundled Noto Sans JP face; Latin faces remain primary, and Latin monospace advances remain equal. Native expanded headings, rich text, code and phone wrapping are also captured. The [glyph record](evidence/24-japanese-glyphs.json) and [font provenance](../crates/reader-fonts/assets/README.md) retain the exact scope and pinned 4,533,028-byte asset. This establishes coverage for the fixture's characters, not all Unicode or CJK text.
+
+The existing lifecycle and performance checks also passed. The 10,000-item fixture's final snapshot contained **56 article containers and 1,941 native visuals**; these are one-snapshot realization counts, not peak memory measurements. Offline reload retained the saved library. A staged 40-resource update preserved 10,000 articles and seven subscriptions, protected another open Reader tab, and activated only after the explicit update action. The staged test files were restored before publication.
+
+### Captures and artifact provenance
+
+| Capture | Evidence |
+|---|---|
+| Independent positions in shared folders | [PNG](screenshots/23-independent-folder-order.png) · [native tree](evidence/23-independent-folder-order.json) |
+| Mixed root order and keyboard cursor | [PNG](screenshots/23-mixed-root-order.png) · [native tree](evidence/23-mixed-root-order.json) |
+| Alphabetical projection | [PNG](screenshots/23-alphabetical-order.png) · [native tree](evidence/23-alphabetical-order.json) |
+| Phone subscription settings | [PNG](screenshots/23-phone-subscription-settings.png) · [native tree](evidence/23-phone-subscription-settings.json) |
+| Phone folder movement | [PNG](screenshots/23-phone-folder-order.png) · [native tree](evidence/23-phone-folder-order.json) |
+| Japanese desktop rendering | [PNG](screenshots/24-japanese-desktop.png) · [native tree](evidence/24-japanese-desktop.json) |
+| Japanese phone rendering | [PNG](screenshots/24-japanese-phone.png) · [native tree](evidence/24-japanese-phone.json) |
+
+These files come from verification artifact **14836273616** (6,460,082 bytes). Its downloaded ZIP SHA-256 was verified as `efa328c228d495d0851825fb40924ca9aa564d1acb65d02c0f7bb655373ebc0f`. Per-file hashes, workflow IDs, update/virtualization records and review bounds are collected in [ordering-release.json](evidence/ordering-release.json). The sum of the 75 recorded scenario durations was 170,985 ms; it is run-specific verification timing, not a device-independent benchmark.
+
+### Corrected gate failure and live-browser boundary
+
+The first workflow, [45209546192](https://github.com/FerroUI/Reader/actions/runs/45209546192), passed 60 scenarios, including all six ordering scenarios, then stopped on the Japanese headline selector. The fixture was in expanded view but searched for the list-only `ArticleHeadlineText` name. Its captured native `TextBlock`, rich text and screenshot already displayed Japanese correctly, and all glyph assertions had passed. The final test targets the expanded title and explicitly checks native Japanese rich text. Deployment was withheld on that failure, and the complete corrected gate passed before publication.
+
+The connected local-browser context was unavailable. The separate cloud browser retained **`f3ffc9bb9161ea03`**, with the same six subscriptions, 146 unread items and Home route already documented in earlier entries. Normal closing/reopening, including an interval without an open Reader client, did not advance that cloud profile to the new build. That older client predates the native **Update Reader** notice. No storage reset, worker unregistration or forced activation was performed. **Current-release activation in that cloud profile remains unverified**; it is separate from the successful published-file checks and isolated CI activation test. A local attempt to reproduce the rendered suite was blocked before tests by the workspace's Chromium socket restriction; the complete rendered results above are from GitHub Actions. No interactive native desktop or physical iOS session is claimed.
+
 ## Folder actions and saved-article integrity — 23 November 2026
 
 **The implementation, rendered gate and Pages deployment succeeded.** This release adds folder context actions and corrects unsubscribe/Undo behavior so saved articles and newer downloads survive changes to subscription membership. The application revision is [`ae15a3c9cb76ba6c654a541b476b8bf8363b1106`](https://github.com/FerroUI/Reader/commit/ae15a3c9cb76ba6c654a541b476b8bf8363b1106), with implementation in [`79f51e02e80a674ce50f936857fd3bb3eff3ef0b`](https://github.com/FerroUI/Reader/commit/79f51e02e80a674ce50f936857fd3bb3eff3ef0b). The FerroUI pin is unchanged.

@@ -1,0 +1,1094 @@
+[
+  {
+    "family": "Liberation Sans",
+    "bold": false,
+    "italic": false,
+    "glyphs": [
+      {
+        "advance": 1366,
+        "character": "A",
+        "family": "Liberation Sans",
+        "glyph": 36
+      },
+      {
+        "advance": 455,
+        "character": "i",
+        "family": "Liberation Sans",
+        "glyph": 76
+      },
+      {
+        "advance": 1933,
+        "character": "W",
+        "family": "Liberation Sans",
+        "glyph": 58
+      },
+      {
+        "advance": 1000,
+        "character": "日",
+        "family": "Noto Sans JP",
+        "glyph": 6369
+      },
+      {
+        "advance": 1000,
+        "character": "本",
+        "family": "Noto Sans JP",
+        "glyph": 6605
+      },
+      {
+        "advance": 1000,
+        "character": "語",
+        "family": "Noto Sans JP",
+        "glyph": 12177
+      },
+      {
+        "advance": 1000,
+        "character": "か",
+        "family": "Noto Sans JP",
+        "glyph": 1214
+      },
+      {
+        "advance": 1000,
+        "character": "な",
+        "family": "Noto Sans JP",
+        "glyph": 1245
+      },
+      {
+        "advance": 1000,
+        "character": "カ",
+        "family": "Noto Sans JP",
+        "glyph": 1308
+      },
+      {
+        "advance": 1000,
+        "character": "ナ",
+        "family": "Noto Sans JP",
+        "glyph": 1339
+      },
+      {
+        "advance": 1000,
+        "character": "、",
+        "family": "Noto Sans JP",
+        "glyph": 1141
+      },
+      {
+        "advance": 1000,
+        "character": "。",
+        "family": "Noto Sans JP",
+        "glyph": 1142
+      },
+      {
+        "advance": 1000,
+        "character": "「",
+        "family": "Noto Sans JP",
+        "glyph": 1152
+      },
+      {
+        "advance": 1000,
+        "character": "」",
+        "family": "Noto Sans JP",
+        "glyph": 1153
+      }
+    ]
+  },
+  {
+    "family": "Liberation Sans",
+    "bold": true,
+    "italic": false,
+    "glyphs": [
+      {
+        "advance": 1479,
+        "character": "A",
+        "family": "Liberation Sans",
+        "glyph": 36
+      },
+      {
+        "advance": 569,
+        "character": "i",
+        "family": "Liberation Sans",
+        "glyph": 76
+      },
+      {
+        "advance": 1933,
+        "character": "W",
+        "family": "Liberation Sans",
+        "glyph": 58
+      },
+      {
+        "advance": 1000,
+        "character": "日",
+        "family": "Noto Sans JP",
+        "glyph": 6369
+      },
+      {
+        "advance": 1000,
+        "character": "本",
+        "family": "Noto Sans JP",
+        "glyph": 6605
+      },
+      {
+        "advance": 1000,
+        "character": "語",
+        "family": "Noto Sans JP",
+        "glyph": 12177
+      },
+      {
+        "advance": 1000,
+        "character": "か",
+        "family": "Noto Sans JP",
+        "glyph": 1214
+      },
+      {
+        "advance": 1000,
+        "character": "な",
+        "family": "Noto Sans JP",
+        "glyph": 1245
+      },
+      {
+        "advance": 1000,
+        "character": "カ",
+        "family": "Noto Sans JP",
+        "glyph": 1308
+      },
+      {
+        "advance": 1000,
+        "character": "ナ",
+        "family": "Noto Sans JP",
+        "glyph": 1339
+      },
+      {
+        "advance": 1000,
+        "character": "、",
+        "family": "Noto Sans JP",
+        "glyph": 1141
+      },
+      {
+        "advance": 1000,
+        "character": "。",
+        "family": "Noto Sans JP",
+        "glyph": 1142
+      },
+      {
+        "advance": 1000,
+        "character": "「",
+        "family": "Noto Sans JP",
+        "glyph": 1152
+      },
+      {
+        "advance": 1000,
+        "character": "」",
+        "family": "Noto Sans JP",
+        "glyph": 1153
+      }
+    ]
+  },
+  {
+    "family": "Liberation Sans",
+    "bold": false,
+    "italic": true,
+    "glyphs": [
+      {
+        "advance": 1366,
+        "character": "A",
+        "family": "Liberation Sans",
+        "glyph": 36
+      },
+      {
+        "advance": 455,
+        "character": "i",
+        "family": "Liberation Sans",
+        "glyph": 76
+      },
+      {
+        "advance": 1933,
+        "character": "W",
+        "family": "Liberation Sans",
+        "glyph": 58
+      },
+      {
+        "advance": 1000,
+        "character": "日",
+        "family": "Noto Sans JP",
+        "glyph": 6369
+      },
+      {
+        "advance": 1000,
+        "character": "本",
+        "family": "Noto Sans JP",
+        "glyph": 6605
+      },
+      {
+        "advance": 1000,
+        "character": "語",
+        "family": "Noto Sans JP",
+        "glyph": 12177
+      },
+      {
+        "advance": 1000,
+        "character": "か",
+        "family": "Noto Sans JP",
+        "glyph": 1214
+      },
+      {
+        "advance": 1000,
+        "character": "な",
+        "family": "Noto Sans JP",
+        "glyph": 1245
+      },
+      {
+        "advance": 1000,
+        "character": "カ",
+        "family": "Noto Sans JP",
+        "glyph": 1308
+      },
+      {
+        "advance": 1000,
+        "character": "ナ",
+        "family": "Noto Sans JP",
+        "glyph": 1339
+      },
+      {
+        "advance": 1000,
+        "character": "、",
+        "family": "Noto Sans JP",
+        "glyph": 1141
+      },
+      {
+        "advance": 1000,
+        "character": "。",
+        "family": "Noto Sans JP",
+        "glyph": 1142
+      },
+      {
+        "advance": 1000,
+        "character": "「",
+        "family": "Noto Sans JP",
+        "glyph": 1152
+      },
+      {
+        "advance": 1000,
+        "character": "」",
+        "family": "Noto Sans JP",
+        "glyph": 1153
+      }
+    ]
+  },
+  {
+    "family": "Liberation Sans",
+    "bold": true,
+    "italic": true,
+    "glyphs": [
+      {
+        "advance": 1479,
+        "character": "A",
+        "family": "Liberation Sans",
+        "glyph": 36
+      },
+      {
+        "advance": 569,
+        "character": "i",
+        "family": "Liberation Sans",
+        "glyph": 76
+      },
+      {
+        "advance": 1933,
+        "character": "W",
+        "family": "Liberation Sans",
+        "glyph": 58
+      },
+      {
+        "advance": 1000,
+        "character": "日",
+        "family": "Noto Sans JP",
+        "glyph": 6369
+      },
+      {
+        "advance": 1000,
+        "character": "本",
+        "family": "Noto Sans JP",
+        "glyph": 6605
+      },
+      {
+        "advance": 1000,
+        "character": "語",
+        "family": "Noto Sans JP",
+        "glyph": 12177
+      },
+      {
+        "advance": 1000,
+        "character": "か",
+        "family": "Noto Sans JP",
+        "glyph": 1214
+      },
+      {
+        "advance": 1000,
+        "character": "な",
+        "family": "Noto Sans JP",
+        "glyph": 1245
+      },
+      {
+        "advance": 1000,
+        "character": "カ",
+        "family": "Noto Sans JP",
+        "glyph": 1308
+      },
+      {
+        "advance": 1000,
+        "character": "ナ",
+        "family": "Noto Sans JP",
+        "glyph": 1339
+      },
+      {
+        "advance": 1000,
+        "character": "、",
+        "family": "Noto Sans JP",
+        "glyph": 1141
+      },
+      {
+        "advance": 1000,
+        "character": "。",
+        "family": "Noto Sans JP",
+        "glyph": 1142
+      },
+      {
+        "advance": 1000,
+        "character": "「",
+        "family": "Noto Sans JP",
+        "glyph": 1152
+      },
+      {
+        "advance": 1000,
+        "character": "」",
+        "family": "Noto Sans JP",
+        "glyph": 1153
+      }
+    ]
+  },
+  {
+    "family": "Liberation Serif",
+    "bold": false,
+    "italic": false,
+    "glyphs": [
+      {
+        "advance": 1479,
+        "character": "A",
+        "family": "Liberation Serif",
+        "glyph": 36
+      },
+      {
+        "advance": 569,
+        "character": "i",
+        "family": "Liberation Serif",
+        "glyph": 76
+      },
+      {
+        "advance": 1933,
+        "character": "W",
+        "family": "Liberation Serif",
+        "glyph": 58
+      },
+      {
+        "advance": 1000,
+        "character": "日",
+        "family": "Noto Sans JP",
+        "glyph": 6369
+      },
+      {
+        "advance": 1000,
+        "character": "本",
+        "family": "Noto Sans JP",
+        "glyph": 6605
+      },
+      {
+        "advance": 1000,
+        "character": "語",
+        "family": "Noto Sans JP",
+        "glyph": 12177
+      },
+      {
+        "advance": 1000,
+        "character": "か",
+        "family": "Noto Sans JP",
+        "glyph": 1214
+      },
+      {
+        "advance": 1000,
+        "character": "な",
+        "family": "Noto Sans JP",
+        "glyph": 1245
+      },
+      {
+        "advance": 1000,
+        "character": "カ",
+        "family": "Noto Sans JP",
+        "glyph": 1308
+      },
+      {
+        "advance": 1000,
+        "character": "ナ",
+        "family": "Noto Sans JP",
+        "glyph": 1339
+      },
+      {
+        "advance": 1000,
+        "character": "、",
+        "family": "Noto Sans JP",
+        "glyph": 1141
+      },
+      {
+        "advance": 1000,
+        "character": "。",
+        "family": "Noto Sans JP",
+        "glyph": 1142
+      },
+      {
+        "advance": 1000,
+        "character": "「",
+        "family": "Noto Sans JP",
+        "glyph": 1152
+      },
+      {
+        "advance": 1000,
+        "character": "」",
+        "family": "Noto Sans JP",
+        "glyph": 1153
+      }
+    ]
+  },
+  {
+    "family": "Liberation Serif",
+    "bold": true,
+    "italic": false,
+    "glyphs": [
+      {
+        "advance": 1479,
+        "character": "A",
+        "family": "Liberation Serif",
+        "glyph": 36
+      },
+      {
+        "advance": 569,
+        "character": "i",
+        "family": "Liberation Serif",
+        "glyph": 76
+      },
+      {
+        "advance": 1933,
+        "character": "W",
+        "family": "Liberation Serif",
+        "glyph": 58
+      },
+      {
+        "advance": 1000,
+        "character": "日",
+        "family": "Noto Sans JP",
+        "glyph": 6369
+      },
+      {
+        "advance": 1000,
+        "character": "本",
+        "family": "Noto Sans JP",
+        "glyph": 6605
+      },
+      {
+        "advance": 1000,
+        "character": "語",
+        "family": "Noto Sans JP",
+        "glyph": 12177
+      },
+      {
+        "advance": 1000,
+        "character": "か",
+        "family": "Noto Sans JP",
+        "glyph": 1214
+      },
+      {
+        "advance": 1000,
+        "character": "な",
+        "family": "Noto Sans JP",
+        "glyph": 1245
+      },
+      {
+        "advance": 1000,
+        "character": "カ",
+        "family": "Noto Sans JP",
+        "glyph": 1308
+      },
+      {
+        "advance": 1000,
+        "character": "ナ",
+        "family": "Noto Sans JP",
+        "glyph": 1339
+      },
+      {
+        "advance": 1000,
+        "character": "、",
+        "family": "Noto Sans JP",
+        "glyph": 1141
+      },
+      {
+        "advance": 1000,
+        "character": "。",
+        "family": "Noto Sans JP",
+        "glyph": 1142
+      },
+      {
+        "advance": 1000,
+        "character": "「",
+        "family": "Noto Sans JP",
+        "glyph": 1152
+      },
+      {
+        "advance": 1000,
+        "character": "」",
+        "family": "Noto Sans JP",
+        "glyph": 1153
+      }
+    ]
+  },
+  {
+    "family": "Liberation Serif",
+    "bold": false,
+    "italic": true,
+    "glyphs": [
+      {
+        "advance": 1479,
+        "character": "A",
+        "family": "Liberation Serif",
+        "glyph": 36
+      },
+      {
+        "advance": 569,
+        "character": "i",
+        "family": "Liberation Serif",
+        "glyph": 76
+      },
+      {
+        "advance": 1933,
+        "character": "W",
+        "family": "Liberation Serif",
+        "glyph": 58
+      },
+      {
+        "advance": 1000,
+        "character": "日",
+        "family": "Noto Sans JP",
+        "glyph": 6369
+      },
+      {
+        "advance": 1000,
+        "character": "本",
+        "family": "Noto Sans JP",
+        "glyph": 6605
+      },
+      {
+        "advance": 1000,
+        "character": "語",
+        "family": "Noto Sans JP",
+        "glyph": 12177
+      },
+      {
+        "advance": 1000,
+        "character": "か",
+        "family": "Noto Sans JP",
+        "glyph": 1214
+      },
+      {
+        "advance": 1000,
+        "character": "な",
+        "family": "Noto Sans JP",
+        "glyph": 1245
+      },
+      {
+        "advance": 1000,
+        "character": "カ",
+        "family": "Noto Sans JP",
+        "glyph": 1308
+      },
+      {
+        "advance": 1000,
+        "character": "ナ",
+        "family": "Noto Sans JP",
+        "glyph": 1339
+      },
+      {
+        "advance": 1000,
+        "character": "、",
+        "family": "Noto Sans JP",
+        "glyph": 1141
+      },
+      {
+        "advance": 1000,
+        "character": "。",
+        "family": "Noto Sans JP",
+        "glyph": 1142
+      },
+      {
+        "advance": 1000,
+        "character": "「",
+        "family": "Noto Sans JP",
+        "glyph": 1152
+      },
+      {
+        "advance": 1000,
+        "character": "」",
+        "family": "Noto Sans JP",
+        "glyph": 1153
+      }
+    ]
+  },
+  {
+    "family": "Liberation Serif",
+    "bold": true,
+    "italic": true,
+    "glyphs": [
+      {
+        "advance": 1479,
+        "character": "A",
+        "family": "Liberation Serif",
+        "glyph": 36
+      },
+      {
+        "advance": 569,
+        "character": "i",
+        "family": "Liberation Serif",
+        "glyph": 76
+      },
+      {
+        "advance": 1933,
+        "character": "W",
+        "family": "Liberation Serif",
+        "glyph": 58
+      },
+      {
+        "advance": 1000,
+        "character": "日",
+        "family": "Noto Sans JP",
+        "glyph": 6369
+      },
+      {
+        "advance": 1000,
+        "character": "本",
+        "family": "Noto Sans JP",
+        "glyph": 6605
+      },
+      {
+        "advance": 1000,
+        "character": "語",
+        "family": "Noto Sans JP",
+        "glyph": 12177
+      },
+      {
+        "advance": 1000,
+        "character": "か",
+        "family": "Noto Sans JP",
+        "glyph": 1214
+      },
+      {
+        "advance": 1000,
+        "character": "な",
+        "family": "Noto Sans JP",
+        "glyph": 1245
+      },
+      {
+        "advance": 1000,
+        "character": "カ",
+        "family": "Noto Sans JP",
+        "glyph": 1308
+      },
+      {
+        "advance": 1000,
+        "character": "ナ",
+        "family": "Noto Sans JP",
+        "glyph": 1339
+      },
+      {
+        "advance": 1000,
+        "character": "、",
+        "family": "Noto Sans JP",
+        "glyph": 1141
+      },
+      {
+        "advance": 1000,
+        "character": "。",
+        "family": "Noto Sans JP",
+        "glyph": 1142
+      },
+      {
+        "advance": 1000,
+        "character": "「",
+        "family": "Noto Sans JP",
+        "glyph": 1152
+      },
+      {
+        "advance": 1000,
+        "character": "」",
+        "family": "Noto Sans JP",
+        "glyph": 1153
+      }
+    ]
+  },
+  {
+    "family": "Liberation Mono",
+    "bold": false,
+    "italic": false,
+    "glyphs": [
+      {
+        "advance": 1229,
+        "character": "A",
+        "family": "Liberation Mono",
+        "glyph": 36
+      },
+      {
+        "advance": 1229,
+        "character": "i",
+        "family": "Liberation Mono",
+        "glyph": 76
+      },
+      {
+        "advance": 1229,
+        "character": "W",
+        "family": "Liberation Mono",
+        "glyph": 58
+      },
+      {
+        "advance": 1000,
+        "character": "日",
+        "family": "Noto Sans JP",
+        "glyph": 6369
+      },
+      {
+        "advance": 1000,
+        "character": "本",
+        "family": "Noto Sans JP",
+        "glyph": 6605
+      },
+      {
+        "advance": 1000,
+        "character": "語",
+        "family": "Noto Sans JP",
+        "glyph": 12177
+      },
+      {
+        "advance": 1000,
+        "character": "か",
+        "family": "Noto Sans JP",
+        "glyph": 1214
+      },
+      {
+        "advance": 1000,
+        "character": "な",
+        "family": "Noto Sans JP",
+        "glyph": 1245
+      },
+      {
+        "advance": 1000,
+        "character": "カ",
+        "family": "Noto Sans JP",
+        "glyph": 1308
+      },
+      {
+        "advance": 1000,
+        "character": "ナ",
+        "family": "Noto Sans JP",
+        "glyph": 1339
+      },
+      {
+        "advance": 1000,
+        "character": "、",
+        "family": "Noto Sans JP",
+        "glyph": 1141
+      },
+      {
+        "advance": 1000,
+        "character": "。",
+        "family": "Noto Sans JP",
+        "glyph": 1142
+      },
+      {
+        "advance": 1000,
+        "character": "「",
+        "family": "Noto Sans JP",
+        "glyph": 1152
+      },
+      {
+        "advance": 1000,
+        "character": "」",
+        "family": "Noto Sans JP",
+        "glyph": 1153
+      }
+    ]
+  },
+  {
+    "family": "Liberation Mono",
+    "bold": true,
+    "italic": false,
+    "glyphs": [
+      {
+        "advance": 1229,
+        "character": "A",
+        "family": "Liberation Mono",
+        "glyph": 36
+      },
+      {
+        "advance": 1229,
+        "character": "i",
+        "family": "Liberation Mono",
+        "glyph": 76
+      },
+      {
+        "advance": 1229,
+        "character": "W",
+        "family": "Liberation Mono",
+        "glyph": 58
+      },
+      {
+        "advance": 1000,
+        "character": "日",
+        "family": "Noto Sans JP",
+        "glyph": 6369
+      },
+      {
+        "advance": 1000,
+        "character": "本",
+        "family": "Noto Sans JP",
+        "glyph": 6605
+      },
+      {
+        "advance": 1000,
+        "character": "語",
+        "family": "Noto Sans JP",
+        "glyph": 12177
+      },
+      {
+        "advance": 1000,
+        "character": "か",
+        "family": "Noto Sans JP",
+        "glyph": 1214
+      },
+      {
+        "advance": 1000,
+        "character": "な",
+        "family": "Noto Sans JP",
+        "glyph": 1245
+      },
+      {
+        "advance": 1000,
+        "character": "カ",
+        "family": "Noto Sans JP",
+        "glyph": 1308
+      },
+      {
+        "advance": 1000,
+        "character": "ナ",
+        "family": "Noto Sans JP",
+        "glyph": 1339
+      },
+      {
+        "advance": 1000,
+        "character": "、",
+        "family": "Noto Sans JP",
+        "glyph": 1141
+      },
+      {
+        "advance": 1000,
+        "character": "。",
+        "family": "Noto Sans JP",
+        "glyph": 1142
+      },
+      {
+        "advance": 1000,
+        "character": "「",
+        "family": "Noto Sans JP",
+        "glyph": 1152
+      },
+      {
+        "advance": 1000,
+        "character": "」",
+        "family": "Noto Sans JP",
+        "glyph": 1153
+      }
+    ]
+  },
+  {
+    "family": "Liberation Mono",
+    "bold": false,
+    "italic": true,
+    "glyphs": [
+      {
+        "advance": 1229,
+        "character": "A",
+        "family": "Liberation Mono",
+        "glyph": 36
+      },
+      {
+        "advance": 1229,
+        "character": "i",
+        "family": "Liberation Mono",
+        "glyph": 76
+      },
+      {
+        "advance": 1229,
+        "character": "W",
+        "family": "Liberation Mono",
+        "glyph": 58
+      },
+      {
+        "advance": 1000,
+        "character": "日",
+        "family": "Noto Sans JP",
+        "glyph": 6369
+      },
+      {
+        "advance": 1000,
+        "character": "本",
+        "family": "Noto Sans JP",
+        "glyph": 6605
+      },
+      {
+        "advance": 1000,
+        "character": "語",
+        "family": "Noto Sans JP",
+        "glyph": 12177
+      },
+      {
+        "advance": 1000,
+        "character": "か",
+        "family": "Noto Sans JP",
+        "glyph": 1214
+      },
+      {
+        "advance": 1000,
+        "character": "な",
+        "family": "Noto Sans JP",
+        "glyph": 1245
+      },
+      {
+        "advance": 1000,
+        "character": "カ",
+        "family": "Noto Sans JP",
+        "glyph": 1308
+      },
+      {
+        "advance": 1000,
+        "character": "ナ",
+        "family": "Noto Sans JP",
+        "glyph": 1339
+      },
+      {
+        "advance": 1000,
+        "character": "、",
+        "family": "Noto Sans JP",
+        "glyph": 1141
+      },
+      {
+        "advance": 1000,
+        "character": "。",
+        "family": "Noto Sans JP",
+        "glyph": 1142
+      },
+      {
+        "advance": 1000,
+        "character": "「",
+        "family": "Noto Sans JP",
+        "glyph": 1152
+      },
+      {
+        "advance": 1000,
+        "character": "」",
+        "family": "Noto Sans JP",
+        "glyph": 1153
+      }
+    ]
+  },
+  {
+    "family": "Liberation Mono",
+    "bold": true,
+    "italic": true,
+    "glyphs": [
+      {
+        "advance": 1229,
+        "character": "A",
+        "family": "Liberation Mono",
+        "glyph": 36
+      },
+      {
+        "advance": 1229,
+        "character": "i",
+        "family": "Liberation Mono",
+        "glyph": 76
+      },
+      {
+        "advance": 1229,
+        "character": "W",
+        "family": "Liberation Mono",
+        "glyph": 58
+      },
+      {
+        "advance": 1000,
+        "character": "日",
+        "family": "Noto Sans JP",
+        "glyph": 6369
+      },
+      {
+        "advance": 1000,
+        "character": "本",
+        "family": "Noto Sans JP",
+        "glyph": 6605
+      },
+      {
+        "advance": 1000,
+        "character": "語",
+        "family": "Noto Sans JP",
+        "glyph": 12177
+      },
+      {
+        "advance": 1000,
+        "character": "か",
+        "family": "Noto Sans JP",
+        "glyph": 1214
+      },
+      {
+        "advance": 1000,
+        "character": "な",
+        "family": "Noto Sans JP",
+        "glyph": 1245
+      },
+      {
+        "advance": 1000,
+        "character": "カ",
+        "family": "Noto Sans JP",
+        "glyph": 1308
+      },
+      {
+        "advance": 1000,
+        "character": "ナ",
+        "family": "Noto Sans JP",
+        "glyph": 1339
+      },
+      {
+        "advance": 1000,
+        "character": "、",
+        "family": "Noto Sans JP",
+        "glyph": 1141
+      },
+      {
+        "advance": 1000,
+        "character": "。",
+        "family": "Noto Sans JP",
+        "glyph": 1142
+      },
+      {
+        "advance": 1000,
+        "character": "「",
+        "family": "Noto Sans JP",
+        "glyph": 1152
+      },
+      {
+        "advance": 1000,
+        "character": "」",
+        "family": "Noto Sans JP",
+        "glyph": 1153
+      }
+    ]
+  }
+]

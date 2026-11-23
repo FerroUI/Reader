@@ -10,6 +10,8 @@ The workflow publishes successful builds from `main`; the deployment job is the 
 
 Actual browser verification captures: [Home](docs/screenshots/home.png) · [Expanded reading](docs/screenshots/expanded.png) · [Narrow layout](docs/screenshots/narrow.png). See the [verification record](docs/verification.md) for the tested revision, interaction checks and measured control counts.
 
+Latest refinement captures: [Independent folder ordering](docs/screenshots/23-independent-folder-order.png) · [Phone subscription settings](docs/screenshots/23-phone-subscription-settings.png) · [Japanese reading on a phone](docs/screenshots/24-japanese-phone.png).
+
 ## What you can do
 
 - Read All items, individual subscriptions, folders, starred items and tags, in expanded or list view. Open a row in place, move between articles, keep an item unread, star it, edit tags and add a private note.
