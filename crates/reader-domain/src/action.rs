@@ -1,4 +1,4 @@
-use crate::{FullArticle, Id, ParsedFeed, Settings};
+use crate::{FullArticle, Id, ParsedFeed, Settings, SubscriptionNode, SubscriptionSort};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -39,6 +39,21 @@ pub enum Action {
         /// None keeps membership; a target folder moves only if not already a member.
         folder: Option<String>,
     },
+    PositionRoot {
+        item: SubscriptionNode,
+        target: SubscriptionNode,
+        before: bool,
+    },
+    PositionFeedOccurrence {
+        id: Id,
+        from_folder: String,
+        to_folder: String,
+        target: Option<SubscriptionNode>,
+        before: bool,
+    },
+    /// None sorts the mixed root; Some sorts only the named folder's children.
+    SortSubscriptions(Option<String>),
+    SetSubscriptionSort(SubscriptionSort),
     SetFeedFolders {
         id: Id,
         folders: Vec<String>,
@@ -83,6 +98,8 @@ pub struct Changes {
     pub articles: Vec<Id>,
     pub removed: Vec<Id>,
     pub feeds: bool,
+    /// Sidebar projection only: no article-query, count or source-epoch work.
+    pub order: bool,
     pub settings: bool,
     pub created_feed: Option<Id>,
 }

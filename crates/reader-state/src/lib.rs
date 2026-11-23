@@ -11,6 +11,7 @@ mod presentation;
 mod query;
 mod send_to;
 mod services;
+mod subscription_order;
 mod subscriptions;
 mod updates;
 

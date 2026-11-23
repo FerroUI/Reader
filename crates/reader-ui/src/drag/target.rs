@@ -1,11 +1,12 @@
 //! A live row target is either a folder move or a before/after insertion.
 use super::{feedback, payload, DragSession};
+use crate::sidebar::tree::TreeNode;
 use ferroui_base::input::{DragDrop, DragDropEffects, DragEventArgs};
 use ferroui_base::{Point, Ref};
 use ferroui_controls::primitives::TemplatedControl;
 use ferroui_controls::{Control, Panel, TextBlock, TopLevel};
 use ferroui_view::{on_cleanup, style};
-use reader_domain::Id;
+use reader_domain::{Id, SubscriptionNode, SubscriptionSort};
 use reader_state::AppViewModel;
 use std::rc::{Rc, Weak};
 
@@ -28,24 +29,54 @@ impl PartialEq for TargetTag {
 pub(super) enum DropOperation {
     Folder(String),
     Row {
-        id: Id,
+        node: SubscriptionNode,
         before: bool,
         folder: String,
     },
 }
 impl DropOperation {
-    pub(super) fn valid(&self, vm: &AppViewModel, source: Id) -> bool {
+    pub(super) fn valid(&self, vm: &AppViewModel, source: &TreeNode) -> bool {
+        let from = match source {
+            TreeNode::Feed { folder, .. } => folder.as_str(),
+            TreeNode::Folder(_) => "",
+            TreeNode::Tag(_) => return false,
+        };
         match self {
-            Self::Folder(folder) => folder.is_empty() || vm.folders().contains(folder),
-            Self::Row { id, folder, .. } => {
-                *id != source
-                    && vm.feed(*id).is_some_and(|feed| {
-                        if folder.is_empty() {
-                            feed.folder_names().is_empty()
-                        } else {
-                            feed.in_folder(folder)
+            Self::Folder(folder) => {
+                (folder.is_empty() || super::folder_exists(vm, folder))
+                    && match source {
+                        TreeNode::Folder(_) => {
+                            folder.is_empty() && vm.subscription_sort() == SubscriptionSort::Manual
                         }
-                    })
+                        TreeNode::Feed { .. } => from != folder,
+                        TreeNode::Tag(_) => false,
+                    }
+            }
+            Self::Row { node, folder, .. } => {
+                if from == folder && vm.subscription_sort() == SubscriptionSort::Alphabetical {
+                    return false;
+                }
+                if matches!(source, TreeNode::Folder(_)) && !folder.is_empty() {
+                    return false;
+                }
+                match node {
+                    SubscriptionNode::Folder(name) => {
+                        folder.is_empty()
+                            && source != &TreeNode::Folder(name.clone())
+                            && super::folder_exists(vm, name)
+                    }
+                    SubscriptionNode::Feed(id) => {
+                        source
+                            != &TreeNode::Feed {
+                                id: *id,
+                                folder: folder.clone(),
+                            }
+                            && vm
+                                .state()
+                                .feed(*id)
+                                .is_some_and(|feed| !feed.archived && super::in_group(feed, folder))
+                    }
+                }
             }
         }
     }
@@ -58,7 +89,7 @@ pub(super) struct PlannedTarget {
 fn plan(
     control: &Control,
     vm: &Rc<AppViewModel>,
-    source: Id,
+    source: &TreeNode,
     point: Point,
 ) -> Option<DropOperation> {
     let bounds = control.bounds();
@@ -76,10 +107,24 @@ fn plan(
     if !tag.owner.ptr_eq(&Rc::downgrade(vm)) {
         return None;
     }
+    let manual = vm.subscription_sort() == SubscriptionSort::Manual;
     let operation = match &tag.target {
+        Target::Folder(folder) if folder.is_empty() => DropOperation::Folder(String::new()),
+        Target::Folder(folder)
+            if matches!(source, TreeNode::Folder(_))
+                || (manual
+                    && (point.y < bounds.height * 0.25 || point.y > bounds.height * 0.75)) =>
+        {
+            DropOperation::Row {
+                node: SubscriptionNode::Folder(folder.clone()),
+                before: point.y < bounds.height / 2.0,
+                folder: String::new(),
+            }
+        }
         Target::Folder(folder) => DropOperation::Folder(folder.clone()),
+        Target::Row { folder, .. } if !manual => DropOperation::Folder(folder.clone()),
         Target::Row { id, folder } => DropOperation::Row {
-            id: *id,
+            node: SubscriptionNode::Feed(*id),
             before: point.y < bounds.height / 2.0,
             folder: folder.clone(),
         },
@@ -102,7 +147,7 @@ pub(super) fn target_at(
         .filter_map(|visual| visual.cast::<Control>())
     {
         if let Some(local) = root.translate_point(point, &control) {
-            if let Some(operation) = plan(&control, vm, drag.id, local) {
+            if let Some(operation) = plan(&control, vm, &drag.node, local) {
                 return Some(PlannedTarget { control, operation });
             }
         }
@@ -116,9 +161,15 @@ pub(crate) fn attach_row_target(
     id: Id,
     folder: String,
 ) {
+    styles(control);
     attach(control, vm, Target::Row { id, folder });
 }
 pub(crate) fn attach_target(control: &Ref<Control>, vm: Rc<AppViewModel>, folder: String) {
+    styles(control);
+    attach(control, vm, Target::Folder(folder));
+}
+
+fn styles(control: &Ref<Control>) {
     control.styles().add(
         style("Button.reader-drop-target")
             .set(TemplatedControl::background_property(), "#D9E7FB")
@@ -135,7 +186,6 @@ pub(crate) fn attach_target(control: &Ref<Control>, vm: Rc<AppViewModel>, folder
             .set(TextBlock::background_property(), "#D9E7FB")
             .build(),
     );
-    attach(control, vm, Target::Folder(folder));
 }
 
 fn attach(control: &Ref<Control>, vm: Rc<AppViewModel>, target: Target) {
@@ -151,8 +201,14 @@ fn attach(control: &Ref<Control>, vm: Rc<AppViewModel>, target: Target) {
         let Some(control) = weak.upgrade() else {
             return;
         };
-        let planned = payload(event, &hover_vm)
-            .and_then(|drag| plan(&control, &hover_vm, drag.id, event.get_position(&control)));
+        let planned = payload(event, &hover_vm).and_then(|drag| {
+            plan(
+                &control,
+                &hover_vm,
+                &drag.node,
+                event.get_position(&control),
+            )
+        });
         feedback::show(&control, planned.as_ref());
         event.set_drag_effects(if planned.is_some() {
             DragDropEffects::MOVE
@@ -183,7 +239,7 @@ fn attach(control: &Ref<Control>, vm: Rc<AppViewModel>, target: Target) {
             return;
         };
         event.set_handled(true);
-        let accepted = plan(&control, &vm, drag.id, event.get_position(&control))
+        let accepted = plan(&control, &vm, &drag.node, event.get_position(&control))
             .is_some_and(|operation| drag.finish(&vm, &operation));
         event.set_drag_effects(if accepted {
             DragDropEffects::MOVE

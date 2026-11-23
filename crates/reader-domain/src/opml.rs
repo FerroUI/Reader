@@ -79,27 +79,22 @@ pub fn parse_opml(source: &str) -> Result<Vec<OpmlSubscription>, String> {
 impl AppState {
     pub fn export_opml(&self) -> String {
         let mut output = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<opml version=\"2.0\">\n<head><title>FerroUI Reader subscriptions</title></head>\n<body>\n");
-        for feed in self
-            .feeds
-            .iter()
-            .filter(|f| !f.archived && f.folder_names().is_empty())
-        {
-            outline(&mut output, feed);
-        }
-        for folder in self.folders() {
-            output.push_str(&format!(
-                "<outline text=\"{}\" title=\"{}\">\n",
-                escape(&folder),
-                escape(&folder)
-            ));
-            for feed in self
-                .feeds
-                .iter()
-                .filter(|f| !f.archived && f.in_folder(&folder))
-            {
-                outline(&mut output, feed);
+        let tree = self.subscription_tree();
+        for node in tree.root {
+            match node {
+                crate::SubscriptionNode::Feed(id) => outline(&mut output, self.feed(id).unwrap()),
+                crate::SubscriptionNode::Folder(folder) => {
+                    output.push_str(&format!(
+                        "<outline text=\"{}\" title=\"{}\">\n",
+                        escape(&folder),
+                        escape(&folder)
+                    ));
+                    for id in &tree.folders[&folder] {
+                        outline(&mut output, self.feed(*id).unwrap());
+                    }
+                    output.push_str("</outline>\n");
+                }
             }
-            output.push_str("</outline>\n");
         }
         output.push_str("</body>\n</opml>\n");
         output

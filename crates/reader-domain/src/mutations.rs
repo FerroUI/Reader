@@ -87,7 +87,31 @@ impl AppState {
                 before,
                 folder,
             } => {
-                changes.feeds = self.position_feed(id, target, before, folder)?;
+                (changes.feeds, changes.order) = self.position_feed(id, target, before, folder)?;
+            }
+            Action::PositionRoot {
+                item,
+                target,
+                before,
+            } => {
+                changes.order = self.position_root(item, target, before)?;
+            }
+            Action::PositionFeedOccurrence {
+                id,
+                from_folder,
+                to_folder,
+                target,
+                before,
+            } => {
+                (changes.feeds, changes.order) =
+                    self.position_feed_occurrence(id, from_folder, to_folder, target, before)?;
+            }
+            Action::SortSubscriptions(folder) => {
+                changes.order = self.sort_subscriptions(folder)?;
+            }
+            Action::SetSubscriptionSort(sort) => {
+                changes.order = self.subscription_order.sort != sort;
+                self.subscription_order.sort = sort;
             }
             Action::SetFeedFolders { id, folders } => {
                 changes.feeds = self.set_feed_folders(id, folders)?;
@@ -106,6 +130,7 @@ impl AppState {
             Action::RenameFolder { from, to } => {
                 let to = self.validate_folder_name(Some(&from), &to)?;
                 if from != to {
+                    changes.order = self.rename_subscription_order(&from, &to);
                     for folder in &mut self.folders {
                         if *folder == from {
                             *folder = to.clone();
@@ -196,9 +221,13 @@ impl AppState {
         }
         changes.articles.sort_unstable();
         changes.articles.dedup();
+        if changes.feeds {
+            changes.order |= self.normalize_subscription_order();
+        }
         changes.changed = !changes.articles.is_empty()
             || !changes.removed.is_empty()
             || changes.feeds
+            || changes.order
             || changes.settings;
         Ok(changes)
     }

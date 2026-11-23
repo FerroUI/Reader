@@ -2,6 +2,17 @@ use super::{aliases::Aliases, reconcile, UndoChange, UndoEntry};
 use reader_domain::{Action, AppState, Changes, View};
 
 impl UndoEntry {
+    fn is_order_only(&self) -> bool {
+        self.snapshot.is_none()
+            && !self.changes.is_empty()
+            && self.changes.iter().all(|change| {
+                matches!(
+                    change,
+                    UndoChange::FeedOrder(_) | UndoChange::SubscriptionOrder(_)
+                )
+            })
+    }
+
     pub(super) fn restore(&self, state: &mut AppState) -> Result<(Changes, Aliases), String> {
         if let Some(snapshot) = &self.snapshot {
             let mut restored = (**snapshot).clone();
@@ -12,6 +23,31 @@ impl UndoEntry {
             changes.settings = true;
             *state = restored;
             return Ok((changes, Aliases::default()));
+        }
+        if self.is_order_only() {
+            // Ordering changes only subscription metadata. Preserve the article
+            // allocation, derived indexes and reactive snapshots in place.
+            let previous = state.subscription_order.clone();
+            let mut reordered = false;
+            for change in &self.changes {
+                match change {
+                    UndoChange::SubscriptionOrder(order) => {
+                        state.subscription_order = order.clone()
+                    }
+                    UndoChange::FeedOrder(order) => reordered |= state.restore_feed_order(order),
+                    _ => unreachable!("only ordering history is restored here"),
+                }
+            }
+            state.normalize_subscription_order();
+            let order = reordered || previous != state.subscription_order;
+            return Ok((
+                Changes {
+                    changed: order,
+                    order,
+                    ..Changes::default()
+                },
+                Aliases::default(),
+            ));
         }
         if self.changes.iter().all(is_scalar) {
             // Read/star/note/title undo cannot change identities or references.
@@ -42,16 +78,9 @@ impl UndoEntry {
                     }
                 }
                 UndoChange::FeedOrder(order) => {
-                    let ranks: std::collections::BTreeMap<_, _> = order
-                        .iter()
-                        .copied()
-                        .enumerate()
-                        .map(|(index, id)| (id, index))
-                        .collect();
-                    restored
-                        .feeds
-                        .sort_by_key(|feed| ranks.get(&feed.id).copied().unwrap_or(usize::MAX));
+                    restored.restore_feed_order(order);
                 }
+                UndoChange::SubscriptionOrder(order) => restored.subscription_order = order.clone(),
                 UndoChange::Folders(folders) => restored.folders = folders.clone(),
                 UndoChange::RestoreFeed(feed, position, articles) => {
                     reconcile::restore_feed(
@@ -89,6 +118,7 @@ impl UndoEntry {
                 .insert(position.min(restored.articles.len()), article);
         }
         aliases.settings(&mut restored.settings);
+        aliases.subscription_order(&mut restored.subscription_order);
         restored.normalize()?;
         let changes = difference(state, &restored);
         *state = restored;
@@ -184,11 +214,13 @@ fn difference(before: &AppState, after: &AppState) -> Changes {
     let feeds = before.feeds != after.feeds || before.folders != after.folders;
     let settings =
         before.settings != after.settings || before.stream_settings != after.stream_settings;
+    let order = before.subscription_order != after.subscription_order;
     Changes {
-        changed: feeds || settings || !articles.is_empty() || !removed.is_empty(),
+        changed: feeds || settings || order || !articles.is_empty() || !removed.is_empty(),
         articles,
         removed,
         feeds,
+        order,
         settings,
         created_feed: None,
     }
@@ -206,6 +238,7 @@ impl crate::AppViewModel {
         let Some(entry) = entry else {
             return;
         };
+        let order_only = entry.is_order_only();
         self.applying.set(true);
         let restored = entry.restore(&mut self.document.borrow_mut());
         match restored {
@@ -224,27 +257,31 @@ impl crate::AppViewModel {
                         older.remap(&aliases);
                     }
                 }
-                let route = entry.restored_view(self.view(), &self.state());
-                // Unlike navigate(), this keeps a still-valid reading cursor
-                // and selection through a folder rename and its inverse.
-                changes.settings |= self.view() != route;
-                *self.view.borrow_mut() = route.clone();
-                {
-                    let state = self.state();
-                    let belongs = |id| {
-                        state.article(id).is_some_and(|article| {
-                            reader_domain::matches_view(article, &state, &route)
-                        })
-                    };
-                    if self.selected().is_some_and(|id| !belongs(id)) {
-                        self.selected.set(None);
+                if !order_only {
+                    let route = entry.restored_view(self.view(), &self.state());
+                    // Unlike navigate(), this keeps a still-valid reading cursor
+                    // and selection through a folder rename and its inverse.
+                    changes.settings |= self.view() != route;
+                    *self.view.borrow_mut() = route.clone();
+                    {
+                        let state = self.state();
+                        let belongs = |id| {
+                            state.article(id).is_some_and(|article| {
+                                reader_domain::matches_view(article, &state, &route)
+                            })
+                        };
+                        if self.selected().is_some_and(|id| !belongs(id)) {
+                            self.selected.set(None);
+                        }
+                        if self.cursor().is_some_and(|id| !belongs(id)) {
+                            self.cursor.set(None);
+                        }
                     }
-                    if self.cursor().is_some_and(|id| !belongs(id)) {
-                        self.cursor.set(None);
-                    }
+                    self.restore_stream_settings();
                 }
-                self.restore_stream_settings();
-                self.publish(&changes);
+                if !order_only || changes.changed {
+                    self.publish(&changes);
+                }
                 *self.status.borrow_mut() = "Change undone.".into();
                 // Report persistence errors after success text, never hide them.
                 if changes.changed {

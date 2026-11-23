@@ -1,4 +1,4 @@
-use crate::{AppViewModel, HostRequest, history::UndoEntry};
+use crate::{history::UndoEntry, AppViewModel, HostRequest};
 use reader_domain::{Action, AppState, Changes};
 
 impl AppViewModel {
@@ -61,6 +61,7 @@ impl AppViewModel {
                 .collect(),
             articles: self.state().articles.iter().map(|a| a.id).collect(),
             feeds: true,
+            order: true,
             settings: true,
             created_feed: None,
         };
@@ -79,6 +80,7 @@ impl AppViewModel {
     pub fn import_opml(&self, source: &str) -> Result<usize, String> {
         let subscriptions = reader_domain::parse_opml(source)?;
         let folders = self.state().folders.clone();
+        let order = self.state().subscription_order.clone();
         let mut added = Vec::new();
         let mut memberships = Vec::new();
         let mut modified = false;
@@ -116,7 +118,7 @@ impl AppViewModel {
         let count = added.len();
         if modified {
             let mut undo = self.undo.borrow_mut();
-            undo.push_back(UndoEntry::subscriptions(added, folders, memberships));
+            undo.push_back(UndoEntry::subscriptions(added, folders, memberships, order));
             if undo.len() > 30 {
                 undo.pop_front();
             }

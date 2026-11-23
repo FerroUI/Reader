@@ -188,8 +188,12 @@ export async function mobileChecks(h, check) {
       await h.capture("08-mobile-insertion");
       await touch.end();
       await h.until(async () => {
-        const feeds = (await h.state()).feeds;
-        return feeds.findIndex(f => f.id === feed.id) === feeds.findIndex(f => f.id === sibling.id) + 1;
+        const order = (await h.state()).subscription_order?.folders?.[feed.folder] || [];
+        const rows = (await h.snapshot()).elements;
+        const moved = rows.find(e => e.name === "SubscriptionLink" && e.automationName?.startsWith(`${feed.title} (`));
+        const anchor = rows.find(e => e.name === "SubscriptionLink" && e.automationName?.startsWith(`${sibling.title} (`));
+        return order.indexOf(feed.id) === order.indexOf(sibling.id) + 1
+          && moved && anchor && moved.y > anchor.y;
       }, "touch drop persists the requested subscription order");
       assert.deepEqual((await h.state()).feeds.find(f => f.id === feed.id).folders, feed.folders,
         "reordering inside a folder retains all memberships");

@@ -1,5 +1,6 @@
 //! Automation snapshots reflect live native controls, including hit testing.
 mod rich_text;
+mod fonts;
 
 use ferroui_base::{input::InputElement, Point, Visual};
 use ferroui_controls::{

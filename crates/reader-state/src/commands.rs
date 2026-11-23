@@ -41,6 +41,17 @@ impl AppViewModel {
     }
 
     pub(crate) fn publish(&self, changes: &Changes) {
+        if !changes.changed {
+            return;
+        }
+        if changes.order
+            && !changes.feeds
+            && !changes.settings
+            && changes.articles.is_empty()
+            && changes.removed.is_empty()
+        {
+            return;
+        }
         if changes.feeds {
             self.feed_epochs
                 .borrow_mut()

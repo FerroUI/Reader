@@ -1,6 +1,6 @@
 //! Stable occurrences in Reader's subscription tree, independent of the open stream.
 //! A feed may appear under several folders; its occurrence includes that parent.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub(crate) enum TreeNode {
     Feed { id: u64, folder: String },
     Folder(String),

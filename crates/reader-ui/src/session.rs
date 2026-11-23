@@ -262,4 +262,55 @@ impl Session {
             self.search_scope.set(View::All);
         }
     }
+
+    /// A dragged occurrence can disappear while the same subscription remains
+    /// in other folders. Keep navigation anchored to its surviving identity.
+    pub fn moved_feed_occurrence(&self, vm: &AppViewModel, id: Id, from: &str, to: &str) {
+        let Some(feed) = vm.feed(id) else { return };
+        let contains = |folder: &str| {
+            if folder.is_empty() {
+                feed.folder_names().is_empty()
+            } else {
+                feed.in_folder(folder)
+            }
+        };
+        if contains(from) {
+            return;
+        }
+        let replacement = if contains(to) {
+            Some(TreeNode::Feed {
+                id,
+                folder: to.to_owned(),
+            })
+        } else {
+            vm.subscription_tree()
+                .root
+                .into_iter()
+                .find_map(|node| match node {
+                    reader_domain::SubscriptionNode::Feed(candidate) if candidate == id => {
+                        Some(TreeNode::Feed {
+                            id,
+                            folder: String::new(),
+                        })
+                    }
+                    reader_domain::SubscriptionNode::Folder(folder) if feed.in_folder(&folder) => {
+                        Some(TreeNode::Feed { id, folder })
+                    }
+                    _ => None,
+                })
+        };
+        let source = TreeNode::Feed {
+            id,
+            folder: from.to_owned(),
+        };
+        if self.tree_cursor.get_untracked().as_ref() == Some(&source) {
+            let nodes = crate::sidebar::cursor::visible(vm, self);
+            self.tree_cursor
+                .set(crate::sidebar::tree::resolve(&nodes, replacement.as_ref()));
+            crate::sidebar::cursor::reveal(self);
+        }
+        if self.tree_opened.borrow().as_ref() == Some(&source) {
+            *self.tree_opened.borrow_mut() = replacement;
+        }
+    }
 }

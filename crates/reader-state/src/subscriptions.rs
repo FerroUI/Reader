@@ -150,8 +150,8 @@ impl AppViewModel {
     pub fn reorder_feed(&self, id: Id, target: Id, before: bool) {
         self.position_feed(id, target, before, None);
     }
-    /// Position in the shared subscription order, optionally moving to the
-    /// target sidebar group. Reordering within an existing label retains others.
+    /// Compatibility API: an explicit folder has independent order. Call
+    /// position_feed_occurrence when a drag captures its source folder as well.
     pub fn position_feed(&self, id: Id, target: Id, before: bool, folder: Option<String>) {
         self.dispatch(Action::PositionFeed {
             id,

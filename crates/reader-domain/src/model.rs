@@ -167,6 +167,8 @@ pub struct AppState {
     pub articles: Vec<Article>,
     pub folders: Vec<String>,
     pub settings: Settings,
+    #[serde(skip_serializing_if = "crate::SubscriptionOrder::is_default")]
+    pub subscription_order: crate::SubscriptionOrder,
     pub stream_settings: BTreeMap<String, crate::StreamSettings>,
     pub next_id: Id,
     #[serde(skip)]
@@ -183,6 +185,7 @@ impl Default for AppState {
             articles: Vec::new(),
             folders: Vec::new(),
             settings: Settings::default(),
+            subscription_order: crate::SubscriptionOrder::default(),
             stream_settings: BTreeMap::new(),
             next_id: 1,
             article_index: BTreeMap::new(),

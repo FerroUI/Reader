@@ -39,7 +39,11 @@ fn row_reorder_and_cross_folder_move_are_single_undoable_transactions() {
         .map(|article| vm.article_shared(article.id).unwrap())
         .collect();
     vm.position_feed(d, a, true, Some("Technology".into()));
-    assert_eq!(ids(&vm)[0], d);
+    assert_eq!(vm.subscription_tree().folders["Technology"][0], d);
+    assert_eq!(
+        ids(&vm),
+        before.feeds.iter().map(|feed| feed.id).collect::<Vec<_>>()
+    );
     assert_eq!(
         vm.feed(d).unwrap().folder_names(),
         vec!["Reading", "Technology"]
@@ -48,7 +52,7 @@ fn row_reorder_and_cross_folder_move_are_single_undoable_transactions() {
     assert_eq!(*vm.state(), before);
     assert!(!vm.can_undo());
     vm.position_feed(d, b, false, Some("Science".into()));
-    let order = ids(&vm);
+    let order = &vm.subscription_tree().folders["Science"];
     assert_eq!(
         order.iter().position(|id| *id == d),
         order.iter().position(|id| *id == b).map(|i| i + 1)
@@ -59,7 +63,15 @@ fn row_reorder_and_cross_folder_move_are_single_undoable_transactions() {
     assert!(!vm.can_undo());
     vm.position_feed(d, unfiled, false, Some(String::new()));
     assert!(vm.feed(d).unwrap().folder_names().is_empty());
-    assert_eq!(ids(&vm).last(), Some(&d));
+    let root = vm.subscription_tree().root;
+    let position = root
+        .iter()
+        .position(|node| *node == reader_domain::SubscriptionNode::Feed(d))
+        .unwrap();
+    assert_eq!(
+        root[position - 1],
+        reader_domain::SubscriptionNode::Feed(unfiled)
+    );
     vm.undo();
     assert_eq!(*vm.state(), before);
     assert!(!vm.can_undo());

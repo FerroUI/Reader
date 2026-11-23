@@ -1,15 +1,20 @@
-//! Shared metrics-compatible Arial substitute, kept outside the browser WASM module.
+//! Shared Reader faces and Japanese fallback, kept outside the browser WASM module.
 use ferroui_base::media::fonts::{FontCollectionBase, FontCollectionBaseImpl};
-use ferroui_base::media::{FontManager, FontManagerOptions};
+use ferroui_base::media::{FontFallback, FontFamily, FontManager, FontManagerOptions};
 use std::{io::Cursor, rc::Rc};
 use url::Url;
 
 pub const SANS: &str = "fonts:Reader#Liberation Sans";
 pub const SERIF: &str = "fonts:Reader#Liberation Serif";
+pub const JAPANESE: &str = "fonts:Reader#Noto Sans JP";
 
 pub fn font_options() -> FontManagerOptions {
     FontManagerOptions {
         default_family_name: Some(SANS.into()),
+        font_fallbacks: Some(vec![FontFallback {
+            font_family: FontFamily::new(JAPANESE),
+            ..Default::default()
+        }]),
         ..Default::default()
     }
 }
@@ -49,4 +54,5 @@ pub const BUNDLED_FONTS: &[&[u8]] = &[
     include_bytes!("../assets/fonts/LiberationSans-BoldItalic.ttf"),
     include_bytes!("../assets/fonts/LiberationSerif-Regular.ttf"),
     include_bytes!("../assets/fonts/LiberationMono-Regular.ttf"),
+    include_bytes!("../assets/fonts/NotoSansJP-Regular.otf"),
 ];

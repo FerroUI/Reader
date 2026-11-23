@@ -110,6 +110,20 @@ Feed settings include newest/oldest/magic sorting, rename, unsubscribe, translat
 
 The preserved generic menu-button implementation (`Ou`, using `Ku(..., 5)`) anchors the menu at the control's bottom-start edge. Native toolbar dropdowns now supply an explicit local placement rectangle so that FerroUI preserves this alignment and constrains the popup at viewport edges. Up/Down opening and native radio semantics preserve keyboard selection and prevent choosing an already-selected preference from clearing its checkmark.
 
+### Subscription tree ordering
+
+The [official September 2008 announcement](https://googlereader.blogspot.com/2008/09/friends-everywhere-and-other-friendly.html) introduced a choice between alphabetical subscription ordering and drag-and-drop ordering. The [saved final client's](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/3564210627-en-scroll.js) `lv.zp` presents **Sort alphabetically** and **Sort by drag and drop** as exclusive choices; `lv.KA` saves the preference and changes the tree's mode. It is a persistent projection choice, not a command that discards manual positions.
+
+| Contract | Preserved-client evidence |
+|---|---|
+| Independent manual positions | `gA`/`hA` read ordering per parent stream, `jA` saves its list and `kA` inserts a node relative to an anchor. A feed's occurrence inside one folder need not share another folder's position. |
+| Alphabetical projection | `Nv.lq` builds folder groups first, followed by unfiled feeds and then standalone tags. `fG.Hd` applies the saved per-parent order only in manual mode. |
+| Cross-folder movement | `Nv.Ar` creates the membership delta `sd:[destination]`, `Rd:[sourceParent]`: add the destination label and remove only the dragged occurrence's source label. Other labels survive. |
+| Root movement | `Nv.Ar` adds a destination label for root-to-folder and removes the source label for folder-to-root. A feed with another label therefore remains in that other folder. Folder nodes do not nest. |
+| Alphabetical-mode dragging | `Nv.Ar` gates relative placement through the manual-mode flag while still allowing cross-parent membership changes. Switching modes retains the saved manual lists. |
+
+The native tree follows these occurrence and mode contracts. **Move up**, **Move down** and a folder's one-shot **Sort subscriptions alphabetically** provide explicit menu access to manual operations. These are usability adaptations, as are touch targets. Existing Reader backups without order metadata retain their previous unfiled-first/document-order projection until the user changes it; alphabetical mode uses the original folder-first grouping. JSON backup preserves the mode and manual lists. OPML exports the current projection, but its subscription/membership import does not reconstruct the independent ordering.
+
 ### Read-state checkbox
 
 The [saved client's](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/3564210627-en-scroll.js) `aw` chooses `it` when automatic read tracking is enabled and `ht` otherwise. `ct` and `bt` define their respective labels and state transitions; `Gp` names the kept-unread state and `Fp` the read state.

@@ -1,7 +1,7 @@
 //! Keep older undo commands attached to their logical feed/article when a
 //! removed source was subscribed again with newly allocated identities.
 use super::{UndoChange, UndoEntry};
-use reader_domain::{Id, Settings, View};
+use reader_domain::{Id, Settings, SubscriptionNode, SubscriptionOrder, View};
 use std::collections::BTreeMap;
 
 #[derive(Default)]
@@ -25,6 +25,20 @@ impl Aliases {
         if let View::Feed(id) = &mut settings.start_page {
             self.feed(id);
         }
+    }
+    pub fn subscription_order(&self, order: &mut SubscriptionOrder) {
+        for node in &mut order.root {
+            if let SubscriptionNode::Feed(id) = node {
+                self.feed(id);
+            }
+        }
+        for ids in order.folders.values_mut() {
+            for id in ids {
+                self.feed(id);
+            }
+        }
+        // Membership validation and duplicate removal belong to restoration:
+        // earlier entries may refer to folders that a later undo recreates.
     }
     fn stream(&self, key: &mut String) {
         if let Some(mut id) = key.strip_prefix("feed:").and_then(|id| id.parse().ok()) {
@@ -55,6 +69,7 @@ impl UndoEntry {
                         aliases.feed(id);
                     }
                 }
+                UndoChange::SubscriptionOrder(order) => aliases.subscription_order(order),
                 UndoChange::RestoreFeed(feed, _, articles) => {
                     aliases.feed(&mut feed.id);
                     for (_, article) in articles {

@@ -2,11 +2,12 @@ pub(crate) mod cursor;
 mod feed;
 pub(crate) mod folder;
 mod navigation;
+mod ordering;
+mod subscriptions;
 pub(crate) mod tree;
 use crate::session::{Panel, Session};
 use feed::feed_row;
 use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
-use ferroui_base::media::FontWeight;
 use ferroui_controls::primitives::ScrollBarVisibility;
 use ferroui_view::prelude::*;
 use navigation::{group, nav};
@@ -98,104 +99,55 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             inset + 20.0,
         ));
     }
-    let unfiled_vm = vm.clone();
-    content = content.child(
-        text_block()
-            .key("subscriptions-heading")
-            .with(move |heading| {
-                crate::drag::attach_target(
-                    &heading.clone().upcast(),
-                    unfiled_vm.clone(),
-                    String::new(),
-                )
-            })
-            .text("Subscriptions")
-            .font_size(13.0)
-            .font_weight(FontWeight::Bold)
-            .height(if touch { 44.0 } else { 32.0 })
-            .padding((inset, 8.0, 0.0, 0.0)),
-    );
-    let feeds = vm.feeds();
-    let counts: HashMap<u64, usize> = feeds
-        .iter()
-        .map(|feed| (feed.id, vm.count(&View::Feed(feed.id))))
-        .collect();
-    let show_all = vm.state().settings.show_all_subscriptions;
-    let keyboard_cursor = cursor::current(&cursor::visible(&vm, &ui), &ui);
-    for feed in feeds.iter().filter(|f| f.folder_names().is_empty()) {
-        let count = counts.get(&feed.id).copied().unwrap_or(0);
-        if show_all || count > 0 {
-            content = content.child(feed_row(
-                vm.clone(),
-                ui.clone(),
-                feed,
-                count,
-                inset + 6.0,
-                "",
-                keyboard_cursor.as_ref()
-                    == Some(&TreeNode::Feed {
-                        id: feed.id,
-                        folder: String::new(),
-                    }),
-            ));
-        }
-    }
-    let collapsed = ui.collapsed.get();
-    for folder in vm.folders() {
-        let folder_feeds: Vec<_> = feeds.iter().filter(|f| f.in_folder(&folder)).collect();
-        let count: usize = folder_feeds
-            .iter()
-            .map(|f| counts.get(&f.id).copied().unwrap_or(0))
-            .sum();
-        if !show_all && count == 0 {
-            continue;
-        }
-        let folder_cursor = keyboard_cursor.as_ref() == Some(&TreeNode::Folder(folder.clone()));
-        content = content.child(folder::row(
-            vm.clone(),
-            ui.clone(),
-            &folder,
-            count,
-            inset,
-            folder_cursor,
-        ));
-        if !collapsed.contains(&folder) {
-            for feed in folder_feeds {
-                let n = counts.get(&feed.id).copied().unwrap_or(0);
-                if show_all || n > 0 {
+    content = content.child(subscriptions::header(vm.clone(), ui.clone(), inset));
+    let feeds: HashMap<_, _> = vm.feeds().into_iter().map(|feed| (feed.id, feed)).collect();
+    let ordering = ordering::Context::capture(&vm);
+    let nodes = cursor::with_order(&vm, &ui, &ordering.order);
+    let keyboard_cursor = cursor::current(&nodes, &ui);
+    let mut tags_started = false;
+    for node in nodes {
+        let selected_cursor = keyboard_cursor.as_ref() == Some(&node);
+        match node {
+            TreeNode::Feed { id, folder } => {
+                if let Some(feed) = feeds.get(&id) {
                     content = content.child(feed_row(
                         vm.clone(),
                         ui.clone(),
                         feed,
-                        n,
-                        inset + 20.0,
+                        vm.count(&View::Feed(id)),
+                        inset + if folder.is_empty() { 6.0 } else { 20.0 },
                         &folder,
-                        keyboard_cursor.as_ref()
-                            == Some(&TreeNode::Feed {
-                                id: feed.id,
-                                folder: folder.clone(),
-                            }),
+                        selected_cursor,
+                        ordering.clone(),
                     ));
                 }
             }
-        }
-    }
-    let tags = vm.tags();
-    if !tags.is_empty() {
-        content = content.child(border().height(15.0));
-        for tag in tags {
-            if !show_all && vm.count(&View::Tag(tag.clone())) == 0 {
-                continue;
+            TreeNode::Folder(name) => {
+                content = content.child(folder::row(
+                    vm.clone(),
+                    ui.clone(),
+                    &name,
+                    vm.count(&View::Folder(name.clone())),
+                    inset,
+                    selected_cursor,
+                    ordering.clone(),
+                ));
             }
-            content = content.child(nav(
-                vm.clone(),
-                ui.clone(),
-                View::Tag(tag.clone()),
-                &tag,
-                Some(Icon::Tag),
-                vm.count(&View::Tag(tag.clone())),
-                inset,
-            ));
+            TreeNode::Tag(tag) => {
+                if !tags_started {
+                    content = content.child(border().height(15.0));
+                    tags_started = true;
+                }
+                content = content.child(nav(
+                    vm.clone(),
+                    ui.clone(),
+                    View::Tag(tag.clone()),
+                    &tag,
+                    Some(Icon::Tag),
+                    vm.count(&View::Tag(tag.clone())),
+                    inset,
+                ));
+            }
         }
     }
     let close = vm.clone();

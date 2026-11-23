@@ -21,8 +21,9 @@ pub fn run_main(
     bold_italic: Vec<u8>,
     serif: Vec<u8>,
     mono: Vec<u8>,
+    japanese: Vec<u8>,
 ) -> Result<(), JsValue> {
-    let bytes = RefCell::new(Some(vec![regular, bold, italic, bold_italic, serif, mono]));
+    let bytes = RefCell::new(Some(vec![regular, bold, italic, bold_italic, serif, mono, japanese]));
     let font_error = Rc::new(RefCell::new(None));
     let result = font_error.clone();
     AppBuilder::configure::<app::App>()

@@ -127,6 +127,7 @@ impl AppState {
             return Err("Reader identifiers are exhausted.".into());
         }
         self.reindex();
+        self.normalize_subscription_order();
         Ok(())
     }
     pub(crate) fn reindex(&mut self) {

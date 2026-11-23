@@ -3,39 +3,57 @@ use super::tree::{self, TreeNode};
 use crate::session::Session;
 use ferroui_base::threading::{Dispatcher, DispatcherPriority};
 use ferroui_controls::Control;
-use reader_domain::View;
+use reader_domain::{SubscriptionNode, SubscriptionOrder, View};
 use reader_state::AppViewModel;
 
 pub(crate) fn visible(vm: &AppViewModel, ui: &Session) -> Vec<TreeNode> {
-    nodes(vm, ui, vm.state().settings.show_all_subscriptions)
+    with_order(vm, ui, &vm.subscription_tree())
 }
 
-fn nodes(vm: &AppViewModel, ui: &Session, show_all: bool) -> Vec<TreeNode> {
-    let feeds = vm.feeds();
+pub(super) fn with_order(
+    vm: &AppViewModel,
+    ui: &Session,
+    order: &SubscriptionOrder,
+) -> Vec<TreeNode> {
+    nodes(vm, ui, order, vm.state().settings.show_all_subscriptions)
+}
+
+fn nodes(
+    vm: &AppViewModel,
+    ui: &Session,
+    order: &SubscriptionOrder,
+    show_all: bool,
+) -> Vec<TreeNode> {
     let include = |id| show_all || vm.count(&View::Feed(id)) > 0;
-    let mut nodes: Vec<_> = feeds
-        .iter()
-        .filter(|feed| feed.folder_names().is_empty() && include(feed.id))
-        .map(|feed| TreeNode::Feed {
-            id: feed.id,
-            folder: String::new(),
-        })
-        .collect();
+    let mut nodes = Vec::new();
     let collapsed = ui.collapsed.get_untracked();
-    for folder in vm.folders() {
-        let children: Vec<_> = feeds
-            .iter()
-            .filter(|feed| feed.in_folder(&folder) && include(feed.id))
-            .collect();
-        if !show_all && children.is_empty() {
-            continue;
-        }
-        nodes.push(TreeNode::Folder(folder.clone()));
-        if !collapsed.contains(&folder) {
-            nodes.extend(children.into_iter().map(|feed| TreeNode::Feed {
-                id: feed.id,
-                folder: folder.clone(),
-            }));
+    for root in &order.root {
+        match root {
+            SubscriptionNode::Feed(id) if include(*id) => nodes.push(TreeNode::Feed {
+                id: *id,
+                folder: String::new(),
+            }),
+            SubscriptionNode::Folder(folder) => {
+                if !show_all && vm.count(&View::Folder(folder.clone())) == 0 {
+                    continue;
+                }
+                nodes.push(TreeNode::Folder(folder.clone()));
+                if !collapsed.contains(folder) {
+                    nodes.extend(
+                        order
+                            .folders
+                            .get(folder)
+                            .into_iter()
+                            .flatten()
+                            .filter(|id| include(**id))
+                            .map(|id| TreeNode::Feed {
+                                id: *id,
+                                folder: folder.clone(),
+                            }),
+                    );
+                }
+            }
+            _ => {}
         }
     }
     nodes.extend(
@@ -100,7 +118,7 @@ pub(crate) fn open_cursor(vm: &AppViewModel, ui: &Session) {
 pub(crate) fn open_next_unread(vm: &AppViewModel, ui: &Session) {
     // Keep the just-finished occurrence as our starting point even when the
     // "show unread" preference has removed it from the painted tree.
-    let nodes = nodes(vm, ui, true);
+    let nodes = nodes(vm, ui, &vm.subscription_tree(), true);
     let start = current(&nodes, ui).or_else(|| opened(vm, ui, &nodes));
     let next = start
         .as_ref()
@@ -154,7 +172,7 @@ pub(crate) fn toggle(vm: &AppViewModel, ui: &Session) {
     }
 }
 
-fn reveal(ui: &Session) {
+pub(crate) fn reveal(ui: &Session) {
     let scroll = ui.navigation_scroll;
     Dispatcher::ui_thread().post_local(
         move || {

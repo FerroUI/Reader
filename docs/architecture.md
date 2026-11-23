@@ -6,7 +6,7 @@ Reader has one portable application and two platform hosts. Domain operations do
 
 | Crate | Main modules and responsibilities |
 | --- | --- |
-| `reader-domain` | `model` defines versioned documents and stable IDs; `action` applies validated operations; `merge` reconciles feed entries; `feed` parses RSS/Atom/JSON Feed; `query` and `stream` select content; `folders`, `opml`, `document` and `trends` keep their respective rules separate |
+| `reader-domain` | `model` defines versioned documents and stable IDs; `action` applies validated operations; `merge` reconciles feed entries; `feed` parses RSS/Atom/JSON Feed; `query` and `stream` select content; `folders`, `subscription_order`, `subscription_position`, `opml`, `document` and `trends` keep their respective rules separate |
 | `reader-state` | `AppViewModel`, ReactiveUI command serialization, DynamicData caches, incremental counts, query updates, read selection, navigation, undo and portable host requests |
 | `reader-content` | Pure, bounded HTML projection into native presentation blocks; optional HTML5/Readability article extraction shared by both hosts |
 | `reader-extract` | A separate `wasm32-unknown-unknown` worker bridge; no FerroUI, rendering or network dependencies |
@@ -20,11 +20,13 @@ The dependency direction is host → UI → controls/state → domain, with UI �
 
 ## Commands and state changes
 
-`AppState` is the serializable source of truth. It contains feeds, articles, folder labels, global preferences, per-stream display settings, the schema version and the next ID. Runtime lookup indices and normalized search text are derived, so backups do not contain redundant indices.
+`AppState` is the serializable source of truth. It contains feeds, articles, folder labels, subscription ordering, global preferences, per-stream display settings, the schema version and the next ID. Runtime lookup indices and normalized search text are derived, so backups do not contain redundant indices.
 
-The UI calls a view-model method or `dispatch(Action)`. `ReactiveCommand` routes mutation through a serialized action queue. Reentrant commands enqueue rather than taking a second mutable document borrow. Each successful domain action returns a `Changes` set describing updated/removed articles and whether feeds or settings changed.
+The UI calls a view-model method or `dispatch(Action)`. `ReactiveCommand` routes mutation through a serialized action queue. Reentrant commands enqueue rather than taking a second mutable document borrow. Each successful domain action returns a `Changes` set describing updated/removed articles and whether feeds, settings or subscription order changed.
 
 The view model uses that set to update its `SourceCache<Rc<Article>, Id>` and unread count index. Small annotation changes update only affected query membership; a structural change or larger batch rebuilds the visible query. A separate visible cache and ordered ID projection describe the active stream. Notification and persistence scheduling occur after mutation and cache updates.
+
+An order-only change takes a narrow publication path: save and notify the tree without touching article caches, counts, visible-query indices or subscription epochs. Pure ordering undo restores only order metadata in place and uses the same path; it does not clone article bodies or reconcile the active reading route.
 
 | Concern | Ownership |
 | --- | --- |
@@ -59,7 +61,11 @@ The reading tracker requires both real user input and a changed offset from the 
 
 Touch and pen activate article content after an accepted release. A shared contact guard records maximum movement, so a pan that returns to its starting point remains cancelled. Additional contacts, capture loss, cancellation and a hold also invalidate a tap. Native scrolling and held subscription dragging use FerroUI gesture recognizers. A stationary held release opens subscription actions; movement after the hold uses the same validated drop operations as mouse dragging. Edge scrolling runs only during a live held drag, and insertion markers distinguish before/after positions.
 
-Subscription position is stored in the feed sequence. Every folder projects that sequence; a feed with several memberships therefore keeps the same relative order across those projections. Reordering within a folder preserves all memberships. A row drop into another folder changes membership and position atomically. Undo restores the user's order/membership change while retaining unrelated background feed metadata and new subscriptions. Folder ordering and independent per-folder feed orders are not implemented.
+`AppState.subscription_order` is a sparse overlay containing the saved `Manual`/`Alphabetical` mode, mixed root `Feed(Id)`/`Folder(String)` positions and independent feed-ID lists keyed by folder. Empty metadata is omitted from JSON. Old documents retain unfiled feeds in document order, then alphabetic folders; each folder initially follows document feed order. Projection appends missing valid entries in that fallback order and normalization removes duplicate, stale or out-of-scope references. Alphabetical projection groups folders first, then unfiled feeds, and sorts names case-insensitively without overwriting the manual lists. One tree projection drives rendering and keyboard traversal; its construction and sorting are bounded by subscription occurrences, not article count.
+
+Occurrence moves validate the captured source, destination and anchor before mutation. Moving between folders removes only the source occurrence's label and adds the destination, retaining other labels and positions. Moving to root only removes the source label; a still-labelled feed has no root occurrence. Alphabetical mode permits these membership moves but disables manual placement and one-shot sort commands. Folder nodes stay at root. Menu commands additionally validate their captured sibling sequence and library generation; drag state retains source identity and parent. Rename carries order keys/root entries forward, delete/unsubscribe prune references, and structural undo restores ordering alongside memberships while retaining unrelated background downloads and reconciling replacement feed IDs.
+
+JSON backups retain the ordering mode and every manual list. OPML export follows the effective tree and represents each folder occurrence; it has no field for the alternative mode or hidden manual lists. Import deduplicates subscriptions and merges memberships while retaining existing ordering preferences; it does not reconstruct independent root/folder positions from outline order. Exact ordering round trips require JSON backup. The old unscoped `PositionFeed` command remains a compatibility operation over document feed order; sidebar code uses the occurrence-aware APIs.
 
 Undo is a bounded in-memory history, generally storing the affected fields or subscriptions instead of copying the complete document. Full document replacement retains a snapshot for undo. The history does not persist across a restart and is not an event-sourced synchronization protocol.
 
@@ -87,7 +93,7 @@ The implementation still has work proportional to stream length when it creates 
 
 The Material base is included through FerroUI's build-time theme part selection. Reader styles override typography, density, border, gradient and selection resources. Reusable Button and ListBoxItem templates use `TemplateBinding` to keep content, alignment, brushes, borders and font properties live. Application code uses actual control semantics instead of replacing buttons with unstructured painted hit regions.
 
-Liberation Sans supplies consistent Arial-like metrics across hosts, with bundled regular/bold/italic/bold-italic styles; Liberation Serif and Inter provide additional typography/fallback support. Bundled Liberation Mono gives article code fixed-width metrics in both hosts. Identical fonts reduce platform variation but do not make the renderer pixel-identical to the original browser DOM.
+Liberation Sans supplies consistent Arial-like metrics across hosts, with bundled regular/bold/italic/bold-italic styles; Liberation Serif and Inter provide additional typography/fallback support. Bundled Liberation Mono gives article code fixed-width metrics in both hosts. A pinned Noto Sans JP Regular fallback supplies Japanese glyphs after the requested Latin face is checked. The unmodified Noto CJK Sans 2.004 Japanese subset is 4,533,028 bytes; [asset provenance and licenses](../crates/reader-fonts/assets/README.md) record its exact source. The browser loads it as a separate font asset included in the offline manifest, and native builds embed the same bytes. One regular face keeps the payload bounded; the framework supplies synthetic styles. Coverage is Japanese, not every CJK language or Unicode script. Identical font bytes reduce platform variation but do not make the renderer pixel-identical to the original browser DOM.
 
 ## Article content boundary
 

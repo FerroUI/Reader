@@ -51,8 +51,9 @@ impl AppState {
         let changed = feed.folder_names() != folders || feed.folders != folders;
         feed.folder = folders.first().cloned().unwrap_or_default();
         feed.folders = folders.clone();
+        let mut known: std::collections::BTreeSet<_> = self.folders.iter().cloned().collect();
         for folder in folders {
-            if !self.folders.contains(&folder) {
+            if known.insert(folder.clone()) {
                 self.folders.push(folder);
             }
         }

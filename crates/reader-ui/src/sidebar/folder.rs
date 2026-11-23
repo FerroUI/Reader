@@ -1,4 +1,4 @@
-use super::{cursor, navigation::row_class, tree::TreeNode};
+use super::{cursor, navigation::row_class, ordering, tree::TreeNode};
 use crate::{
     menus,
     session::{FolderTarget, Panel, Session},
@@ -18,6 +18,7 @@ pub(super) fn row(
     count: usize,
     inset: f64,
     keyboard_cursor: bool,
+    ordering: Rc<ordering::Context>,
 ) -> Element {
     let touch = crate::responsive::touch(&vm);
     let collapsed = ui.collapsed.get().contains(name);
@@ -31,8 +32,10 @@ pub(super) fn row(
     let disclosure_name = name.to_owned();
     let hold_vm = vm.clone();
     let held_name = name.to_owned();
-    let held_generation = vm.library_generation();
-    let context = menus::context(&vm, items(vm.clone(), ui, name));
+    let drag_vm = vm.clone();
+    let drag_ui = ui.clone();
+    let drag_node = TreeNode::Folder(name.to_owned());
+    let context = menus::context(&vm, items_with_order(vm.clone(), ui, name, ordering));
     rsx! {
         Grid {key:format!("folder:{name}"),name:"SubscriptionFolderRow",
             with:move |target|crate::drag::attach_target(&target.clone().upcast(),drop_vm.clone(),drop_folder.clone()),
@@ -44,17 +47,24 @@ pub(super) fn row(
                 horizontal_content_alignment:H::Stretch,automation_properties_name:name.to_owned(),context_menu:context,
                 with:move |button|{
                     menus::attach_context_keys(button);
+                    crate::drag::attach_source(button,drag_vm.clone(),drag_ui.clone(),drag_node.clone());
                     let vm=hold_vm.clone();
                     let name=held_name.clone();
-                    crate::gestures::attach_held_menu(button,Rc::new(move||vm.library_generation()==held_generation && vm.folders().contains(&name)));
+                    let generation=hold_vm.clone();
+                    crate::gestures::attach_held_menu(button,Rc::new(move||vm.folders().contains(&name)),Rc::new(move||generation.library_generation()));
                 },
-                on_click:move |_|cursor::open(&open_vm,&open_ui,TreeNode::Folder(open_name.clone())),
+                on_click:move |_|{
+                    let node=TreeNode::Folder(open_name.clone());
+                    if !crate::drag::consume_click(&node) { cursor::open(&open_vm,&open_ui,node); }
+                },
                 Grid {column_definitions:"20,*,Auto",
                     {icon(Icon::Folder,14.0,"#A1A1A1")}
                     TextBlock {Grid.column:1,text:name.to_owned(),text_trimming:<dyn TextTrimming>::character_ellipsis(),vertical_alignment:V::Center,font_weight:if count>0{FontWeight::Bold}else{FontWeight::Normal}}
                     TextBlock {Grid.column:2,text:crate::format::unread_badge(count),font_size:11.0,foreground:"#666666",margin:(4.0,0.0,8.0,0.0),vertical_alignment:V::Center}
                 }
             }
+            Border {Grid.column_span:2,is_hit_test_visible:false,{crate::drag::marker(false)}}
+            Border {Grid.column_span:2,is_hit_test_visible:false,{crate::drag::marker(true)}}
         }
     }
 }
@@ -62,6 +72,16 @@ pub(super) fn row(
 /// Sidebar and toolbar actions share the same captured target. A popup that
 /// outlives a replacement library cannot operate on an unrelated folder.
 pub(crate) fn items(vm: Rc<AppViewModel>, ui: Rc<Session>, name: &str) -> Vec<Element> {
+    let ordering = ordering::Context::capture(&vm);
+    items_with_order(vm, ui, name, ordering)
+}
+
+fn items_with_order(
+    vm: Rc<AppViewModel>,
+    ui: Rc<Session>,
+    name: &str,
+    ordering: Rc<ordering::Context>,
+) -> Vec<Element> {
     let target = FolderTarget::capture(&vm, name);
     let refresh_vm = vm.clone();
     let refresh_target = target.clone();
@@ -72,8 +92,9 @@ pub(crate) fn items(vm: Rc<AppViewModel>, ui: Rc<Session>, name: &str) -> Vec<El
     let delete_ui = ui.clone();
     let delete_target = target.clone();
     let unsubscribe_vm = vm.clone();
+    let unsubscribe_ui = ui.clone();
     let unsubscribe_target = target.clone();
-    vec![
+    let mut items = vec![
         menus::item_enabled(
             "Refresh folder",
             !vm.is_refreshing() && !target.feeds.is_empty(),
@@ -99,9 +120,19 @@ pub(crate) fn items(vm: Rc<AppViewModel>, ui: Rc<Session>, name: &str) -> Vec<El
             !target.feeds.is_empty(),
             move || {
                 if unsubscribe_target.valid(&unsubscribe_vm) {
-                    ui.show(Panel::UnsubscribeFolder(unsubscribe_target.clone()));
+                    unsubscribe_ui.show(Panel::UnsubscribeFolder(unsubscribe_target.clone()));
                 }
             },
         ),
-    ]
+    ];
+    items.push(menus::separator());
+    items.extend(ordering::move_items(
+        vm.clone(),
+        ui,
+        TreeNode::Folder(name.to_owned()),
+        ordering.clone(),
+    ));
+    items.push(menus::separator());
+    items.push(ordering::sort_item(vm, name, ordering));
+    items
 }

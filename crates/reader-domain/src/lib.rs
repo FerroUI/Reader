@@ -18,6 +18,8 @@ mod sample;
 mod send_to;
 mod starter;
 mod stream;
+mod subscription_order;
+mod subscription_position;
 mod subscriptions;
 mod trends;
 
@@ -32,4 +34,5 @@ pub use query::{matches_view, search_matches};
 pub use send_to::{validate_send_to, SendToDestination, MAX_SEND_TO_DESTINATIONS};
 pub use starter::{DefaultFeed, DEFAULT_FEEDS};
 pub use stream::StreamSettings;
+pub use subscription_order::{SubscriptionNode, SubscriptionOrder, SubscriptionSort};
 pub use trends::{FeedTrend, Trends};

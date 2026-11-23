@@ -1,9 +1,11 @@
 mod aliases;
+#[cfg(test)]
+mod ordering_tests;
 mod reconcile;
 mod restore;
 #[cfg(test)]
 mod tests;
-use reader_domain::{Action, AppState, Article, Changes, Feed, Id, Settings};
+use reader_domain::{Action, AppState, Article, Changes, Feed, Id, Settings, SubscriptionOrder};
 
 pub(crate) enum UndoChange {
     Read(Id, bool, Option<i64>),
@@ -13,6 +15,7 @@ pub(crate) enum UndoChange {
     Title(Id, String),
     FeedFolders(Id, Vec<String>),
     FeedOrder(Vec<Id>),
+    SubscriptionOrder(SubscriptionOrder),
     Folders(Vec<String>),
     RestoreFeed(Feed, usize, Vec<(usize, Article)>),
     RemoveFeed(Id),
@@ -74,16 +77,39 @@ impl UndoEntry {
                 changes.push(UndoChange::Folders(state.folders.clone()));
             }
             Action::PositionFeed { id, folder, .. } => {
-                changes.push(UndoChange::FeedOrder(
-                    state.feeds.iter().map(|feed| feed.id).collect(),
-                ));
-                if folder.is_some() {
+                if let Some(folder) = folder {
+                    if let Some(feed) = state.feed(*id).filter(|feed| {
+                        if folder.trim().is_empty() {
+                            !feed.folder_names().is_empty()
+                        } else {
+                            !feed.in_folder(folder.trim())
+                        }
+                    }) {
+                        changes.push(UndoChange::FeedFolders(*id, feed.folder_names()));
+                        changes.push(UndoChange::Folders(state.folders.clone()));
+                    }
+                } else {
+                    changes.push(UndoChange::FeedOrder(
+                        state.feeds.iter().map(|feed| feed.id).collect(),
+                    ));
+                }
+            }
+            Action::PositionFeedOccurrence {
+                id,
+                from_folder,
+                to_folder,
+                ..
+            } => {
+                if from_folder != to_folder {
                     if let Some(feed) = state.feed(*id) {
                         changes.push(UndoChange::FeedFolders(*id, feed.folder_names()));
                     }
                     changes.push(UndoChange::Folders(state.folders.clone()));
                 }
             }
+            Action::PositionRoot { .. }
+            | Action::SortSubscriptions(_)
+            | Action::SetSubscriptionSort(_) => {}
             Action::RemoveFeed(id) => capture_feeds(state, &[*id], &mut changes),
             Action::RemoveFeeds(ids) => capture_feeds(state, ids, &mut changes),
             Action::CreateFolder(_) => changes.push(UndoChange::Folders(state.folders.clone())),
@@ -122,11 +148,35 @@ impl UndoEntry {
                     state.stream_settings.get(stream).copied(),
                 ));
             }
-            Action::AddSubscription { .. } => {}
+            Action::AddSubscription { .. } => {
+                changes.push(UndoChange::Folders(state.folders.clone()));
+            }
             Action::MergeFeed { .. }
             | Action::FeedError { .. }
             | Action::CacheFullArticle { .. }
             | Action::ShowFullArticle { .. } => return None,
+        }
+        if matches!(
+            action,
+            Action::MoveFeed { .. }
+                | Action::SetFeedFolders { .. }
+                | Action::PositionFeed { .. }
+                | Action::PositionRoot { .. }
+                | Action::PositionFeedOccurrence { .. }
+                | Action::SortSubscriptions(_)
+                | Action::SetSubscriptionSort(_)
+                | Action::RemoveFeed(_)
+                | Action::RemoveFeeds(_)
+                | Action::CreateFolder(_)
+                | Action::RenameFolder { .. }
+                | Action::DeleteFolder(_)
+                | Action::AddSubscription { .. }
+        ) {
+            // Restore positions after memberships and sources, then normalize
+            // their references once the complete structural undo has settled.
+            changes.push(UndoChange::SubscriptionOrder(
+                state.subscription_order.clone(),
+            ));
         }
         Some(Self {
             changes,
@@ -143,6 +193,7 @@ impl UndoEntry {
         ids: Vec<Id>,
         folders: Vec<String>,
         memberships: Vec<(Id, Vec<String>)>,
+        order: SubscriptionOrder,
     ) -> Self {
         let mut changes = ids
             .into_iter()
@@ -154,6 +205,7 @@ impl UndoEntry {
                 .into_iter()
                 .map(|(id, folders)| UndoChange::FeedFolders(id, folders)),
         );
+        changes.push(UndoChange::SubscriptionOrder(order));
         Self {
             changes,
             snapshot: None,

@@ -1,5 +1,6 @@
 use super::{highlight, release_click, suppress, DragSession};
 use crate::gestures::motion::Motion;
+use crate::{session::Session, sidebar::tree::TreeNode};
 use ferroui_base::input::gesture_recognizers::GestureRecognizer;
 use ferroui_base::input::{HoldingState, IPointer, InputElement, PointerType};
 use ferroui_base::reactive::Subscription;
@@ -10,7 +11,6 @@ use ferroui_base::{
 };
 use ferroui_controls::{Button, Control, TopLevel};
 use ferroui_view::on_cleanup;
-use reader_domain::Id;
 use reader_state::AppViewModel;
 use std::{
     cell::RefCell,
@@ -23,7 +23,8 @@ pub(super) struct TouchDrag {
     pub base: GestureRecognizer,
     pub button: WeakRef<Button>,
     pub vm: Weak<AppViewModel>,
-    pub id: Id,
+    pub ui: Weak<Session>,
+    pub node: TreeNode,
     pub contact: RefCell<Option<Contact>>,
     pub highlight: RefCell<Option<WeakRef<Control>>>,
     pub timer: RefCell<Option<Subscription>>,
@@ -49,7 +50,7 @@ impl TouchDrag {
             contact.drag.active.set(false);
             if contact.held {
                 contact.pointer.capture(None);
-                release_click(self.id);
+                release_click(&self.node);
             }
         }
     }
@@ -70,7 +71,7 @@ impl TouchDrag {
             }
             contact.held = true;
         }
-        suppress(self.id);
+        suppress(&self.node);
         self.capture(pointer);
         true
     }
@@ -106,12 +107,13 @@ impl TouchDrag {
     }
 }
 
-pub(super) fn attach(button: &Ref<Button>, vm: Rc<AppViewModel>, id: Id) {
+pub(super) fn attach(button: &Ref<Button>, vm: Rc<AppViewModel>, ui: Rc<Session>, node: TreeNode) {
     let recognizer = instantiate(TouchDrag {
         base: GestureRecognizer::construct(),
         button: button.downgrade(),
         vm: Rc::downgrade(&vm),
-        id,
+        ui: Rc::downgrade(&ui),
+        node,
         contact: RefCell::new(None),
         highlight: RefCell::new(None),
         timer: RefCell::new(None),

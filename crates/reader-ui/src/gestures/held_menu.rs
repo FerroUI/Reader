@@ -18,6 +18,7 @@ struct HeldMenu {
     base: GestureRecognizer,
     button: WeakRef<Button>,
     valid: Rc<dyn Fn() -> bool>,
+    generation: Rc<dyn Fn() -> u64>,
     contact: RefCell<Option<Contact>>,
 }
 ferro_class!(HeldMenu: GestureRecognizer);
@@ -27,6 +28,7 @@ struct Contact {
     pointer: Rc<dyn IPointer>,
     motion: Motion,
     held: bool,
+    generation: u64,
 }
 impl HeldMenu {
     fn cancel(&self) {
@@ -49,7 +51,9 @@ impl HeldMenu {
         {
             let mut contact = self.contact.borrow_mut();
             let Some(contact) = contact.as_mut().filter(|contact| {
-                contact.pointer.id() == pointer.id() && contact.motion.within_tap()
+                contact.pointer.id() == pointer.id()
+                    && contact.motion.within_tap()
+                    && contact.generation == (self.generation)()
             }) else {
                 return false;
             };
@@ -77,6 +81,7 @@ impl GestureRecognizerImpl for HeldMenu {
             pointer: event.pointer().clone(),
             motion: Motion::new(position.x, position.y),
             held: false,
+            generation: (this.generation)(),
         });
     }
     fn pointer_moved(this: &Self, event: &PointerEventArgs) {
@@ -89,7 +94,10 @@ impl GestureRecognizerImpl for HeldMenu {
             return;
         };
         contact.motion.update(position.x, position.y);
-        if !contact.motion.within_tap() || !(this.valid)() {
+        if !contact.motion.within_tap()
+            || !(this.valid)()
+            || contact.generation != (this.generation)()
+        {
             drop(current);
             this.cancel();
         }
@@ -115,7 +123,11 @@ impl GestureRecognizerImpl for HeldMenu {
             .within_tap()
             .then(|| this.button.upgrade())
             .flatten()
-            .filter(|button| button.is_attached_to_visual_tree() && (this.valid)());
+            .filter(|button| {
+                button.is_attached_to_visual_tree()
+                    && (this.valid)()
+                    && contact.generation == (this.generation)()
+            });
         contact.pointer.capture(None);
         if let Some(button) = target {
             crate::menus::request(&button);
@@ -133,11 +145,16 @@ impl GestureRecognizerImpl for HeldMenu {
     }
 }
 
-pub(crate) fn attach(button: &Ref<Button>, valid: Rc<dyn Fn() -> bool>) {
+pub(crate) fn attach(
+    button: &Ref<Button>,
+    valid: Rc<dyn Fn() -> bool>,
+    generation: Rc<dyn Fn() -> u64>,
+) {
     let recognizer = instantiate(HeldMenu {
         base: GestureRecognizer::construct(),
         button: button.downgrade(),
         valid,
+        generation,
         contact: RefCell::new(None),
     });
     button.gesture_recognizers().add(&recognizer);

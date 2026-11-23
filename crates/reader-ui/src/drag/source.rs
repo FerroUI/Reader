@@ -1,4 +1,5 @@
 use super::{format, release_click, suppress, touch, DragSession};
+use crate::{session::Session, sidebar::tree::TreeNode};
 use ferroui_base::input::{
     DataTransfer, DataTransferItem, DragDrop, DragDropEffects, InputElement, Key,
     PointerPressedEventArgs, PointerType,
@@ -8,7 +9,6 @@ use ferroui_base::threading::Dispatcher;
 use ferroui_base::{Point, Ref};
 use ferroui_controls::Button;
 use ferroui_view::on_cleanup;
-use reader_domain::Id;
 use reader_state::AppViewModel;
 use std::{cell::RefCell, rc::Rc};
 
@@ -18,16 +18,25 @@ struct Press {
     session: DragSession,
 }
 
-pub(crate) fn attach_source(button: &Ref<Button>, vm: Rc<AppViewModel>, id: Id) {
-    touch::attach(button, vm.clone(), id);
+pub(crate) fn attach_source(
+    button: &Ref<Button>,
+    vm: Rc<AppViewModel>,
+    ui: Rc<Session>,
+    node: TreeNode,
+) {
+    if matches!(node, TreeNode::Feed { .. }) {
+        touch::attach(button, vm.clone(), ui.clone(), node.clone());
+    }
+    let node = Rc::new(node);
     let pending = Rc::new(RefCell::<Option<Press>>::new(None));
     let active = Rc::new(RefCell::<Option<DragSession>>::new(None));
     let arm = pending.clone();
     let arm_vm = vm.clone();
+    let arm_node = node.clone();
     let pressed = button.add_handler_with(
         InputElement::pointer_pressed_event(),
         move |_, event| {
-            super::consume_click(id);
+            super::consume_click(&arm_node);
             if let Some(old) = arm.borrow_mut().take() {
                 old.session.active.set(false);
             }
@@ -36,7 +45,7 @@ pub(crate) fn attach_source(button: &Ref<Button>, vm: Rc<AppViewModel>, id: Id) 
             {
                 return;
             }
-            if let Some(session) = DragSession::new(&arm_vm, id) {
+            if let Some(session) = DragSession::new(&arm_vm, &ui, &arm_node) {
                 *arm.borrow_mut() = Some(Press {
                     start: event.get_position(None),
                     trigger: event.clone(),
@@ -49,6 +58,7 @@ pub(crate) fn attach_source(button: &Ref<Button>, vm: Rc<AppViewModel>, id: Id) 
     );
     let moving = pending.clone();
     let moving_active = active.clone();
+    let moving_node = node.clone();
     let moved = button.add_handler_with(
         InputElement::pointer_moved_event(),
         move |_, event| {
@@ -72,7 +82,7 @@ pub(crate) fn attach_source(button: &Ref<Button>, vm: Rc<AppViewModel>, id: Id) 
             let press = state.take().unwrap();
             drop(state);
             event.set_handled(true);
-            suppress(id);
+            suppress(&moving_node);
             *moving_active.borrow_mut() = Some(press.session.clone());
             let data = DataTransfer::new();
             data.add(DataTransferItem::create(
@@ -83,10 +93,11 @@ pub(crate) fn attach_source(button: &Ref<Button>, vm: Rc<AppViewModel>, id: Id) 
             let operation =
                 DragDrop::do_drag_drop_async(&press.trigger, data, DragDropEffects::MOVE);
             let session = press.session;
+            let node = moving_node.clone();
             Dispatcher::ui_thread().spawn_local(async move {
                 let _ = operation.await;
                 session.active.set(false);
-                release_click(id);
+                release_click(&node);
             });
         },
         RoutingStrategies::TUNNEL,
@@ -117,6 +128,7 @@ pub(crate) fn attach_source(button: &Ref<Button>, vm: Rc<AppViewModel>, id: Id) 
     });
     let cancel_pending = pending.clone();
     let cancel_active = active.clone();
+    let cancel_node = node.clone();
     let key = button.add_handler_with(
         InputElement::key_down_event(),
         move |_, event| {
@@ -127,7 +139,7 @@ pub(crate) fn attach_source(button: &Ref<Button>, vm: Rc<AppViewModel>, id: Id) 
                 if let Some(old) = cancel_active.borrow_mut().take() {
                     old.active.set(false);
                 }
-                release_click(id);
+                release_click(&cancel_node);
             }
         },
         RoutingStrategies::TUNNEL,
@@ -135,6 +147,7 @@ pub(crate) fn attach_source(button: &Ref<Button>, vm: Rc<AppViewModel>, id: Id) 
     );
     let detach_pending = pending.clone();
     let detach_active = active.clone();
+    let detach_node = node.clone();
     let detached = button.detached_from_visual_tree(move |_| {
         if let Some(old) = detach_pending.borrow_mut().take() {
             old.session.active.set(false);
@@ -142,7 +155,7 @@ pub(crate) fn attach_source(button: &Ref<Button>, vm: Rc<AppViewModel>, id: Id) 
         if let Some(old) = detach_active.borrow_mut().take() {
             old.active.set(false);
         }
-        release_click(id);
+        release_click(&detach_node);
     });
     let weak = button.downgrade();
     on_cleanup(move || {

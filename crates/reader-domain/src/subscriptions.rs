@@ -56,6 +56,7 @@ impl AppState {
             changes.settings = true;
         }
         self.reindex();
+        changes.order = self.normalize_subscription_order();
         Ok(changes)
     }
 }

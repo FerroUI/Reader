@@ -6,8 +6,7 @@ use super::{
 use crate::gestures::motion::Motion;
 use ferroui_base::input::gesture_recognizers::GestureRecognizerImpl;
 use ferroui_base::input::{
-    ContextRequestedEventArgs, IPointer, PointerEventArgs, PointerPressedEventArgs,
-    PointerReleasedEventArgs, PointerType,
+    IPointer, PointerEventArgs, PointerPressedEventArgs, PointerReleasedEventArgs, PointerType,
 };
 use ferroui_controls::TopLevel;
 use std::rc::Rc;
@@ -25,7 +24,8 @@ impl GestureRecognizerImpl for TouchDrag {
         let Some(vm) = this.vm.upgrade() else {
             return;
         };
-        let Some(drag) = DragSession::new(&vm, this.id) else {
+        let Some(ui) = this.ui.upgrade() else { return };
+        let Some(drag) = DragSession::new(&vm, &ui, &this.node) else {
             return;
         };
         let start = event.get_position(None);
@@ -111,11 +111,11 @@ impl GestureRecognizerImpl for TouchDrag {
         }
         contact.drag.active.set(false);
         contact.pointer.capture(None);
-        release_click(this.id);
+        release_click(&this.node);
         // Releasing a stationary hold exposes the existing feed actions. Capture
         // and the in-process drag payload are retired before opening a popup.
         if let Some(button) = menu_target {
-            button.raise_event(&ContextRequestedEventArgs::new());
+            crate::menus::request(&button);
         }
     }
     fn pointer_capture_lost(this: &Self, pointer: &Rc<dyn IPointer>) {
