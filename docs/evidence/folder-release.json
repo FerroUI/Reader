@@ -1,0 +1,248 @@
+{
+  "application_revision": "ae15a3c9cb76ba6c654a541b476b8bf8363b1106",
+  "implementation_revision": "79f51e02e80a674ce50f936857fd3bb3eff3ef0b",
+  "framework_revision": "0f5bbb50dd40522f911826efe0bc3df6e968b884",
+  "build_id": "c96ff553a4106762",
+  "verification_date": "2026-11-23",
+  "workflow_run": 45177370750,
+  "workflow_url": "https://github.com/FerroUI/Reader/actions/runs/45177370750",
+  "build_job": 137701992073,
+  "deploy_job": 137706780557,
+  "build_result": "success",
+  "deploy_result": "success",
+  "test_counts": {
+    "rust_packages": 118,
+    "rust_standalone": 32,
+    "rust_total": 150,
+    "javascript": 66,
+    "rendered_browser": 68
+  },
+  "rendered_results": "../folder-verification-results.json",
+  "scenario_time_sum_ms": 143337,
+  "artifact": {
+    "id": 14819127931,
+    "name": "reader-ui-verification",
+    "url": "https://github.com/FerroUI/Reader/actions/runs/45177370750/artifacts/14819127931",
+    "bytes": 5874441,
+    "sha256": "2a010fe282e80c7c6ada5552a1d1779ba50378e5c43eab8e47f4b7e74d7e3874",
+    "downloaded_digest_matches": true
+  },
+  "evidence_source_mapping": [
+    {
+      "destination": "docs/evidence/22-folder-delete.json",
+      "artifact_entry": "22-folder-delete.json",
+      "bytes": 140402,
+      "sha256": "72a9c522008c382ea2d8b2e0b5f6a3a8878c67a941a86b0ea643b651f00e5de0"
+    },
+    {
+      "destination": "docs/screenshots/22-folder-delete.png",
+      "artifact_entry": "22-folder-delete.png",
+      "bytes": 68950,
+      "sha256": "0a80d8b8081b5b66d8cfd80091a61a0a4717d37292f4691b5baff12128a36be0"
+    },
+    {
+      "destination": "docs/evidence/22-folder-menu.json",
+      "artifact_entry": "22-folder-menu.json",
+      "bytes": 151235,
+      "sha256": "5097d43053c01cfc81e54c6be1a355b0a34174277ba23f367049854ec2ce9b44"
+    },
+    {
+      "destination": "docs/screenshots/22-folder-menu.png",
+      "artifact_entry": "22-folder-menu.png",
+      "bytes": 56494,
+      "sha256": "a26eb09c61a2aa4589459901203cc8f9fe848cc11fe1ef2c60c63ba9ac407eb4"
+    },
+    {
+      "destination": "docs/evidence/22-folder-phone-confirmation.json",
+      "artifact_entry": "22-folder-phone-confirmation.json",
+      "bytes": 115233,
+      "sha256": "4c187a57c463add151ddf4660a14ddfef6cdb09cb81cb9d9ecc5328768b1ebdb"
+    },
+    {
+      "destination": "docs/screenshots/22-folder-phone-confirmation.png",
+      "artifact_entry": "22-folder-phone-confirmation.png",
+      "bytes": 21591,
+      "sha256": "30f927d82214b65c18e52aa32d3c08ff0ac038cdeb864dc7e0c9b2a94ca9de79"
+    },
+    {
+      "destination": "docs/evidence/22-folder-phone-menu.json",
+      "artifact_entry": "22-folder-phone-menu.json",
+      "bytes": 169953,
+      "sha256": "f735ec6275846531af82d742c25c9034857842f98520da26463013dc8db4c74e"
+    },
+    {
+      "destination": "docs/screenshots/22-folder-phone-menu.png",
+      "artifact_entry": "22-folder-phone-menu.png",
+      "bytes": 24940,
+      "sha256": "a908b4677d2a0148999b07cced6adb420030f14f9ce8492ea11e598053074001"
+    },
+    {
+      "destination": "docs/evidence/22-folder-rename-validation.json",
+      "artifact_entry": "22-folder-rename-validation.json",
+      "bytes": 227440,
+      "sha256": "86ca005c1d66f1cb1ef73c8ef535afeaac9f01909f8be4f4b54ed98a1d1c9ee0"
+    },
+    {
+      "destination": "docs/screenshots/22-folder-rename-validation.png",
+      "artifact_entry": "22-folder-rename-validation.png",
+      "bytes": 91765,
+      "sha256": "0ae96fe57fb9a0a04a5510d6ea16dfc16141fd960a790ef56aab2be1a1fc88ec"
+    },
+    {
+      "destination": "docs/evidence/22-folder-renamed.json",
+      "artifact_entry": "22-folder-renamed.json",
+      "bytes": 217450,
+      "sha256": "70c6262862640946c09923f6dd45d17c84ed5d2985a2a5c5f2e2120aaef28d2b"
+    },
+    {
+      "destination": "docs/screenshots/22-folder-renamed.png",
+      "artifact_entry": "22-folder-renamed.png",
+      "bytes": 102323,
+      "sha256": "82ffb5c41bd9987e1612b91f7f5e074905f6f3f0a1ffd074ebd9f876ad70d12f"
+    },
+    {
+      "destination": "docs/evidence/22-folder-stale-confirmation.json",
+      "artifact_entry": "22-folder-stale-confirmation.json",
+      "bytes": 144387,
+      "sha256": "dc501d754332265b36c6146ce3ddaab610b08ad16e83d96804c594ce392a64f7"
+    },
+    {
+      "destination": "docs/screenshots/22-folder-stale-confirmation.png",
+      "artifact_entry": "22-folder-stale-confirmation.png",
+      "bytes": 81261,
+      "sha256": "a2b8eeabdb076bb7b00a49c50577b78ef82a314e49029ae43b2722052a941615"
+    },
+    {
+      "destination": "docs/evidence/22-retained-starred.json",
+      "artifact_entry": "22-retained-starred.json",
+      "bytes": 119704,
+      "sha256": "90785c1df8d6caf9b65401cc734133e1915949b18ff32fb3b355bdf4ad598859"
+    },
+    {
+      "destination": "docs/screenshots/22-retained-starred.png",
+      "artifact_entry": "22-retained-starred.png",
+      "bytes": 56399,
+      "sha256": "a897802a1fe7a998e498465957c30eaf98d0776c53748d2920f62a36d51d9d19"
+    },
+    {
+      "destination": "docs/evidence/22-subscription-lifecycle.json",
+      "artifact_entry": "22-subscription-lifecycle.json",
+      "bytes": 165,
+      "sha256": "f8bfa7d2aa6837b7e0d17e882ee84330dcd06f7ac8c82e7842b3a8c07d8fcabd"
+    },
+    {
+      "destination": "docs/folder-verification-results.json",
+      "artifact_entry": "results.json",
+      "bytes": 8634,
+      "sha256": "d01849a70d3f6c0deed0d53368db336cc1b4083e8430fae862638dcc7b7ae7ab"
+    },
+    {
+      "destination": "docs/evidence/folder-21-update-verification.json",
+      "artifact_entry": "21-update-verification.json",
+      "bytes": 256,
+      "sha256": "e03b4e60e1f164af90315cb25c659082b221afd7e8749f9d9090fdb6273352a5"
+    },
+    {
+      "destination": "docs/evidence/folder-09-virtualized.json",
+      "artifact_entry": "09-virtualized.json",
+      "bytes": 457581,
+      "sha256": "eeacd0c64c7db116585e8854d507651c74259f54d63e245845c7eed8df014b41"
+    },
+    {
+      "destination": "docs/evidence/folder-10-offline.json",
+      "artifact_entry": "10-offline.json",
+      "bytes": 100405,
+      "sha256": "c6a9a0aa1bd5982285aec71dc72ef77858599584ff101551a088dcbf6e1c77e5"
+    }
+  ],
+  "subscription_lifecycle": {
+    "record": "22-subscription-lifecycle.json",
+    "activeSources": 3,
+    "articles": 7,
+    "sameSourceIdentity": true,
+    "savedAnnotationsRetained": true,
+    "newDownloadsRetained": true,
+    "reloadVerified": true
+  },
+  "offline_and_updates": {
+    "saved_articles": 10000,
+    "verified_resources": 38,
+    "other_reader_tabs_protected": true,
+    "explicit_activation": true,
+    "staged_fixture_build": "b6f951c757b4ec28",
+    "deployed_files_restored_after_fixture": true,
+    "record": "folder-21-update-verification.json"
+  },
+  "virtualization": {
+    "saved_articles": 10000,
+    "article_containers_in_snapshot": 56,
+    "native_visuals_in_snapshot": 1920,
+    "record": "folder-09-virtualized.json",
+    "scope": "One final snapshot, not peak memory usage."
+  },
+  "published_integrity": {
+    "record": "folder-published-integrity.json",
+    "resources": 38,
+    "all_verified": true,
+    "unqualified_index_build_id": "c96ff553a4106762",
+    "duration_seconds": 11.06
+  },
+  "live_browser_observations": {
+    "browser": "Chrome",
+    "previous_build": "4abdca5ae1e9f289",
+    "observed_build": "c96ff553a4106762",
+    "activation": "Clicked the ordinary Update Reader button after its ready prompt appeared.",
+    "subscriptions_before": 6,
+    "subscriptions_after": 6,
+    "unread_before": 12,
+    "unread_after": 12,
+    "home_route_preserved": true,
+    "folder_context_actions_observed": [
+      "Refresh folder",
+      "Rename folder...",
+      "Delete folder...",
+      "Unsubscribe from all..."
+    ],
+    "folder_context_kept_reading_location": true,
+    "storage_reset": false,
+    "service_worker_unregistered": false,
+    "forced_activation": false,
+    "scope": "This existing live session; bulk data mutations were checked only in isolated fixtures."
+  },
+  "corrected_gate_failure": {
+    "workflow_run": 45175570882,
+    "application_revision": "79f51e02e80a674ce50f936857fd3bb3eff3ef0b",
+    "deploy_result": "skipped",
+    "failed_assertion": "keyboard folder menu",
+    "cause": "The focused folder was correct, but the browser platform default only registered the Apps context-menu key.",
+    "correction": "Subscription rows handle exact Shift+F10 and Apps in key-up tunneling, then reuse the existing native first-item focus path. The passing scenario also verifies Arrow Down skips the separator and focuses Rename."
+  },
+  "visual_review": {
+    "desktop_label_width": 132,
+    "phone_menu_viewport": [
+      320,
+      740
+    ],
+    "short_confirmation_viewport": [
+      320,
+      360
+    ],
+    "phone_action_min_height": 44,
+    "captured_controls_reachable": true,
+    "actionable_clipping_observed": false
+  },
+  "limits": {
+    "full_historical_parity_established": false,
+    "physical_ios_verified": false,
+    "desktop_interactive_test_performed": false,
+    "public_feed_provider_availability_established": false,
+    "scenario_durations_are_device_independent_benchmarks": false
+  },
+  "native_check": {
+    "command": "cargo check --locked --offline -p reader-desktop",
+    "result": "success",
+    "application_revision": "ae15a3c9cb76ba6c654a541b476b8bf8363b1106",
+    "duration_seconds": 3.72,
+    "scope": "Native desktop compilation after the final keyboard/toolbar correction; no interactive native desktop session."
+  }
+}

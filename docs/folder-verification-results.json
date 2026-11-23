@@ -1,0 +1,277 @@
+{
+  "passed": 68,
+  "checks": [
+    {
+      "name": "native first paint",
+      "milliseconds": 2003
+    },
+    {
+      "name": "fresh library loads real default feeds and preserves edits on reopening",
+      "milliseconds": 1417
+    },
+    {
+      "name": "an intentionally empty saved library does not restore default subscriptions",
+      "milliseconds": 1297
+    },
+    {
+      "name": "stream navigation and list shortcut",
+      "milliseconds": 934
+    },
+    {
+      "name": "scan, open, star, tag, and keep unread",
+      "milliseconds": 902
+    },
+    {
+      "name": "search typing does not trigger reading shortcuts",
+      "milliseconds": 729
+    },
+    {
+      "name": "browser modifiers and composition keys do not execute Reader commands",
+      "milliseconds": 555
+    },
+    {
+      "name": "feed subscription through the browser network host",
+      "milliseconds": 900
+    },
+    {
+      "name": "preferences menu and exact compact density",
+      "milliseconds": 1492
+    },
+    {
+      "name": "atomic IndexedDB persistence survives reload",
+      "milliseconds": 846
+    },
+    {
+      "name": "competing storage writers cannot silently overwrite a newer generation",
+      "milliseconds": 30
+    },
+    {
+      "name": "home stories open their source and article tags navigate",
+      "milliseconds": 1963
+    },
+    {
+      "name": "empty unread recovery keeps its feed and search keeps its query",
+      "milliseconds": 1652
+    },
+    {
+      "name": "desktop quick add anchors, cancels and survives a narrow resize",
+      "milliseconds": 2052
+    },
+    {
+      "name": "subscription cursor scans, collapses and opens without reading early",
+      "milliseconds": 1192
+    },
+    {
+      "name": "keyboard help keeps four groups and a reachable phone close action",
+      "milliseconds": 1371
+    },
+    {
+      "name": "dated mark-all confirmation preserves cutoff and opt-out",
+      "milliseconds": 1836
+    },
+    {
+      "name": "cross-origin discovery, relay subscription, refresh and failure reporting",
+      "milliseconds": 3058
+    },
+    {
+      "name": "publisher article downloads into native selectable reading controls",
+      "milliseconds": 3118
+    },
+    {
+      "name": "article cancellation and publisher errors preserve the saved copy",
+      "milliseconds": 1093
+    },
+    {
+      "name": "saved article survives reload and remains usable offline on mobile",
+      "milliseconds": 4110
+    },
+    {
+      "name": "list headlines retain native layout and independent actions across expansion",
+      "milliseconds": 1702
+    },
+    {
+      "name": "density insets and the selected article edge match expanded view",
+      "milliseconds": 2730
+    },
+    {
+      "name": "small-phone list expansion retains touch targets and collapse behavior",
+      "milliseconds": 2039
+    },
+    {
+      "name": "article palettes reconcile native links and table text without replacing selection",
+      "milliseconds": 1337
+    },
+    {
+      "name": "List Space navigation pages tall articles and advances unread subscriptions",
+      "milliseconds": 3702
+    },
+    {
+      "name": "Expanded Space navigation pages tall articles and advances unread subscriptions",
+      "milliseconds": 4616
+    },
+    {
+      "name": "Space pages the overview without selecting an article",
+      "milliseconds": 586
+    },
+    {
+      "name": "Space remains native input in search and subscription editors",
+      "milliseconds": 1319
+    },
+    {
+      "name": "Send to configuration validates templates without opening or reading items",
+      "milliseconds": 2463
+    },
+    {
+      "name": "native Send to opens the exact encoded destination without contacting a service",
+      "milliseconds": 677
+    },
+    {
+      "name": "Send to supports edit, cancel, disable, reload and both native menu anchors",
+      "milliseconds": 4460
+    },
+    {
+      "name": "touch Send to remains within the viewport and Back dismisses its native menu",
+      "milliseconds": 544
+    },
+    {
+      "name": "original Keep unread and Mark as read checkboxes retain their distinct state",
+      "milliseconds": 999
+    },
+    {
+      "name": "Reader dropdowns preserve anchors, exclusive choices and native keyboard focus",
+      "milliseconds": 2424
+    },
+    {
+      "name": "right-edge menus clamp correctly and article-size commands expose native disabled states",
+      "milliseconds": 2702
+    },
+    {
+      "name": "long touch menus scroll within the phone and keyboard selection reaches clipped choices",
+      "milliseconds": 1294
+    },
+    {
+      "name": "mobile More actions keeps independent radio groups and skips disabled commands",
+      "milliseconds": 1851
+    },
+    {
+      "name": "current-article magnification preserves the base preference and native text selection",
+      "milliseconds": 5128
+    },
+    {
+      "name": "list magnification retains density, source/date layout and current-only expansion",
+      "milliseconds": 2755
+    },
+    {
+      "name": "hiding the sidebar widens article bodies while titles retain their original cap",
+      "milliseconds": 2276
+    },
+    {
+      "name": "magnification and sidebar reflow retain a paragraph inside a far nonuniform article",
+      "milliseconds": 3551
+    },
+    {
+      "name": "settings expose native selection and compact wrapping preference controls",
+      "milliseconds": 1496
+    },
+    {
+      "name": "320px settings keep connection drafts and errors through keyboard resizing",
+      "milliseconds": 3134
+    },
+    {
+      "name": "Send to editor advances fields and retains an invalid draft on narrow screens",
+      "milliseconds": 1690
+    },
+    {
+      "name": "subscription filtering and contextual actions remain usable at 320px",
+      "milliseconds": 2536
+    },
+    {
+      "name": "the direct settings route saves a connection without a modal",
+      "milliseconds": 1338
+    },
+    {
+      "name": "folder menus refresh their captured scope without changing the reading location",
+      "milliseconds": 1608
+    },
+    {
+      "name": "folder rename retains invalid drafts, trims valid names and preserves collapsed membership",
+      "milliseconds": 4179
+    },
+    {
+      "name": "deleting a folder preserves subscriptions and articles and supports a single undo",
+      "milliseconds": 2672
+    },
+    {
+      "name": "bulk unsubscribe rejects a confirmation whose folder membership has changed",
+      "milliseconds": 806
+    },
+    {
+      "name": "bulk unsubscribe retains annotated articles and ignores late refresh results before undo",
+      "milliseconds": 2124
+    },
+    {
+      "name": "resubscription and undo preserve new downloads, saved annotations and reloadable source identity",
+      "milliseconds": 2036
+    },
+    {
+      "name": "phone folder holds cancel cleanly and keep bulk actions reachable in a short viewport",
+      "milliseconds": 3735
+    },
+    {
+      "name": "phone touch scrolling, cancellation and tap-to-expand",
+      "milliseconds": 4167
+    },
+    {
+      "name": "browser Back dismisses mobile overlays before changing streams",
+      "milliseconds": 1065
+    },
+    {
+      "name": "held subscription menus, cancellation, reordering and folder movement",
+      "milliseconds": 4549
+    },
+    {
+      "name": "small portrait and landscape dialogs keep actions reachable",
+      "milliseconds": 1127
+    },
+    {
+      "name": "visual viewport keyboard resize preserves dialog input and focus",
+      "milliseconds": 1000
+    },
+    {
+      "name": "expanded read tracking follows user scrolling and preserves Keep unread",
+      "milliseconds": 1515
+    },
+    {
+      "name": "mixed-height articles keep bounded realization and exact far targets",
+      "milliseconds": 2474
+    },
+    {
+      "name": "read/star updates preserve the visible article and keyboard seeks its neighbor",
+      "milliseconds": 2379
+    },
+    {
+      "name": "late image decoding preserves the paragraph inside a tall article",
+      "milliseconds": 1427
+    },
+    {
+      "name": "phone resize and touch retain long-article position without opening another item",
+      "milliseconds": 5744
+    },
+    {
+      "name": "ten thousand items keep a bounded native control tree",
+      "milliseconds": 1222
+    },
+    {
+      "name": "installed application and saved library reload without network",
+      "milliseconds": 2580
+    },
+    {
+      "name": "a verified application update is offered without interrupting reading",
+      "milliseconds": 2134
+    },
+    {
+      "name": "updating protects other Reader tabs and restores the saved library",
+      "milliseconds": 2895
+    }
+  ]
+}

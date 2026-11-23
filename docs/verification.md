@@ -1,5 +1,45 @@
 # Verification record
 
+## Folder actions and saved-article integrity — 23 November 2026
+
+**The implementation, rendered gate and Pages deployment succeeded.** This release adds folder context actions and corrects unsubscribe/Undo behavior so saved articles and newer downloads survive changes to subscription membership. The application revision is [`ae15a3c9cb76ba6c654a541b476b8bf8363b1106`](https://github.com/FerroUI/Reader/commit/ae15a3c9cb76ba6c654a541b476b8bf8363b1106), with implementation in [`79f51e02e80a674ce50f936857fd3bb3eff3ef0b`](https://github.com/FerroUI/Reader/commit/79f51e02e80a674ce50f936857fd3bb3eff3ef0b). The FerroUI pin is unchanged.
+
+| Evidence | Verified result |
+| --- | --- |
+| Published build | **`c96ff553a4106762`** at [Reader](https://ferroui.com/Reader/) |
+| Workflow | [45177370750](https://github.com/FerroUI/Reader/actions/runs/45177370750): build **137701992073** and Pages **137706780557** succeeded |
+| Automated checks | **150 Rust** (118 package tests and 32 standalone checks), **66 JavaScript**, **68 rendered scenarios** |
+| Final native compilation | `cargo check --locked --offline -p reader-desktop` passed at the application revision in **3.72s**; separate from interactive desktop execution |
+| Exact rendered results | [folder-verification-results.json](folder-verification-results.json); recorded scenario durations total **143,337ms**, including harness work |
+| Verification artifact | [14819127931](https://github.com/FerroUI/Reader/actions/runs/45177370750/artifacts/14819127931), **5,874,441 bytes**; downloaded ZIP SHA-256 matched **`2a010fe282e80c7c6ada5552a1d1779ba50378e5c43eab8e47f4b7e74d7e3874`** |
+| Preserved release record | [folder-release.json](evidence/folder-release.json), including source-to-destination artifact hashes, test categories and explicit observation limits |
+
+### Folder controls and navigation
+
+The sidebar exposes **Refresh folder**, **Rename folder...**, **Delete folder...** and **Unsubscribe from all...** through right-click, Shift+F10, the Menu key and a stationary held touch release. Folder views also expose these actions through **Folder settings**, with a fully visible desktop label. Refresh targets the captured folder without changing the reading location. Blank or duplicate names retain the editable draft with an inline explanation; valid names are trimmed and preserve folder membership, expansion state, current route and search scope. Delete removes the label while retaining subscriptions and articles, and one Undo restores it. Evidence: [folder menu](screenshots/22-folder-menu.png), [rename validation](screenshots/22-folder-rename-validation.png), [renamed folder](screenshots/22-folder-renamed.png) and [delete confirmation](screenshots/22-folder-delete.png).
+
+Bulk confirmation captures exact source IDs/URLs and the library generation. Changing folder membership while it is open disables the destructive action and explains why; newly added subscriptions are not swept into an earlier confirmation. Removing a scoped folder or subscription also clears its effective search filter, so the submitted query matches the scope displayed in the header. Evidence: [stale confirmation](screenshots/22-folder-stale-confirmation.png) and the exact scenario results.
+
+### Saved articles, Undo and asynchronous results
+
+Unsubscribe retains starred, tagged and nonblank noted articles with archived source metadata. Archived sources leave subscriptions, ordinary streams, refresh and OPML export; their saved items remain readable from Starred, tags, search and source links. The archive flag defaults to false for older backups. Re-subscribing to the same URL reactivates the source identity and preserves annotations. Evidence: [retained starred item](screenshots/22-retained-starred.png) and the domain/state regression suites.
+
+Structural Undo validates a staged document before committing it and reconciles source URLs/article GUIDs rather than inserting duplicate identities. It retains downloads received after unsubscribe and restores missing originals, annotations, memberships and affected navigation/preferences. A failed validation leaves both live state and history intact. Scalar read/star/note undo remains narrow. Refresh requests carry transient source-lifetime tokens: success and failure callbacks from before unsubscribe remain stale after Undo or resubscription, even when the same numeric source ID is reused.
+
+The rendered lifecycle fixture completed bulk unsubscribe, resubscription, one Undo and reload with **3 active sources and 7 articles**, preserving source identity, saved annotations and the new download. Its exact result is [22-subscription-lifecycle.json](evidence/22-subscription-lifecycle.json). The browser gate also injects stale success/failure while archived and stale success after Undo; broader lifetime invariants are covered by Rust tests.
+
+### Touch, retained behavior and publication
+
+At **320×740**, the held folder menu stays inside the viewport with **44px** actions. Cancelled holds and movement away and back do not open the menu or navigate. At **320×360**, the complete bulk confirmation remains inside the viewport with reachable **44px** confirmation/cancel actions. Visual review found no actionable clipping in the preserved captures: [phone menu](screenshots/22-folder-phone-menu.png) and [short confirmation](screenshots/22-folder-phone-confirmation.png).
+
+The complete gate retains the existing reading, selection, menus, settings, heterogeneous scrolling and offline-update checks. Its 10,000-item snapshot contains **56 article containers and 1,920 native visuals**; these are snapshot counts, not peak memory measurements. The isolated update fixture protects another Reader tab and restores **10,000 saved articles**. Its temporary staged build `b6f951c757b4ec28` is distinct from the deployed build, and the harness restores deployable files before publication. See [virtualization snapshot](evidence/folder-09-virtualized.json), [offline snapshot](evidence/folder-10-offline.json) and [update record](evidence/folder-21-update-verification.json).
+
+All **38 published resources** were fetched independently with the worker's build-qualified query; every decoded size and SHA-256 matched. Both the qualified and ordinary index identify **`c96ff553a4106762`**. See [published-integrity.json](evidence/folder-published-integrity.json). In the existing live Chrome session, the ordinary **Update Reader** prompt activated that build while preserving **6 subscriptions**, **12 unread items** and the Home route. The new folder context menu opened without navigation. No storage reset, service-worker unregister or forced activation was used.
+
+The first candidate correctly failed deployment because the browser's default platform shortcuts recognized the Menu key but omitted Shift+F10. The final revision handles both keys on focused subscription rows before native bubbling and verifies first-item focus plus Arrow Down navigation. Failed requested verifications now retain the exact browser build for one day to aid reproduction; successful releases retain the normal visual artifact.
+
+This evidence establishes the recorded Chromium scenarios and live session, not physical iOS behavior, interactive native-desktop execution, public-provider availability or complete historical Google Reader parity. The remaining parity boundaries are documented in [parity.md](parity.md).
+
 ## Reading, menus, settings and explicit updates — 23 November 2026
 
 The previously unfinished handoff completed successfully at application revision [`f28e3bb6a46a8f66f2ffb8304b2550fe36d7ca5c`](https://github.com/FerroUI/Reader/commit/f28e3bb6a46a8f66f2ffb8304b2550fe36d7ca5c). [Workflow 45142540301](https://github.com/FerroUI/Reader/actions/runs/45142540301) passed its build job **137583807956**, rendered gate and Pages deployment **137587954662**. Build identifier: **`4abdca5ae1e9f289`**.
