@@ -5,9 +5,9 @@ use crate::{
 };
 mod articles;
 use ferroui_base::{
-    Ref,
     input::platform::ClipboardExtensions,
     threading::{Dispatcher, DispatcherPriority, DispatcherTimer},
+    Ref,
 };
 use ferroui_controls::Window;
 use reader_domain::{Action, Feed, View};
@@ -178,6 +178,7 @@ async fn handle(
         HostRequest::ScheduleSave => {
             vm.flush()?;
         }
+        HostRequest::ApplyUpdate => vm.set_update_notice(String::new(), false),
         // These are registered synchronously by install before any async work.
         HostRequest::FetchArticle { .. } | HostRequest::CancelArticle { .. } => {}
     }

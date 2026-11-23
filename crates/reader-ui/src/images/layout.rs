@@ -1,8 +1,4 @@
 //! Reserve publisher dimensions before download; retain native aspect ratio afterwards.
-pub(crate) fn available_width(viewport: f64) -> f64 {
-    (viewport - if viewport < 700.0 { 70.0 } else { 330.0 }).clamp(100.0, 650.0)
-}
-
 pub(crate) fn size(
     available: f64,
     declared: Option<(f64, f64)>,

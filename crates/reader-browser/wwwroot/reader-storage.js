@@ -1,7 +1,7 @@
 // App storage is distinct from FerroUI's storage.js platform module.
 // IndexedDB writes are atomic. A generation check prevents two tabs overwriting each other.
 const KEY = "library", FALLBACK = "ferroui.reader.v1", RECOVERY = "ferroui.reader.recovery";
-let db, contents = "", generation = 0, queue = Promise.resolve(), failure = null;
+let db, contents = "", generation = 0, queue = Promise.resolve(), failure = null, saveFailure = null;
 let report = () => {};
 export function setStorageReporter(callback) { report = callback; }
 const request = value => new Promise((resolve, reject) => {
@@ -35,7 +35,11 @@ export function load() { return contents; }
 export function save(value) {
   if (failure) throw new Error(failure);
   contents = value;
-  if (!db) { localStorage.setItem(FALLBACK, value); return; }
+  if (!db) {
+    try { localStorage.setItem(FALLBACK, value); saveFailure = null; }
+    catch (error) { saveFailure = error; throw error; }
+    return;
+  }
   queue = queue.then(() => new Promise((resolve, reject) => {
     const tx = db.transaction("state", "readwrite"), store = tx.objectStore("state");
     const read = store.get(KEY);
@@ -46,9 +50,9 @@ export function save(value) {
       }
       store.put({ contents: value, generation: generation + 1 }, KEY);
     };
-    tx.oncomplete = () => { generation++; resolve(); };
+    tx.oncomplete = () => { generation++; saveFailure = null; resolve(); };
     tx.onerror = tx.onabort = () => reject(new Error(failure || tx.error?.message || "The library could not be saved"));
-  })).catch(error => { preserveRecovery(value); report(error); });
+  })).catch(error => { saveFailure = error; preserveRecovery(value); report(error); });
 }
 export function preserveRecovery(value) {
   try { localStorage.setItem(RECOVERY, value); return true; }
@@ -57,4 +61,9 @@ export function preserveRecovery(value) {
     return false;
   }
 }
-export function flushStorage() { return queue; }
+export async function flushStorage({ requireSaved = false } = {}) {
+  // A write may be queued while an earlier transaction is being awaited.
+  let pending;
+  do { pending = queue; await pending; } while (pending !== queue);
+  if (requireSaved && (failure || saveFailure)) throw new Error(failure || saveFailure.message || String(saveFailure));
+}

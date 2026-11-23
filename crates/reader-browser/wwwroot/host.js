@@ -2,6 +2,7 @@ import { load, save, preserveRecovery, flushStorage, setStorageReporter } from "
 import { fetchFeed, fetchImage, refreshFeeds } from "./feeds.js";
 import { downloadFile, pickFile, openUrl, copyText, share, email, printArticle } from "./transfers.js";
 import { ArticleRequests } from "./articles.js";
+import { applyAppUpdate, flushBeforeUpdate } from "./updates.js";
 export { load, save, preserveRecovery };
 export { navigationChanged } from "./navigation.js";
 export { inputHintsChanged } from "./input.js";
@@ -9,6 +10,7 @@ export const now = () => Math.floor(Date.now() / 1000);
 export const width = () => document.getElementById("out").getBoundingClientRect().width;
 export const height = () => document.getElementById("out").getBoundingClientRect().height;
 let runtime, saveTimer, pendingOperations = 0, latestSubscription = 0, operationGeneration;
+let saveRevision = 0;
 const articles = new ArticleRequests({
   receive: (message, result) => runtime.receiveArticle(message.id, message.request_id, message.generation, message.url, result.html, result.base_url),
   error: (message, error) => runtime.articleError(message.id, message.request_id, message.generation, message.url, error),
@@ -24,6 +26,12 @@ export function flush() {
   try { runtime?.flushSave(); } catch (error) { reportError(error); }
   return flushStorage();
 }
+export function flushForUpdate(completed) {
+  return flushBeforeUpdate(() => saveRevision, () => {
+    clearTimeout(saveTimer);
+    runtime?.flushSave();
+  }, () => flushStorage({ requireSaved: true }), completed);
+}
 export function request(json) {
   let message;
   try { message = JSON.parse(json); } catch (error) { reportError(error); return; }
@@ -38,7 +46,8 @@ export function request(json) {
     case "print": try { printArticle(message.title, message.html, message.base_url); } catch (e) { reportError(e); } return;
     case "share": void share(message.title, message.url).then(s => s && runtime.hostStatus(s)).catch(reportError); return;
     case "copy": void copyText(message.contents).then(() => runtime.hostStatus("Copied to clipboard")).catch(reportError); return;
-    case "scheduleSave": clearTimeout(saveTimer); saveTimer = setTimeout(flush, 150); return;
+    case "scheduleSave": saveRevision++; clearTimeout(saveTimer); saveTimer = setTimeout(flush, 150); return;
+    case "applyUpdate": void applyAppUpdate(); return;
   }
   const generation = runtime?.libraryGeneration();
   queueMicrotask(() => { void perform(message, generation).catch(reportError); });

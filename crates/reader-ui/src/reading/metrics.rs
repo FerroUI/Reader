@@ -62,7 +62,7 @@ impl Metrics {
     }
 }
 
-/// Read/star/cursor changes preserve geometry. Full body, reading controls,
+/// Read/star changes preserve geometry. Current-entry magnification, reading controls,
 /// heading context, annotations and presentation settings can change its size.
 pub(super) struct RowGeometry(Row);
 impl PartialEq for RowGeometry {
@@ -71,11 +71,14 @@ impl PartialEq for RowGeometry {
         old.expanded == new.expanded
             && old.list_mode == new.list_mode
             && old.density == new.density
+            && old.scale == new.scale
             && old.font_size == new.font_size
             && old.narrow == new.narrow
             && old.touch == new.touch
             && (!new.expanded
-                || (old.source == new.source
+                || (old.wide_body == new.wide_body
+                    && old.media_width == new.media_width
+                    && old.source == new.source
                     && old.single_source == new.single_source
                     && old.article_loading == new.article_loading
                     && old.article_error == new.article_error
@@ -96,11 +99,14 @@ fn estimate(row: &Row, width: f64) -> f64 {
     if !row.expanded {
         return 1.0 + crate::article::headline_height(row);
     }
-    let text_width = (width - if row.narrow { 24.0 } else { 48.0 }).clamp(160.0, 650.0);
-    let characters_per_line = (text_width / (row.font_size * 0.49)).max(12.0);
+    let text_width = (width - if row.narrow { 24.0 } else { 48.0 })
+        .max(1.0)
+        .min(crate::reading::scale::body_max_width(row.wide_body));
+    let font_size = row.scale.text_size(row.font_size, 0);
+    let characters_per_line = (text_width / (font_size * 0.49)).max(12.0);
     // Initial guesses only: replace each visited row with its actual measurement,
     // without changing estimates for the other thousands of unseen articles.
     let characters = row.article.reading_content().len() as f64 * 0.58;
     let lines = (characters / characters_per_line).ceil().max(2.0);
-    (184.0 + lines * row.font_size * 1.55).clamp(216.0, 48_000.0)
+    (184.0 + lines * font_size * 1.55).clamp(216.0, 48_000.0)
 }

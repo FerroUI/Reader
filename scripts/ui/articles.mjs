@@ -165,17 +165,37 @@ export async function articleChecks(h, check) {
       await h.capture("14-article-mobile");
       // All three widths remain in the phone breakpoint. A row whose equality
       // tracks only narrow/touch would keep the first image's explicit width.
-      for (const [width, expected] of [[390, 320], [320, 250], [390, 320]]) {
+      const imageGeometry = [];
+      for (const width of [390, 320, 390]) {
         await h.resize(width, 844);
         await top(h);
         await reveal(h, "ArticleImage");
-        await h.until(async () => {
-          const image = (await h.snapshot()).elements.find(e => e.name === "ArticleImage");
-          return image && Math.abs(image.width - expected) <= 1
-            && image.x >= -1 && image.x + image.width <= width + 1;
+        const measured = await h.until(async () => {
+          const view = await h.snapshot();
+          const image = view.elements.find(e => e.name === "ArticleImage");
+          const body = view.elements.find(e => e.name === "ArticleBody");
+          const viewport = view.elements.find(e => e.name === "ArticleList");
+          if (!image || !body || !viewport) return false;
+          assert(image.width > 0 && image.height > 0);
+          assert(image.x >= body.x - 1 && image.x + image.width <= body.x + body.width + 1,
+            "publisher image stays inside its native article body");
+          assert(body.x >= viewport.x - 1 && body.x + body.width <= viewport.x + viewport.width + 1,
+            "the article body stays inside the native reading viewport");
+          assert(image.x >= -1 && image.x + image.width <= view.width + 1,
+            "publisher image remains inside the browser viewport");
+          assert(Math.abs(image.width - 2 * image.height) <= 2,
+            "declared publisher dimensions preserve the image's 2:1 aspect ratio");
+          const previous = imageGeometry.at(-1);
+          if (previous) assert(Math.abs((image.width - previous.image.width) - (width - previous.viewportWidth)) <= 1,
+            "same-breakpoint image width follows the 70px viewport change");
+          return {viewportWidth: view.width, body: {x: body.x, width: body.width},
+            image: {x: image.x, width: image.width, height: image.height}};
         }, `publisher image follows same-breakpoint resize to ${width}px`);
+        imageGeometry.push(measured);
         if (width === 320) await h.capture("14-article-mobile-small-image");
       }
+      assert(Math.abs(imageGeometry[2].image.width - imageGeometry[0].image.width) <= 1,
+        "returning to the initial viewport restores the observed image width");
       await top(h);
       const count = network.count();
       await h.page.send("Network.emulateNetworkConditions", {offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0});
@@ -187,7 +207,8 @@ export async function articleChecks(h, check) {
       assert(network.requests.every(request => !request.cookie && !request.authorization));
       await h.record("14-article-verification", {articleId, sourceUrl: restored.full_content.source_url,
         fullContentRetained: true, offlineReopen: true, cancellationPreserved: true,
-        extractionFailurePreserved: true, sameBreakpointImageWidths: [320, 250, 320],
+        extractionFailurePreserved: true, sameBreakpointImageWidths: imageGeometry.map(sample => sample.image.width),
+        sameBreakpointImageGeometry: imageGeometry,
         nativeInlineLinkOpened: true, selection, requests: network.requests});
     });
     passed = true;

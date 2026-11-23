@@ -1,22 +1,25 @@
 mod cache;
 mod table;
 mod text;
+use crate::rows::Row;
 use ferroui_base::layout::HorizontalAlignment as H;
+use ferroui_base::media::TextWrapping;
 use ferroui_controls::primitives::ScrollBarVisibility;
 use ferroui_view::prelude::*;
-use reader_domain::Article;
 use reader_state::AppViewModel;
 use std::rc::Rc;
 
-pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64, selected: bool) -> Element {
-    let subdued = article.read && !selected;
+pub fn view(vm: Rc<AppViewModel>, row: &Row) -> Element {
+    let article = &row.article;
+    let size = row.scale.text_size(row.font_size, 0);
+    let subdued = article.read && !row.selected;
     let (fingerprint, blocks) =
         cache::project(article.reading_content(), article.reading_base_url());
     let mut body = stack_panel()
         .name("ArticleBody")
-        .max_width(650.0)
+        .max_width(crate::reading::scale::body_max_width(row.wide_body))
         .horizontal_alignment(H::Left)
-        .spacing(14.0);
+        .spacing(14.0 * row.scale.factor());
     if blocks.is_empty() {
         body = body.child(text::view(
             vm.clone(),
@@ -34,7 +37,12 @@ pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64, selected: bool) 
     for (index, block) in blocks.iter().enumerate() {
         let key = format!("{}-{fingerprint}-{index}", article.id);
         if let Some(image) = &block.image {
-            body = body.child(crate::images::with_metadata(vm.clone(), image.clone(), key));
+            body = body.child(crate::images::with_metadata(
+                vm.clone(),
+                image.clone(),
+                key,
+                row.media_width,
+            ));
             continue;
         }
         if let Some(table) = &block.table {
@@ -48,7 +56,7 @@ pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64, selected: bool) 
         let content = text::view(
             vm.clone(),
             &block.spans,
-            size,
+            row.scale.text_size(row.font_size, block.heading),
             block.heading,
             block.pre,
             subdued,
@@ -73,7 +81,7 @@ pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64, selected: bool) 
             border()
                 .border_brush("#CCCCCC")
                 .border_thickness((3.0, 0.0, 0.0, 0.0))
-                .padding((14.0, 0.0))
+                .padding((14.0 * row.scale.factor(), 0.0))
                 .child(content)
                 .into()
         } else {
@@ -81,7 +89,12 @@ pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64, selected: bool) 
         };
         let content = if block.list_depth > 1 {
             border()
-                .margin(((block.list_depth - 1) as f64 * 18.0, 0.0, 0.0, 0.0))
+                .margin((
+                    (block.list_depth - 1) as f64 * 18.0 * row.scale.factor(),
+                    0.0,
+                    0.0,
+                    0.0,
+                ))
                 .child(content)
                 .into()
         } else {
@@ -98,9 +111,14 @@ pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64, selected: bool) 
         });
     }
     if !article.note.is_empty() {
-        body = body.child(border().background("#FFF9DC").padding(12.0).child(
-            reader_controls::paragraph(format!("Your note: {}", article.note)),
-        ));
+        body = body.child(
+            border().background("#FFF9DC").padding(12.0).child(
+                text_block()
+                    .text(format!("Your note: {}", article.note))
+                    .font_size(size)
+                    .text_wrapping(TextWrapping::Wrap),
+            ),
+        );
     }
     body.into()
 }

@@ -83,6 +83,12 @@ pub fn host_status(message: &str) {
         vm.set_status(message.into());
     }
 }
+#[wasm_bindgen(js_name = appUpdateStatus)]
+pub fn app_update_status(message: &str, applying: bool) {
+    if let Ok(vm) = vm() {
+        vm.set_update_notice(message.into(), applying);
+    }
+}
 #[wasm_bindgen(js_name = resizeWindow)]
 pub fn resize_window(width: f64) {
     if width.is_finite() && width > 0.0 {

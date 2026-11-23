@@ -148,9 +148,10 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
         }
         main = main.child(stream);
     }
+    let mut notices = stack_panel().grid_row(2);
     if !vm.status().is_empty() {
-        main=main.child(rsx!{
-        Border{Grid.row:2,background:"#FFF8CE",border_brush:"#F0C36D",border_thickness:(0.0,1.0,0.0,0.0),padding:(14.0,7.0),
+        notices=notices.child(rsx!{
+        Border{background:"#FFF8CE",border_brush:"#F0C36D",border_thickness:(0.0,1.0,0.0,0.0),padding:(14.0,7.0),
             Grid{column_definitions:if narrow{"*,Auto"}else{"*,Auto,Auto"},row_definitions:if narrow{"Auto,Auto"}else{"Auto"},column_spacing:12.0,
                 ScrollViewer{Grid.column_span:if narrow{2}else{1},max_height:if narrow{80.0}else{110.0},horizontal_scroll_bar_visibility:ScrollBarVisibility::Disabled,vertical_scroll_bar_visibility:ScrollBarVisibility::Auto,
                     TextBlock{text:vm.status(),font_size:12.0,text_wrapping:TextWrapping::Wrap,vertical_alignment:V::Center}
@@ -161,6 +162,10 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
         }
     });
     }
+    if let Some(update) = crate::notifications::update(vm.clone()) {
+        notices = notices.child(update);
+    }
+    main = main.child(notices);
     if narrow && article_stream {
         main = main.child(
             border()

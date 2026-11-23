@@ -108,9 +108,14 @@ pub fn inspect_view() -> String {
                 json!({"brush":rich_text::foreground(border.border_brush()),
                     "left":thickness.left,"top":thickness.top,"right":thickness.right,"bottom":thickness.bottom})
             }),
+            "background":visual.cast::<Border>().and_then(|border|rich_text::foreground(border.background())),
+            "opacity":visual.opacity(),
             "automationName":AutomationProperties::get_name(&visual),"articleId":article_id,
             "treeCursor":visual.classes().contains("keyboard-cursor"),
-            "checked":visual.cast::<ToggleButton>().and_then(|toggle|toggle.is_checked()),
+            "checked":visual.cast::<ToggleButton>().and_then(|toggle|toggle.is_checked())
+                .or_else(||visual.cast::<MenuItem>().map(|item|item.is_checked())),
+            "selected":visual.cast::<MenuItem>().map(|item|item.is_selected()),
+            "enabled":visual.cast::<InputElement>().is_some_and(|input|input.is_effectively_enabled()),
             "focused":visual.cast::<InputElement>().is_some_and(|i|i.is_focused()),
             "scroll":visual.cast::<ScrollViewer>().map(|scroll|json!({
                 "offsetX":scroll.offset().x,"offsetY":scroll.offset().y,

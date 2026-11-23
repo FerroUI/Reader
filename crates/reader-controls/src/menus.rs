@@ -1,8 +1,13 @@
 //! Reader geometry on the native Material menu template preserves access keys and popups.
+mod palette;
 use ferroui_base::layout::Layoutable;
-use ferroui_base::media::{FontFamily, Stretch};
+use ferroui_base::media::{BoxShadows, FontFamily, Geometry, Stretch};
 use ferroui_base::Visual;
-use ferroui_controls::{primitives::TemplatedControl, shapes::Shape, Application, Border};
+use ferroui_controls::{
+    primitives::TemplatedControl,
+    shapes::{Path, Shape},
+    Application, Border, Control,
+};
 use ferroui_view::style;
 
 pub fn install(app: &Application) {
@@ -25,16 +30,28 @@ pub fn install(app: &Application) {
             .build(),
     );
     app.styles().add(
+        style("ContextMenu /template/ Border#ThemeShadowWrapper")
+            .set(
+                Border::box_shadow_property(),
+                BoxShadows::parse("0 2 4 #33000000").expect("Reader menu shadow"),
+            )
+            .set(Border::corner_radius_property(), 0.0)
+            .build(),
+    );
+    app.styles().add(
         style("MenuItem.reader-menu")
             .set(
                 TemplatedControl::font_family_property(),
                 FontFamily::new("fonts:Reader#Liberation Sans"),
             )
             .set(TemplatedControl::font_size_property(), 13.0)
-            .set(TemplatedControl::padding_property(), (9.0, 6.0))
+            .set(TemplatedControl::padding_property(), (16.0, 6.0, 44.0, 6.0))
             .set(TemplatedControl::foreground_property(), "#333333")
             .set(TemplatedControl::background_property(), "White")
-            .set(Layoutable::min_height_property(), 28.0)
+            .set(Layoutable::min_height_property(), 27.0)
+            .set(Layoutable::min_width_property(), 0.0)
+            .set(Layoutable::max_width_property(), f64::INFINITY)
+            .set(Control::focus_adorner_property(), None)
             .build(),
     );
     app.styles().add(
@@ -45,9 +62,21 @@ pub fn install(app: &Application) {
     );
     app.styles().add(
         style("MenuItem.reader-menu /template/ Path#CheckGlyph")
-            .set(Layoutable::width_property(), 16.0)
-            .set(Layoutable::height_property(), 16.0)
-            .set(Layoutable::margin_property(), (0.0, 0.0, 8.0, 0.0))
+            .set(Layoutable::width_property(), 14.0)
+            .set(Layoutable::height_property(), 14.0)
+            .set(Layoutable::margin_property(), (-10.0, 0.0, 10.0, 0.0))
+            .set(Shape::stretch_property(), Stretch::Uniform)
+            .build(),
+    );
+    app.styles().add(
+        style("MenuItem.reader-menu:radio /template/ Path#CheckGlyph")
+            .set(
+                Path::data_property(),
+                Some(
+                    Geometry::parse("M9 16.17 4.83 12 3.41 13.41 9 19 21 7 19.59 5.59Z")
+                        .expect("Reader menu check"),
+                ),
+            )
             .set(Shape::stretch_property(), Stretch::Uniform)
             .build(),
     );
@@ -56,14 +85,5 @@ pub fn install(app: &Application) {
             .set(Visual::is_visible_property(), false)
             .build(),
     );
-    for selector in [
-        "MenuItem.reader-menu:selected /template/ Border#StateLayer",
-        "MenuItem.reader-menu:pointerover /template/ Border#StateLayer",
-    ] {
-        app.styles().add(
-            style(selector)
-                .set(Border::background_property(), "#EEEEEE")
-                .build(),
-        );
-    }
+    palette::install(app);
 }

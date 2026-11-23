@@ -33,9 +33,10 @@ pub(crate) fn button(vm: Rc<AppViewModel>, ui: Rc<Session>, row: &Row) -> Elemen
         return Element::Empty;
     }
     let id = row.article.id;
+    let font_size = 13.0 * row.scale.factor();
     ferroui_view::prelude::button().key(format!("send-to:{id}:{}", row.send_to_revision))
         .name("ArticleSendTo").tag(Some(Rc::new(id) as ferroui_base::BoxedValue))
-        .class("reader-link").font_size(13.0).foreground("#444444")
+        .class("reader-link").font_size(font_size).foreground("#444444")
         .padding((8.0,0.0)).height(crate::article::action_height(row))
         .min_width(if row.touch {44.0}else{0.0}).automation_properties_name("Send to")
         .context_menu(menu(vm,ui,id,false))
@@ -46,7 +47,7 @@ pub(crate) fn button(vm: Rc<AppViewModel>, ui: Rc<Session>, row: &Row) -> Elemen
             }
         })
         .child(rsx!{StackPanel {orientation:Orientation::Horizontal,spacing:5.0,vertical_alignment:V::Center,
-            TextBlock {text:"Send to",font_size:13.0,foreground:"#444444",vertical_alignment:V::Center}
+            TextBlock {text:"Send to",font_size,foreground:"#444444",vertical_alignment:V::Center}
             {reader_controls::icon(reader_controls::Icon::ChevronDown,8.0,"#777777")}
         }}).into()
 }

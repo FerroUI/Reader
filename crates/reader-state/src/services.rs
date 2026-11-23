@@ -61,6 +61,7 @@ pub enum HostRequest {
         id: Id,
     },
     ScheduleSave,
+    ApplyUpdate,
 }
 
 #[derive(Clone)]

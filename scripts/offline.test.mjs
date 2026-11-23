@@ -34,13 +34,13 @@ async function fixture(t) {
 
 // Execute the generated worker with real Web Crypto and Fetch Response streams.
 // Only network and CacheStorage are replaced; tests dispatch its actual install/activate handlers.
-async function worker(directory, build, tamper) {
+async function worker(directory, build, tamper, windows = []) {
   const buckets = new Map([
     ["ferroui-reader-previous", new Map([[origin + "index.html", new Response("previous build")]])],
     ["another-application", new Map()],
   ]);
   const events = new Map(), requests = [], deleted = [];
-  let active = 0, peak = 0, claims = 0;
+  let active = 0, peak = 0, claims = 0, activations = 0;
   const caches = {
     has: async name => buckets.has(name),
     keys: async () => [...buckets.keys()],
@@ -75,9 +75,9 @@ async function worker(directory, build, tamper) {
   };
   const self = {
     location: { href: origin + "app-sw.js" },
-    clients: { claim: async () => { claims++; } },
+    clients: { claim: async () => { claims++; }, matchAll: async () => windows },
     addEventListener: (event, handler) => events.set(event, handler),
-    skipWaiting: () => assert.fail("an update must not take over existing clients"),
+    skipWaiting: async () => { activations++; },
   };
   runInNewContext(await readFile(path.join(directory, "app-sw.js"), "utf8"), {
     self, caches, fetch, URL, Response, Headers, AbortController, crypto: webcrypto, Uint8Array,
@@ -88,7 +88,17 @@ async function worker(directory, build, tamper) {
     assert(completion, `${event} must retain its asynchronous work`);
     return completion;
   };
-  return { buckets, requests, deleted, dispatch, active: () => active, peak: () => peak, claims: () => claims };
+  const message = async (source, type = "reader:activate") => {
+    let completion, response;
+    events.get("message")({ data: { type }, source: source ? { id: source } : null,
+      ports: [{ postMessage: value => { response = structuredClone(value); } }],
+      waitUntil: promise => { completion = promise; },
+    });
+    await completion;
+    return response;
+  };
+  return { buckets, requests, deleted, dispatch, message, active: () => active,
+    peak: () => peak, claims: () => claims, activations: () => activations };
 }
 
 test("offline manifest hashes final stamped assets and preparation is idempotent", async t => {
@@ -133,9 +143,29 @@ test("verified installation uses canonical cache keys and preserves the old gene
   }
   assert(host.peak() <= 2); assert.equal(host.active(), 0);
   assert(host.buckets.has("ferroui-reader-previous")); assert.equal(host.claims(), 0);
+  assert.equal(host.activations(), 0, "installation never forces an update");
   await host.dispatch("activate");
   assert(!host.buckets.has("ferroui-reader-previous"));
   assert(host.buckets.has("another-application")); assert.equal(host.claims(), 1);
+});
+
+test("only an explicit same-scope client can request activation with no other Reader windows", async t => {
+  const directory = await fixture(t), build = await prepareSite(directory);
+  const windows = [{ id: "reader", url: origin + "#feed/1" }, { id: "other-app", url: "https://example.com/Other/" }];
+  const host = await worker(directory, build, undefined, windows);
+  await host.dispatch("install");
+  assert.equal(host.activations(), 0);
+  assert.equal(await host.message("reader", "unknown"), undefined);
+  assert.equal(await host.message(null), undefined);
+  assert.equal((await host.message("other-app")).status, "rejected");
+  windows.push({ id: "another-reader", url: origin + "#home" });
+  assert.equal((await host.message("reader")).status, "blocked");
+  assert.equal(host.activations(), 0);
+  assert(host.buckets.has("ferroui-reader-previous"));
+  windows.pop();
+  assert.deepEqual(await host.message("reader"), { status: "accepted", version: build.version });
+  assert.equal(host.activations(), 1);
+  assert.equal(host.claims(), 0, "the browser still owns the actual activation lifecycle");
 });
 
 test("same-length tampering rejects installation and removes only its failed generation", async t => {

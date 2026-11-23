@@ -19,6 +19,8 @@ pub(super) fn view(vm: Rc<AppViewModel>, row: &Row) -> El<Border> {
     let open = vm.clone();
     let row_open = vm;
     let height = super::headline_height(row);
+    let factor = row.scale.factor();
+    let action_width = if row.touch { 44.0 } else { 26.0 * factor };
     let content_height = height - if row.expanded && !row.touch { 1.0 } else { 0.0 };
     let mut line = grid()
         .name("ArticleRow")
@@ -28,14 +30,18 @@ pub(super) fn view(vm: Rc<AppViewModel>, row: &Row) -> El<Border> {
         })
         .column_definitions(&format!(
             "{},{},*,{},{}",
-            if row.touch { 44 } else { 26 },
+            action_width,
             if row.narrow || row.single_source {
-                0
+                0.0
             } else {
-                169
+                169.0 * factor
             },
-            if row.narrow { 60 } else { 91 },
-            if row.touch { 44 } else { 26 }
+            if row.narrow {
+                60.0 * factor
+            } else {
+                91.0 * factor
+            },
+            action_width
         ))
         .height(content_height)
         .background(if row.selected && !row.expanded {
@@ -48,7 +54,7 @@ pub(super) fn view(vm: Rc<AppViewModel>, row: &Row) -> El<Border> {
     line = line.child(
         button()
             .class("reader-flat")
-            .width(if row.touch { 44.0 } else { 26.0 })
+            .width(action_width)
             .height(content_height)
             .automation_properties_name(if row.article.starred {
                 "Remove star"
@@ -79,13 +85,13 @@ pub(super) fn view(vm: Rc<AppViewModel>, row: &Row) -> El<Border> {
                 .name("ArticleHeadlineSource")
                 .grid_column(1)
                 .text(row.source.to_string())
-                .font_size(13.0)
+                .font_size(13.0 * factor)
                 .foreground("#555555")
                 // Original source: left 1.85em, width 11em, right padding 1em.
-                .width(143.0)
+                .width(143.0 * factor)
                 .horizontal_alignment(H::Left)
                 .text_trimming(<dyn TextTrimming>::character_ellipsis())
-                .margin((-1.95, 0.0, 13.0, 0.0))
+                .margin((-1.95 * factor, 0.0, 13.0 * factor, 0.0))
                 .vertical_alignment(V::Center),
         );
     }
@@ -107,7 +113,7 @@ pub(super) fn view(vm: Rc<AppViewModel>, row: &Row) -> El<Border> {
             .name("ArticleHeadlineDate")
             .grid_column(3)
             .text(super::date(row.article.published))
-            .font_size(13.0)
+            .font_size(13.0 * factor)
             .foreground("#555555")
             .horizontal_alignment(H::Right)
             .vertical_alignment(V::Center)
@@ -119,7 +125,7 @@ pub(super) fn view(vm: Rc<AppViewModel>, row: &Row) -> El<Border> {
             .class("reader-flat")
             .grid_column(4)
             .height(content_height)
-            .width(if row.touch { 44.0 } else { 26.0 })
+            .width(action_width)
             .automation_properties_name("View original article")
             .tool_tip_tip("View original article (v)")
             .on_click(move |event| {
@@ -167,7 +173,7 @@ fn title(row: &Row) -> El<TextBlock> {
     text_block()
         .key(format!("headline-{}-{}", row.article.id, key.finish()))
         .name("ArticleHeadlineText")
-        .font_size(13.0)
+        .font_size(13.0 * row.scale.factor())
         .foreground("#000000")
         .text_trimming(<dyn TextTrimming>::character_ellipsis())
         .vertical_alignment(V::Center)

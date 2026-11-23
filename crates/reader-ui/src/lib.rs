@@ -11,6 +11,7 @@ mod home;
 mod images;
 mod keyboard;
 mod menus;
+mod notifications;
 mod reading;
 mod responsive;
 mod rows;
@@ -43,7 +44,18 @@ pub fn create_view(vm: Rc<AppViewModel>) -> Ref<Control> {
         let revision = signal(vm.revision());
         let session = Rc::new(session::Session::new());
         let rows = Rc::new(rows::Rows::new(vm.clone(), session.clone()));
-        rows.synchronize(&vm);
+        let presentation_rows = rows.clone();
+        let presentation_vm = vm.clone();
+        let presentation_ui = session.clone();
+        effect(move || {
+            presentation_ui.article_scale.get();
+            presentation_ui.desktop_sidebar.get();
+            presentation_ui.focus_mode.get();
+            presentation_ui
+                .programmatic_scroll
+                .set(Some(std::time::Instant::now()));
+            presentation_rows.synchronize(&presentation_vm);
+        });
         PRESENTATION
             .with(|p| *p.borrow_mut() = Some((Rc::downgrade(&session), Rc::downgrade(&rows))));
         let observed = vm.clone();

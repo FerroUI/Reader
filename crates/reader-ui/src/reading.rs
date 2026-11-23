@@ -7,6 +7,8 @@ mod metrics;
 mod page;
 mod page_policy;
 mod panel;
+pub(crate) mod scale;
+mod scale_policy;
 mod viewport;
 
 use crate::session::{Panel, Session};

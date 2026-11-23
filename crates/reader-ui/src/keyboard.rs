@@ -168,11 +168,8 @@ fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
             }
         }
         Key::OemPlus | Key::Add | Key::OemMinus | Key::Subtract => {
-            let mut settings = vm.state().settings.clone();
             let larger = matches!(event.key, Key::OemPlus | Key::Add);
-            settings.font_size =
-                (settings.font_size + if larger { 1.0 } else { -1.0 }).clamp(11.0, 24.0);
-            vm.set_settings(settings);
+            crate::reading::scale::change(ui, larger);
         }
         Key::R => vm.refresh(),
         Key::A if shift => {

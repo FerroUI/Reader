@@ -26,7 +26,7 @@ pub(super) fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, row: &Row) -> El<Borde
             action_control(row, if row.article.starred { "Remove star" } else { "Add star" }, move || star.toggle_star(id))
                 .child(rsx! {StackPanel{orientation:Orientation::Horizontal,spacing:4.0,vertical_alignment:V::Center,
                     {icon(if row.article.starred{Icon::Starred}else{Icon::Star},12.0,if row.article.starred{"#E9BC36"}else{"#777777"})}
-                    TextBlock{text:if row.article.starred{"Remove star"}else{"Add star"},font_size:13.0,foreground:"#444444",vertical_alignment:V::Center}
+                    TextBlock{text:if row.article.starred{"Remove star"}else{"Add star"},font_size:13.0*row.scale.factor(),foreground:"#444444",vertical_alignment:V::Center}
                 }}),
         )
         .child(read_state(vm.clone(), row))
@@ -70,7 +70,7 @@ pub(super) fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, row: &Row) -> El<Borde
                 .child(
                     text_block()
                         .text(label)
-                        .font_size(13.0)
+                        .font_size(13.0 * row.scale.factor())
                         .foreground(if row.selected { "#444444" } else { "#666666" })
                         .text_wrapping(TextWrapping::Wrap),
                 ),
@@ -116,7 +116,7 @@ fn read_state(vm: Rc<AppViewModel>, row: &Row) -> Element {
         .class("reader-read-state")
         .content(label)
         .automation_properties_name(label)
-        .font_size(13.0)
+        .font_size(13.0 * row.scale.factor())
         .foreground("#444444")
         .padding((8.0, 0.0))
         .height(super::action_height(row))
@@ -144,7 +144,7 @@ fn action(row: &Row, label: &str, invoke: impl Fn() + 'static) -> El<Button> {
 fn action_control(row: &Row, label: &str, invoke: impl Fn() + 'static) -> El<Button> {
     button()
         .class("reader-link")
-        .font_size(13.0)
+        .font_size(13.0 * row.scale.factor())
         .foreground("#444444")
         .padding((8.0, 0.0))
         .height(super::action_height(row))

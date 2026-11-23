@@ -72,6 +72,31 @@ self.addEventListener("activate", event => {
     await self.clients.claim();
   })());
 });
+self.addEventListener("message", event => {
+  if (event.data?.type !== "reader:activate" || !event.source?.id || !event.ports?.[0]) return;
+  const port = event.ports[0];
+  event.waitUntil((async () => {
+    try {
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      const belongs = client => {
+        const url = new URL(client.url);
+        return url.origin === root.origin && url.pathname.startsWith(root.pathname);
+      };
+      if (!windows.some(client => client.id === event.source.id && belongs(client))) {
+        port.postMessage({ status: "rejected" }); return;
+      }
+      if (windows.some(client => client.id !== event.source.id && belongs(client))) {
+        port.postMessage({ status: "blocked" }); return;
+      }
+      // The requesting tab has explicitly saved its library and will reload on controllerchange.
+      // Other open Reader windows must close first; they are never reloaded by this worker.
+      port.postMessage({ status: "accepted", version: VERSION });
+      await self.skipWaiting();
+    } catch {
+      port.postMessage({ status: "rejected" });
+    }
+  })());
+});
 self.addEventListener("fetch", event => {
   const request = event.request, url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== root.origin || !url.pathname.startsWith(root.pathname)) return;

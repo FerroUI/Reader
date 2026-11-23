@@ -20,6 +20,8 @@ pub struct Row {
     /// the reading cap and collapsed headline rows need no template changes.
     pub media_width: f64,
     pub density: Density,
+    pub scale: crate::reading::scale::Scale,
+    pub wide_body: bool,
     pub font_size: f64,
     pub narrow: bool,
     pub touch: bool,
@@ -39,6 +41,8 @@ impl PartialEq for Row {
             && self.list_mode == other.list_mode
             && (!self.expanded || self.media_width == other.media_width)
             && self.density == other.density
+            && self.scale == other.scale
+            && (!self.expanded || self.wide_body == other.wide_body)
             && self.font_size == other.font_size
             && self.narrow == other.narrow
             && self.touch == other.touch
@@ -57,6 +61,7 @@ impl Row {
 }
 /// Retains the observable collection and recycling template for the full window lifetime.
 pub struct Rows {
+    session: Rc<Session>,
     data: RefCell<Vec<Row>>,
     items: Rc<FerroList<Option<BoxedValue>>>,
     pub template: Rc<dyn IDataTemplate>,
@@ -69,6 +74,7 @@ pub struct Rows {
 impl Rows {
     pub fn new(vm: Rc<AppViewModel>, session: Rc<Session>) -> Self {
         Self {
+            session: session.clone(),
             data: RefCell::new(Vec::new()),
             items: Rc::new(FerroList::new()),
             template: ferroui_view::template(move |row: Row| {
@@ -113,7 +119,15 @@ impl Rows {
             .map(|f| (f.id, Rc::from(f.title)))
             .collect();
         let narrow = vm.viewport() < 700.0;
-        let media_width = crate::images::available_width(vm.viewport());
+        let sidebar_hidden = narrow
+            || !self.session.desktop_sidebar.get_untracked()
+            || self.session.focus_mode.get_untracked();
+        let sidebar_width = if sidebar_hidden {
+            0.0
+        } else {
+            crate::sidebar::width(settings.density)
+        };
+        let scale = self.session.article_scale.get_untracked();
         let single_source = matches!(vm.view(), reader_domain::View::Feed(_));
         let next = vm
             .visible_shared()
@@ -125,8 +139,10 @@ impl Rows {
                     .unwrap_or_else(|| Rc::from(""));
                 let expanded =
                     settings.view_mode == ViewMode::Expanded || selected == Some(article.id);
-                Row {
+                let mut row = Row {
                     selected: cursor.or(selected) == Some(article.id),
+                    scale: scale.for_current(cursor.or(selected) == Some(article.id)),
+                    wide_body: sidebar_hidden,
                     article_loading: vm.article_loading(article.id),
                     article_error: vm.article_error(article.id),
                     send_to_revision,
@@ -137,12 +153,14 @@ impl Rows {
                     source,
                     expanded,
                     list_mode: settings.view_mode == ViewMode::List,
-                    media_width,
+                    media_width: 0.0,
                     density: settings.density,
                     font_size: settings.font_size,
                     narrow,
                     touch: crate::responsive::touch(vm),
-                }
+                };
+                row.media_width = crate::article::media_width(&row, vm.viewport(), sidebar_width);
+                row
             })
             .collect();
         *self.pending.borrow_mut() = Some(next);

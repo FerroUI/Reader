@@ -1,7 +1,6 @@
 mod info;
 mod layout;
 mod view;
-pub(crate) use layout::available_width;
 pub use view::with_metadata;
 
 use ferroui_base::media::{

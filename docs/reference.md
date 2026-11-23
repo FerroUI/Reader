@@ -108,6 +108,8 @@ The Mark all as read dropdown offers all items, items older than a day, older th
 
 Feed settings include newest/oldest/magic sorting, rename, unsubscribe, translation, details/statistics and folder membership. Folder settings include rename/delete and unsubscribe from all. Subscription-section settings include alphabetical/manual ordering, all/updated visibility, favicon/default icon preference, add and manage subscriptions.
 
+The preserved generic menu-button implementation (`Ou`, using `Ku(..., 5)`) anchors the menu at the control's bottom-start edge. Native toolbar dropdowns now supply an explicit local placement rectangle so that FerroUI preserves this alignment and constrains the popup at viewport edges. Up/Down opening and native radio semantics preserve keyboard selection and prevent choosing an already-selected preference from clearing its checkmark.
+
 ### Read-state checkbox
 
 The [saved client's](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/3564210627-en-scroll.js) `aw` chooses `it` when automatic read tracking is enabled and `ht` otherwise. `ct` and `bt` define their respective labels and state transitions; `Gp` names the kept-unread state and `Fp` the read state.
@@ -216,11 +218,11 @@ The [saved client's](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e
 
 `XG.Le` moves by the viewport height minus 50 pixels, preserving a reading overlap. The native implementation uses measured or indexed variable-height article geometry, keeps list scans distinct from opening, and uses the subscription cursor's unread traversal at the stream boundary. Page Up/Page Down continue to perform viewport paging.
 
-### Verified magnification and hidden-sidebar differences
+### Verified magnification and hidden-sidebar behavior
 
-The original `wE` binds magnification changes in ten-point steps; `XG.Wp` clamps them to 100–150%. The [stylesheet's](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/2139832829-en-scroll.css) `.magnification110` through `.magnification150` rules target `#current-entry` and `.cursor`, not all article bodies. The current `=`/`-` commands instead change the saved global body size within 11–24 pixels. This remains a functional and visual difference.
+The original `wE` binds magnification changes in ten-point steps; `XG.Wp` clamps them to 100–150%. The [stylesheet's](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/2139832829-en-scroll.css) `.magnification110` through `.magnification150` rules target `#current-entry` and `.cursor`, not all article bodies. The native `+`/`=`/`-` commands now keep a transient 100–150% scale for the active article. The saved global base text size remains a separate preference. Scaling updates retained native text properties rather than rebuilding the document; density-defined headline heights remain fixed.
 
-The same stylesheet's `.lhn-hidden #entries .entry-body` rule raises the body's maximum width to 100% when the sidebar is hidden. The current native body remains capped at 650 pixels in that mode. Hiding the sidebar is implemented, but this full-width reading behavior remains outstanding.
+The same stylesheet's `.lhn-hidden #entries .entry-body` rule raises the body's maximum width to 100% when the sidebar is hidden. The native body now follows that width policy when the desktop sidebar is hidden or focus mode is active, while titles keep their own width constraint. The phone layout continues to use its responsive pane width.
 
 ### Subscription cursor and help overlay
 

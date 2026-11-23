@@ -11,6 +11,7 @@ mod query;
 mod send_to;
 mod services;
 mod subscriptions;
+mod updates;
 
 use ferroui_dynamic_data::SourceCache;
 use ferroui_reactive::{concurrency::ImmediateScheduler, ObservableExt};
@@ -22,6 +23,7 @@ use std::{
     collections::{BTreeSet, VecDeque},
     rc::Rc,
 };
+pub use updates::UpdateNotice;
 
 pub struct AppViewModel {
     reactive: ReactiveObject,
@@ -39,6 +41,7 @@ pub struct AppViewModel {
     touch_mode: Cell<bool>,
     sidebar: Cell<bool>,
     status: RefCell<String>,
+    update_notice: RefCell<Option<UpdateNotice>>,
     refreshing: Cell<bool>,
     dirty: Cell<bool>,
     applying: Cell<bool>,
@@ -99,6 +102,7 @@ impl AppViewModel {
                 touch_mode: Cell::new(false),
                 sidebar: Cell::new(false),
                 status: RefCell::new(error.unwrap_or_default()),
+                update_notice: RefCell::new(None),
                 refreshing: Cell::new(false),
                 dirty: Cell::new(false),
                 applying: Cell::new(false),

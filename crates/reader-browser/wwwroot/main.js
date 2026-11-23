@@ -1,10 +1,11 @@
 import { FerroExports } from "./ferroui.js";
 import { loadModule } from "./ferroui-loader.js";
-import { attachRuntime, now, flush, reportError } from "./host.js";
+import { attachRuntime, now, flush, flushForUpdate, reportError } from "./host.js";
 import { prepareStorage } from "./reader-storage.js";
 import { attachNavigation } from "./navigation.js";
 import { attachViewport } from "./viewport.js";
 import { attachInputGuard } from "./input.js";
+import { attachUpdates } from "./updates.js";
 
 const fontNames = ["LiberationSans-Regular.ttf", "LiberationSans-Bold.ttf", "LiberationSans-Italic.ttf", "LiberationSans-BoldItalic.ttf", "LiberationSerif-Regular.ttf", "LiberationMono-Regular.ttf"];
 try {
@@ -35,10 +36,7 @@ try {
       if (!runtime.refreshInitialFeeds()) runtime.hostStatus("Back online. Refresh your subscriptions to get new articles.");
     });
     addEventListener("offline", () => runtime.hostStatus("You're offline. Your saved articles are still available."));
-    if ("serviceWorker" in navigator && !new URLSearchParams(location.search).has("nooffline")) {
-      navigator.serviceWorker.register(new URL("./app-sw.js", import.meta.url), { scope: "./" })
-        .catch(error => console.info("Offline installation is unavailable:", error.message));
-    }
+    attachUpdates(runtime, flushForUpdate);
   }
 } catch (error) {
   document.getElementById("loading-status").textContent = `Reader could not start. ${error.message || error}`;

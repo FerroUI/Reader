@@ -7,7 +7,7 @@ use crate::{content, rows::Row, session::Session};
 use ferroui_base::layout::HorizontalAlignment as H;
 use ferroui_base::media::BoxShadows;
 use ferroui_view::prelude::*;
-pub(crate) use layout::{action_height, headline_height, right_inset};
+pub(crate) use layout::{action_height, headline_height, media_width, right_inset};
 use reader_state::AppViewModel;
 use std::rc::Rc;
 
@@ -40,7 +40,7 @@ fn list_entry(vm: Rc<AppViewModel>, ui: Rc<Session>, row: Row) -> Element {
                 .name("ArticleListBody")
                 .border_brush(if row.selected { "#4D90F0" } else { "#FFFFFF" })
                 .border_thickness((1.0, 0.0, 0.0, 0.0))
-                .child(details(vm, ui, &row, 13.0)),
+                .child(details(vm, ui, &row, 13.0 * row.scale.factor())),
         );
     }
     border()
@@ -86,7 +86,7 @@ fn card(vm: Rc<AppViewModel>, ui: Rc<Session>, row: Row) -> Element {
 
 fn details(vm: Rc<AppViewModel>, ui: Rc<Session>, row: &Row, padding: f64) -> Element {
     let select = vm.clone();
-    let body = content::view(vm.clone(), &row.article, row.font_size, row.selected);
+    let body = content::view(vm.clone(), row);
     grid()
         .name(if row.list_mode {
             "ArticleExpandedContent"
@@ -102,9 +102,13 @@ fn details(vm: Rc<AppViewModel>, ui: Rc<Session>, row: &Row, padding: f64) -> El
                 .grid_row(1)
                 .margin((
                     padding,
-                    6.5,
+                    6.5 * row.scale.factor(),
                     padding,
-                    if row.list_mode { 6.5 } else { 20.0 },
+                    if row.list_mode {
+                        6.5 * row.scale.factor()
+                    } else {
+                        20.0
+                    },
                 ))
                 .horizontal_alignment(H::Stretch)
                 .with(move |node| {

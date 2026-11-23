@@ -11,6 +11,10 @@ import { articlePaletteChecks } from "./ui/article-palette.mjs";
 import { readingNavigationChecks } from "./ui/reading-navigation.mjs";
 import { articleLayoutChecks } from "./ui/article-layout.mjs";
 import { sendToChecks } from "./ui/send-to.mjs";
+import { updateChecks } from "./ui/updates.mjs";
+import { menuPolishChecks } from "./ui/menu-polish.mjs";
+import { settingsPolishChecks } from "./ui/settings-polish.mjs";
+import { readingScaleChecks } from "./ui/reading-scale.mjs";
 import { interceptStarterFeeds, starterChecks } from "./ui/starter.mjs";
 import { sleep } from "../FerroUI/scripts/browser/harness.mjs";
 
@@ -119,11 +123,15 @@ try {
         stale.setStorageReporter(error => { message = error.message; });
         stale.save('stale writer');
         await stale.flushStorage();
+        let updateError = '';
+        try { await stale.flushStorage({ requireSaved: true }); }
+        catch (error) { updateError = error.message; }
         const observer = await import('./reader-storage.js?independent-observer');
         await observer.prepareStorage();
-        return { message, preserved: observer.load() === current };
+        return { message, updateError, preserved: observer.load() === current };
       })()`);
       assert.match(result.message, /changed in another tab/);
+      assert.match(result.updateError, /changed in another tab/, "an update must refuse to reload an unsaved conflicting library");
       assert(result.preserved, "a stale writer must preserve the committed library");
     });
     await refinementChecks(h, check);
@@ -133,6 +141,9 @@ try {
     await articlePaletteChecks(h, check);
     await readingNavigationChecks(h, check);
     await sendToChecks(h, check);
+    await menuPolishChecks(h, check);
+    await readingScaleChecks(h, check);
+    await settingsPolishChecks(h, check);
     await mobileChecks(h, check);
     await check("expanded read tracking follows user scrolling and preserves Keep unread", async () => {
       const data = await h.state();
@@ -200,6 +211,7 @@ try {
       await h.capture("10-offline");
       await h.page.send("Network.emulateNetworkConditions", { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 });
     });
+    await updateChecks(h, check, site);
     h.healthy();
     await writeFile(path.join(output, "results.json"), JSON.stringify({ passed: checks.length, checks }, null, 2));
     console.log(`All ${checks.length} browser checks passed.`);

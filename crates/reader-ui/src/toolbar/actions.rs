@@ -110,6 +110,10 @@ fn sort_items(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Vec<Element> {
     let order = vm.state().settings.sort;
     let newest = vm.clone();
     let oldest = vm.clone();
+    let larger = ui.clone();
+    let smaller = ui.clone();
+    let scale = ui.article_scale.get();
+    let current = vm.cursor().or(vm.selected()).is_some();
     let mut items = vec![
         menus::checked("Sort by newest", order == SortOrder::Newest, move || {
             newest.set_sort(SortOrder::Newest)
@@ -117,6 +121,21 @@ fn sort_items(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Vec<Element> {
         menus::checked("Sort by oldest", order == SortOrder::Oldest, move || {
             oldest.set_sort(SortOrder::Oldest)
         }),
+        menus::separator(),
+        menus::item_enabled(
+            "Larger article text (+)",
+            current && scale.can_change(true),
+            move || {
+                crate::reading::scale::change(&larger, true);
+            },
+        ),
+        menus::item_enabled(
+            "Smaller article text (-)",
+            current && scale.can_change(false),
+            move || {
+                crate::reading::scale::change(&smaller, false);
+            },
+        ),
     ];
     if let View::Feed(id) = vm.view() {
         let rename = ui.clone();
@@ -140,13 +159,25 @@ pub(super) fn more_items(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Vec<Element> 
     let expanded = vm.clone();
     let previous = vm.clone();
     let next = vm.clone();
+    let mode = vm.state().settings.view_mode;
+    let has_items = vm.visible_len() > 0;
     let mut items = vec![
-        menus::item("List view", move || list.set_view_mode(ViewMode::List)),
-        menus::item("Expanded view", move || {
-            expanded.set_view_mode(ViewMode::Expanded)
+        menus::choice(
+            "List view",
+            mode == ViewMode::List,
+            Some("view-mode"),
+            move || list.set_view_mode(ViewMode::List),
+        ),
+        menus::choice(
+            "Expanded view",
+            mode == ViewMode::Expanded,
+            Some("view-mode"),
+            move || expanded.set_view_mode(ViewMode::Expanded),
+        ),
+        menus::item_enabled("Previous item", has_items, move || {
+            previous.next_article(-1)
         }),
-        menus::item("Previous item", move || previous.next_article(-1)),
-        menus::item("Next item", move || next.next_article(1)),
+        menus::item_enabled("Next item", has_items, move || next.next_article(1)),
         menus::separator(),
     ];
     items.extend(mark_items(vm.clone(), ui.clone(), true));
