@@ -1,0 +1,590 @@
+[
+  {
+    "name": "read current article",
+    "foreground": "#000000",
+    "links": [
+      {
+        "bounds": [
+          {
+            "height": 21,
+            "width": 68.46875,
+            "x": 693.880859375,
+            "y": 287
+          }
+        ],
+        "foreground": "#1155CC",
+        "id": "0x2319bf8",
+        "text": " Native link",
+        "underline": true,
+        "url": "https://palette.example/reference"
+      }
+    ],
+    "identity": {
+      "controlId": "0x2112bf8",
+      "paragraphIds": [
+        "0x221b7f0"
+      ],
+      "links": [
+        "0x2319bf8"
+      ]
+    },
+    "selection": {
+      "caret": 22,
+      "end": 22,
+      "start": 0,
+      "text": "Palette selection rema"
+    },
+    "table": [
+      {
+        "fontSize": 14,
+        "foreground": "#000000",
+        "links": [
+          {
+            "bounds": [
+              {
+                "height": 21,
+                "width": 79.365234375,
+                "x": 438.0341796875,
+                "y": 330
+              }
+            ],
+            "foreground": "#1155CC",
+            "id": "0xe8d5d0",
+            "text": " Header link",
+            "underline": true,
+            "url": "https://palette.example/header"
+          }
+        ],
+        "identity": {
+          "controlId": "0x1d2ded0",
+          "paragraphIds": [
+            "0x1ce57e8"
+          ],
+          "links": [
+            "0xe8d5d0"
+          ]
+        }
+      },
+      {
+        "fontSize": 14,
+        "foreground": "#000000",
+        "links": [
+          {
+            "bounds": [
+              {
+                "height": 21,
+                "width": 52.9033203125,
+                "x": 639.73046875,
+                "y": 330
+              }
+            ],
+            "foreground": "#1155CC",
+            "id": "0x20b7968",
+            "text": " Cell link",
+            "underline": true,
+            "url": "https://palette.example/cell"
+          }
+        ],
+        "identity": {
+          "controlId": "0x1fac648",
+          "paragraphIds": [
+            "0xe6c210"
+          ],
+          "links": [
+            "0x20b7968"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "read inactive article",
+    "foreground": "#222222",
+    "links": [
+      {
+        "bounds": [
+          {
+            "height": 21,
+            "width": 68.46875,
+            "x": 693.880859375,
+            "y": 287
+          }
+        ],
+        "foreground": "#444444",
+        "id": "0x2319bf8",
+        "text": " Native link",
+        "underline": true,
+        "url": "https://palette.example/reference"
+      }
+    ],
+    "identity": {
+      "controlId": "0x2112bf8",
+      "paragraphIds": [
+        "0x221b7f0"
+      ],
+      "links": [
+        "0x2319bf8"
+      ]
+    },
+    "selection": {
+      "caret": 22,
+      "end": 22,
+      "start": 0,
+      "text": "Palette selection rema"
+    },
+    "table": [
+      {
+        "fontSize": 14,
+        "foreground": "#222222",
+        "links": [
+          {
+            "bounds": [
+              {
+                "height": 21,
+                "width": 79.365234375,
+                "x": 438.0341796875,
+                "y": 330
+              }
+            ],
+            "foreground": "#444444",
+            "id": "0xe8d5d0",
+            "text": " Header link",
+            "underline": true,
+            "url": "https://palette.example/header"
+          }
+        ],
+        "identity": {
+          "controlId": "0x1d2ded0",
+          "paragraphIds": [
+            "0x1ce57e8"
+          ],
+          "links": [
+            "0xe8d5d0"
+          ]
+        }
+      },
+      {
+        "fontSize": 14,
+        "foreground": "#222222",
+        "links": [
+          {
+            "bounds": [
+              {
+                "height": 21,
+                "width": 52.9033203125,
+                "x": 639.73046875,
+                "y": 330
+              }
+            ],
+            "foreground": "#444444",
+            "id": "0x20b7968",
+            "text": " Cell link",
+            "underline": true,
+            "url": "https://palette.example/cell"
+          }
+        ],
+        "identity": {
+          "controlId": "0x1fac648",
+          "paragraphIds": [
+            "0xe6c210"
+          ],
+          "links": [
+            "0x20b7968"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "read article becomes current again",
+    "foreground": "#000000",
+    "links": [
+      {
+        "bounds": [
+          {
+            "height": 21,
+            "width": 68.46875,
+            "x": 693.880859375,
+            "y": 287
+          }
+        ],
+        "foreground": "#1155CC",
+        "id": "0x2319bf8",
+        "text": " Native link",
+        "underline": true,
+        "url": "https://palette.example/reference"
+      }
+    ],
+    "identity": {
+      "controlId": "0x2112bf8",
+      "paragraphIds": [
+        "0x221b7f0"
+      ],
+      "links": [
+        "0x2319bf8"
+      ]
+    },
+    "selection": {
+      "caret": 22,
+      "end": 22,
+      "start": 0,
+      "text": "Palette selection rema"
+    },
+    "table": [
+      {
+        "fontSize": 14,
+        "foreground": "#000000",
+        "links": [
+          {
+            "bounds": [
+              {
+                "height": 21,
+                "width": 79.365234375,
+                "x": 438.0341796875,
+                "y": 330
+              }
+            ],
+            "foreground": "#1155CC",
+            "id": "0xe8d5d0",
+            "text": " Header link",
+            "underline": true,
+            "url": "https://palette.example/header"
+          }
+        ],
+        "identity": {
+          "controlId": "0x1d2ded0",
+          "paragraphIds": [
+            "0x1ce57e8"
+          ],
+          "links": [
+            "0xe8d5d0"
+          ]
+        }
+      },
+      {
+        "fontSize": 14,
+        "foreground": "#000000",
+        "links": [
+          {
+            "bounds": [
+              {
+                "height": 21,
+                "width": 52.9033203125,
+                "x": 639.73046875,
+                "y": 330
+              }
+            ],
+            "foreground": "#1155CC",
+            "id": "0x20b7968",
+            "text": " Cell link",
+            "underline": true,
+            "url": "https://palette.example/cell"
+          }
+        ],
+        "identity": {
+          "controlId": "0x1fac648",
+          "paragraphIds": [
+            "0xe6c210"
+          ],
+          "links": [
+            "0x20b7968"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "unread current article",
+    "foreground": "#000000",
+    "links": [
+      {
+        "bounds": [
+          {
+            "height": 21,
+            "width": 68.46875,
+            "x": 693.880859375,
+            "y": 287
+          }
+        ],
+        "foreground": "#1155CC",
+        "id": "0x2319bf8",
+        "text": " Native link",
+        "underline": true,
+        "url": "https://palette.example/reference"
+      }
+    ],
+    "identity": {
+      "controlId": "0x2112bf8",
+      "paragraphIds": [
+        "0x221b7f0"
+      ],
+      "links": [
+        "0x2319bf8"
+      ]
+    },
+    "selection": {
+      "caret": 22,
+      "end": 22,
+      "start": 0,
+      "text": "Palette selection rema"
+    },
+    "table": [
+      {
+        "fontSize": 14,
+        "foreground": "#000000",
+        "links": [
+          {
+            "bounds": [
+              {
+                "height": 21,
+                "width": 79.365234375,
+                "x": 438.0341796875,
+                "y": 330
+              }
+            ],
+            "foreground": "#1155CC",
+            "id": "0xe8d5d0",
+            "text": " Header link",
+            "underline": true,
+            "url": "https://palette.example/header"
+          }
+        ],
+        "identity": {
+          "controlId": "0x1d2ded0",
+          "paragraphIds": [
+            "0x1ce57e8"
+          ],
+          "links": [
+            "0xe8d5d0"
+          ]
+        }
+      },
+      {
+        "fontSize": 14,
+        "foreground": "#000000",
+        "links": [
+          {
+            "bounds": [
+              {
+                "height": 21,
+                "width": 52.9033203125,
+                "x": 639.73046875,
+                "y": 330
+              }
+            ],
+            "foreground": "#1155CC",
+            "id": "0x20b7968",
+            "text": " Cell link",
+            "underline": true,
+            "url": "https://palette.example/cell"
+          }
+        ],
+        "identity": {
+          "controlId": "0x1fac648",
+          "paragraphIds": [
+            "0xe6c210"
+          ],
+          "links": [
+            "0x20b7968"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "unread inactive article",
+    "foreground": "#000000",
+    "links": [
+      {
+        "bounds": [
+          {
+            "height": 21,
+            "width": 68.46875,
+            "x": 693.880859375,
+            "y": 287
+          }
+        ],
+        "foreground": "#1155CC",
+        "id": "0x2319bf8",
+        "text": " Native link",
+        "underline": true,
+        "url": "https://palette.example/reference"
+      }
+    ],
+    "identity": {
+      "controlId": "0x2112bf8",
+      "paragraphIds": [
+        "0x221b7f0"
+      ],
+      "links": [
+        "0x2319bf8"
+      ]
+    },
+    "selection": {
+      "caret": 22,
+      "end": 22,
+      "start": 0,
+      "text": "Palette selection rema"
+    },
+    "table": [
+      {
+        "fontSize": 14,
+        "foreground": "#000000",
+        "links": [
+          {
+            "bounds": [
+              {
+                "height": 21,
+                "width": 79.365234375,
+                "x": 438.0341796875,
+                "y": 330
+              }
+            ],
+            "foreground": "#1155CC",
+            "id": "0xe8d5d0",
+            "text": " Header link",
+            "underline": true,
+            "url": "https://palette.example/header"
+          }
+        ],
+        "identity": {
+          "controlId": "0x1d2ded0",
+          "paragraphIds": [
+            "0x1ce57e8"
+          ],
+          "links": [
+            "0xe8d5d0"
+          ]
+        }
+      },
+      {
+        "fontSize": 14,
+        "foreground": "#000000",
+        "links": [
+          {
+            "bounds": [
+              {
+                "height": 21,
+                "width": 52.9033203125,
+                "x": 639.73046875,
+                "y": 330
+              }
+            ],
+            "foreground": "#1155CC",
+            "id": "0x20b7968",
+            "text": " Cell link",
+            "underline": true,
+            "url": "https://palette.example/cell"
+          }
+        ],
+        "identity": {
+          "controlId": "0x1fac648",
+          "paragraphIds": [
+            "0xe6c210"
+          ],
+          "links": [
+            "0x20b7968"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "name": "read inactive article after toggling read state",
+    "foreground": "#222222",
+    "links": [
+      {
+        "bounds": [
+          {
+            "height": 21,
+            "width": 68.46875,
+            "x": 693.880859375,
+            "y": 287
+          }
+        ],
+        "foreground": "#444444",
+        "id": "0x2319bf8",
+        "text": " Native link",
+        "underline": true,
+        "url": "https://palette.example/reference"
+      }
+    ],
+    "identity": {
+      "controlId": "0x2112bf8",
+      "paragraphIds": [
+        "0x221b7f0"
+      ],
+      "links": [
+        "0x2319bf8"
+      ]
+    },
+    "selection": {
+      "caret": 22,
+      "end": 22,
+      "start": 0,
+      "text": "Palette selection rema"
+    },
+    "table": [
+      {
+        "fontSize": 14,
+        "foreground": "#222222",
+        "links": [
+          {
+            "bounds": [
+              {
+                "height": 21,
+                "width": 79.365234375,
+                "x": 438.0341796875,
+                "y": 330
+              }
+            ],
+            "foreground": "#444444",
+            "id": "0xe8d5d0",
+            "text": " Header link",
+            "underline": true,
+            "url": "https://palette.example/header"
+          }
+        ],
+        "identity": {
+          "controlId": "0x1d2ded0",
+          "paragraphIds": [
+            "0x1ce57e8"
+          ],
+          "links": [
+            "0xe8d5d0"
+          ]
+        }
+      },
+      {
+        "fontSize": 14,
+        "foreground": "#222222",
+        "links": [
+          {
+            "bounds": [
+              {
+                "height": 21,
+                "width": 52.9033203125,
+                "x": 639.73046875,
+                "y": 330
+              }
+            ],
+            "foreground": "#444444",
+            "id": "0x20b7968",
+            "text": " Cell link",
+            "underline": true,
+            "url": "https://palette.example/cell"
+          }
+        ],
+        "identity": {
+          "controlId": "0x1fac648",
+          "paragraphIds": [
+            "0xe6c210"
+          ],
+          "links": [
+            "0x20b7968"
+          ]
+        }
+      }
+    ]
+  }
+]

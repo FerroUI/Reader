@@ -1,0 +1,125 @@
+[
+  {
+    "density": "Comfortable",
+    "headlineHeight": 37,
+    "card": {
+      "articleId": null,
+      "automationName": null,
+      "border": null,
+      "checked": null,
+      "focused": false,
+      "fontSize": null,
+      "foreground": null,
+      "headlineRuns": null,
+      "height": 223,
+      "hit": true,
+      "links": null,
+      "name": "ArticleCard",
+      "richText": null,
+      "scroll": null,
+      "text": null,
+      "textSelection": null,
+      "treeCursor": false,
+      "type": "Grid",
+      "width": 1061,
+      "x": 269,
+      "y": 172
+    },
+    "edge": {
+      "bottom": 0,
+      "brush": "#4D90F0",
+      "left": 1,
+      "right": 0,
+      "top": 0
+    },
+    "frame": {
+      "bottom": 1,
+      "brush": "#DDDDDD",
+      "left": 1,
+      "right": 1,
+      "top": 1
+    }
+  },
+  {
+    "density": "Cozy",
+    "headlineHeight": 31,
+    "card": {
+      "articleId": null,
+      "automationName": null,
+      "border": null,
+      "checked": null,
+      "focused": false,
+      "fontSize": null,
+      "foreground": null,
+      "headlineRuns": null,
+      "height": 213,
+      "hit": true,
+      "links": null,
+      "name": "ArticleCard",
+      "richText": null,
+      "scroll": null,
+      "text": null,
+      "textSelection": null,
+      "treeCursor": false,
+      "type": "Grid",
+      "width": 1089,
+      "x": 253,
+      "y": 162
+    },
+    "edge": {
+      "bottom": 0,
+      "brush": "#4D90F0",
+      "left": 1,
+      "right": 0,
+      "top": 0
+    },
+    "frame": {
+      "bottom": 1,
+      "brush": "#DDDDDD",
+      "left": 1,
+      "right": 1,
+      "top": 1
+    }
+  },
+  {
+    "density": "Compact",
+    "headlineHeight": 27,
+    "card": {
+      "articleId": null,
+      "automationName": null,
+      "border": null,
+      "checked": null,
+      "focused": false,
+      "fontSize": null,
+      "foreground": null,
+      "headlineRuns": null,
+      "height": 208,
+      "hit": true,
+      "links": null,
+      "name": "ArticleCard",
+      "richText": null,
+      "scroll": null,
+      "text": null,
+      "textSelection": null,
+      "treeCursor": false,
+      "type": "Grid",
+      "width": 1112,
+      "x": 241,
+      "y": 143
+    },
+    "edge": {
+      "bottom": 0,
+      "brush": "#4D90F0",
+      "left": 1,
+      "right": 0,
+      "top": 0
+    },
+    "frame": {
+      "bottom": 1,
+      "brush": "#DDDDDD",
+      "left": 1,
+      "right": 1,
+      "top": 1
+    }
+  }
+]

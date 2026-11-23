@@ -1,0 +1,419 @@
+{
+  "application_revision": "bcc36dc2b623f4eb1da20a7c56b0a2fb8f2e038d",
+  "build_id": "bd938668d9e27169",
+  "workflow_run": 45129206147,
+  "workflow_url": "https://github.com/FerroUI/Reader/actions/runs/45129206147",
+  "build_job": 137540548380,
+  "deploy_job": 137543256248,
+  "build_result": "success",
+  "deploy_result": "success",
+  "verification_date": "2026-11-23",
+  "test_counts": {
+    "rust": 113,
+    "javascript": 54,
+    "rendered_browser": 46
+  },
+  "scenario_time_sum_ms": 86600,
+  "offline_manifest_resources": 37,
+  "offline_saved_article_records": 10000,
+  "rendered_results": "../parity-verification-results.json",
+  "artifact": {
+    "id": 14796793070,
+    "name": "reader-ui-verification",
+    "url": "https://github.com/FerroUI/Reader/actions/runs/45129206147/artifacts/14796793070",
+    "size_bytes": 4016268,
+    "sha256": "85fdf2b403b84b7888b02b9ac954c6088308dbb6486e390f27ea2a3f91e74b41"
+  },
+  "native_check": {
+    "scope": "Integrated local reader-ui compilation",
+    "result": "success",
+    "duration_seconds": 5.96
+  },
+  "phone_expansion": [
+    {
+      "artifact_entry": "16-list-phone-320.json",
+      "viewport": {
+        "width": 320,
+        "height": 844
+      },
+      "article_containers": 5,
+      "native_visuals": 354,
+      "article_scroll": {
+        "extentHeight": 839,
+        "offsetY": 0,
+        "viewportHeight": 571
+      },
+      "realized_headlines": [
+        {
+          "articleId": 7,
+          "y": 151,
+          "height": 44
+        },
+        {
+          "articleId": 8,
+          "y": 629,
+          "height": 44
+        },
+        {
+          "articleId": 9,
+          "y": 674,
+          "height": 44
+        },
+        {
+          "articleId": 10,
+          "y": 719,
+          "height": 44
+        }
+      ]
+    },
+    {
+      "artifact_entry": "16-list-phone-390.json",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "article_containers": 5,
+      "native_visuals": 355,
+      "article_scroll": {
+        "extentHeight": 838,
+        "offsetY": 0,
+        "viewportHeight": 571
+      },
+      "realized_headlines": [
+        {
+          "articleId": 7,
+          "y": 151,
+          "height": 44
+        },
+        {
+          "articleId": 8,
+          "y": 629,
+          "height": 44
+        },
+        {
+          "articleId": 9,
+          "y": 674,
+          "height": 44
+        },
+        {
+          "articleId": 10,
+          "y": 719,
+          "height": 44
+        }
+      ]
+    }
+  ],
+  "scrolling_snapshots": [
+    {
+      "artifact_entry": "15-mixed-height-stream.json",
+      "viewport": {
+        "width": 1363,
+        "height": 936
+      },
+      "article_containers": 2,
+      "native_visuals": 626,
+      "article_scroll": {
+        "extentHeight": 1020255,
+        "offsetY": 855283,
+        "viewportHeight": 766
+      }
+    },
+    {
+      "artifact_entry": "15-image-scroll-anchor.json",
+      "viewport": {
+        "width": 1363,
+        "height": 936
+      },
+      "article_containers": 1,
+      "native_visuals": 524,
+      "article_scroll": {
+        "extentHeight": 1026233,
+        "offsetY": 942914,
+        "viewportHeight": 766
+      }
+    },
+    {
+      "artifact_entry": "15-phone-long-article.json",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "article_containers": 1,
+      "native_visuals": 298,
+      "article_scroll": {
+        "extentHeight": 1615139,
+        "offsetY": 809844.9991737745,
+        "viewportHeight": 571
+      }
+    },
+    {
+      "artifact_entry": "09-virtualized.json",
+      "viewport": {
+        "width": 1363,
+        "height": 936
+      },
+      "article_containers": 56,
+      "native_visuals": 1919,
+      "article_scroll": {
+        "extentHeight": 280000,
+        "offsetY": 3795.9999999999973,
+        "viewportHeight": 766
+      }
+    }
+  ],
+  "scrolling_limits": {
+    "virtualization_unit": "article",
+    "mixed_height_records": 1200,
+    "list_records": 10000,
+    "half_viewport_overscan": true,
+    "all_unmeasured_heights_are_estimates": true,
+    "snapshot_counts_are_not_peak_memory": true
+  },
+  "send_to": {
+    "placeholders": [
+      "url",
+      "title",
+      "source"
+    ],
+    "native_popup_exact_url_verified": true,
+    "positive_navigation_fulfilled_locally_before_network": true,
+    "third_party_service_availability_established": false,
+    "pointer_and_keyboard_left_alignment_tolerance_px": 1,
+    "phone_target_minimum_px": 44
+  },
+  "article_layout": {
+    "density_headline_heights_px": [
+      37,
+      31,
+      27
+    ],
+    "density_right_insets_px": [
+      33,
+      21,
+      10
+    ],
+    "desktop_list_action_height_px": 17,
+    "desktop_list_footer_height_px": 30,
+    "footer_height_is_native_font_metric_approximation": true,
+    "native_selection_and_paragraph_identity_retained": true
+  },
+  "evidence_source_mapping": {
+    "evidence/16-article-layout-evidence.json": {
+      "artifact_entry": "16-article-layout-evidence.json",
+      "sha256": "c843203a18a930131f799bc5b278629d85ce990dccdfd3f20190856f227036bc",
+      "bytes": 2409
+    },
+    "evidence/16-article-palette-evidence.json": {
+      "artifact_entry": "16-article-palette-evidence.json",
+      "sha256": "c19fcc88a75826a50086f97a2135652d283c93738834da8749185a5f34fb3ef7",
+      "bytes": 12931
+    },
+    "evidence/16-article-palette.json": {
+      "artifact_entry": "16-article-palette.json",
+      "sha256": "5e4ebfc05287202e728a70a96be5967e71b833bc559d1b211e5c432cf59fca5a",
+      "bytes": 113485
+    },
+    "screenshots/16-article-palette.png": {
+      "artifact_entry": "16-article-palette.png",
+      "sha256": "a4f064c8006a6fe278164916172d6ef5042dfa49b089c5e25f14dadfce676ac8",
+      "bytes": 67200
+    },
+    "evidence/16-density-comfortable.json": {
+      "artifact_entry": "16-density-comfortable.json",
+      "sha256": "08569196b2b39d5b1760e5b890e06a5403c89717567fd469a7727547519feeef",
+      "bytes": 158099
+    },
+    "screenshots/16-density-comfortable.png": {
+      "artifact_entry": "16-density-comfortable.png",
+      "sha256": "1e01a3cd4d6e4d36fb3c7fe95b468717c1f81e017a876f8b017d39fec7ee9efc",
+      "bytes": 137416
+    },
+    "evidence/16-density-compact.json": {
+      "artifact_entry": "16-density-compact.json",
+      "sha256": "1a27121059fa28a9056e1e8adcdac91e03fb89458251c503952ad19b6a7efe68",
+      "bytes": 175234
+    },
+    "screenshots/16-density-compact.png": {
+      "artifact_entry": "16-density-compact.png",
+      "sha256": "3235433ca1725156e3d3b3e4ac4f61fee8654f8ea12a93542359c94f4720f9ba",
+      "bytes": 150594
+    },
+    "evidence/16-density-cozy.json": {
+      "artifact_entry": "16-density-cozy.json",
+      "sha256": "9893ef4ac3e88873ba55814e3112e7a432c9fe699025bd044030a0e3e84d8352",
+      "bytes": 162174
+    },
+    "screenshots/16-density-cozy.png": {
+      "artifact_entry": "16-density-cozy.png",
+      "sha256": "639cdb4f47b23bc43c777a43cfd986cf10b146c99c890e49b4e73f2655b8fa49",
+      "bytes": 143059
+    },
+    "evidence/16-list-expanded-headline.json": {
+      "artifact_entry": "16-list-expanded-headline.json",
+      "sha256": "e5f48378b7295ffc1029476a835978f833d06fc34195725cc0d8e8d833b4dc63",
+      "bytes": 186992
+    },
+    "screenshots/16-list-expanded-headline.png": {
+      "artifact_entry": "16-list-expanded-headline.png",
+      "sha256": "9e6ea19198545d106c1c94fa7512926807666c3b3ea1e70bfb66493255483f11",
+      "bytes": 126650
+    },
+    "evidence/16-list-phone-320.json": {
+      "artifact_entry": "16-list-phone-320.json",
+      "sha256": "fcd39395ab9c7740618419682f7e15fe08ccc79dae5b0a52c7ad8ae0040d09a7",
+      "bytes": 99942
+    },
+    "screenshots/16-list-phone-320.png": {
+      "artifact_entry": "16-list-phone-320.png",
+      "sha256": "d415ab499dc9099c089b378c278d57b5b768d6e1ee43eea3a764c4e378e79c69",
+      "bytes": 42041
+    },
+    "evidence/16-list-phone-390.json": {
+      "artifact_entry": "16-list-phone-390.json",
+      "sha256": "1dbee31a40cf35a0cd26d63a3576e0f3f3cb6fe7b0e07bae4d44777ff4665914",
+      "bytes": 100457
+    },
+    "screenshots/16-list-phone-390.png": {
+      "artifact_entry": "16-list-phone-390.png",
+      "sha256": "94526a8e8f6b3844a71eaafd2027fa32aad8c80e50a75a1a6f322421710cad2c",
+      "bytes": 43811
+    },
+    "evidence/16-space-expanded.json": {
+      "artifact_entry": "16-space-expanded.json",
+      "sha256": "ced7baced1419cd2ef958adf0f4e364570974d6b73ef1b3aaae1ad3b5c9a1213",
+      "bytes": 82552
+    },
+    "screenshots/16-space-expanded.png": {
+      "artifact_entry": "16-space-expanded.png",
+      "sha256": "0d43153ef99045a359c795a0f271dc4c0bd4f6346f8194ac2a50cede58bce240",
+      "bytes": 46895
+    },
+    "evidence/16-space-list.json": {
+      "artifact_entry": "16-space-list.json",
+      "sha256": "b5958b54d98440c680884b67308cac6c42af2d348a80e3f8b195e98b3e901695",
+      "bytes": 82552
+    },
+    "screenshots/16-space-list.png": {
+      "artifact_entry": "16-space-list.png",
+      "sha256": "0d43153ef99045a359c795a0f271dc4c0bd4f6346f8194ac2a50cede58bce240",
+      "bytes": 46895
+    },
+    "evidence/17-reader-read-state.json": {
+      "artifact_entry": "17-reader-read-state.json",
+      "sha256": "08c6746bcec2c6df9095b339a0c2181df6ad4e712b1a626d9f2c437bcb0f1100",
+      "bytes": 60245
+    },
+    "screenshots/17-reader-read-state.png": {
+      "artifact_entry": "17-reader-read-state.png",
+      "sha256": "3331f89e6dc57e5f9e87ec6ec099b9301c18f83cf71c5da931a51b333617c68f",
+      "bytes": 30774
+    },
+    "evidence/17-send-to-activation.json": {
+      "artifact_entry": "17-send-to-activation.json",
+      "sha256": "e0c6ef24253ec943f0d18da926dd88204f9cc189cf2efd34f0d5faf708b05e1b",
+      "bytes": 315
+    },
+    "evidence/17-send-to-menu.json": {
+      "artifact_entry": "17-send-to-menu.json",
+      "sha256": "9ccc895b2692751ff45a85e05f3820a6efd45c60d630b8e24b6efc64087f4e35",
+      "bytes": 97694
+    },
+    "screenshots/17-send-to-menu.png": {
+      "artifact_entry": "17-send-to-menu.png",
+      "sha256": "8d21bb6b5d161eab7e6fdc3c99260ecc9b611c1157faac41a4de51c22e0355a8",
+      "bytes": 51877
+    },
+    "evidence/17-send-to-phone.json": {
+      "artifact_entry": "17-send-to-phone.json",
+      "sha256": "cbd57ded5c62db7bbfd695975b0ebb2d245c5cfb2f106ef6c5eae40df70b5181",
+      "bytes": 61269
+    },
+    "screenshots/17-send-to-phone.png": {
+      "artifact_entry": "17-send-to-phone.png",
+      "sha256": "b8f8e5645f0d0c580740f0c5c625bab446eed51bd7d73d9bd846966acbeb5b7d",
+      "bytes": 32209
+    },
+    "evidence/17-send-to-settings.json": {
+      "artifact_entry": "17-send-to-settings.json",
+      "sha256": "93107a6c3328bcceff1f94fddd5388b1807ac7371c2485e612c04476a107b48c",
+      "bytes": 81149
+    },
+    "screenshots/17-send-to-settings.png": {
+      "artifact_entry": "17-send-to-settings.png",
+      "sha256": "5c9444310c50486394c150f7c5edd6f4cd82a997e67102be1f4c399333785985",
+      "bytes": 53635
+    },
+    "evidence/parity-15-mixed-height-stream.json": {
+      "artifact_entry": "15-mixed-height-stream.json",
+      "sha256": "b2fb5417dfdde47654617cb727daf9217594707a237348d92b4abe4ef1974831",
+      "bytes": 138842
+    },
+    "screenshots/parity-15-mixed-height-stream.png": {
+      "artifact_entry": "15-mixed-height-stream.png",
+      "sha256": "7422d35c1bd323ee4618185362886ddf50bd08b6ed9aa09a52d057c69bc1087c",
+      "bytes": 185293
+    },
+    "evidence/parity-15-image-scroll-anchor.json": {
+      "artifact_entry": "15-image-scroll-anchor.json",
+      "sha256": "5f4e6ed1c791fbf3727d5ccc87b2617f9d3c41c35b3ebbba2942ad1cbb3c2e3c",
+      "bytes": 106601
+    },
+    "screenshots/parity-15-image-scroll-anchor.png": {
+      "artifact_entry": "15-image-scroll-anchor.png",
+      "sha256": "4dfbe25a80de1f85184cb0ed5d95baee81df4e21166e4dc17790e5890b24f330",
+      "bytes": 199308
+    },
+    "evidence/parity-15-phone-long-article.json": {
+      "artifact_entry": "15-phone-long-article.json",
+      "sha256": "04332b2fa8ed31ae685ee7935a66fb7e97ae9500290729a5d0a024b5b3bb24af",
+      "bytes": 56162
+    },
+    "screenshots/parity-15-phone-long-article.png": {
+      "artifact_entry": "15-phone-long-article.png",
+      "sha256": "b0e7a60ad00f183d5b0a7788c024842efc2703f5f1321d43b0bd5ebd39a29541",
+      "bytes": 70395
+    },
+    "evidence/parity-09-virtualized.json": {
+      "artifact_entry": "09-virtualized.json",
+      "sha256": "6bdd408a01c7e497ba41f16c6074916cce725f42dfa3a9983b42d1ebe4537203",
+      "bytes": 373775
+    },
+    "evidence/parity-10-offline.json": {
+      "artifact_entry": "10-offline.json",
+      "sha256": "a130646bff9441f7b95f6137f27d66fa509d5d9a73c4ece40c61056b264d5082",
+      "bytes": 80389
+    },
+    "parity-verification-results.json": {
+      "artifact_entry": "results.json",
+      "sha256": "fae9117f2d791acbab7d70fa65274ade3d41169fa500f90ef96e5a55543913b5",
+      "bytes": 5622
+    }
+  },
+  "full_historical_parity_established": false,
+  "physical_ios_verified": false,
+  "non_latin_glyph_coverage_complete": false,
+  "published_integrity": {
+    "origin": "https://ferroui.com/Reader/",
+    "build_id": "bd938668d9e27169",
+    "resources_verified": 37,
+    "all_sizes_and_sha256_match": true,
+    "report": "parity-published-integrity.json",
+    "report_sha256": "d6c872828435187faa6783ee79ab9dbf0fb064d65ffff61c0c7b4d1a924f3e72",
+    "request_query": "__reader_build=bd938668d9e27169",
+    "index_http_status": 200,
+    "index_build_id": "bd938668d9e27169",
+    "index_last_modified": "Mon, 23 Nov 2026 07:18:07 GMT",
+    "index_etag": "\"6b03e8af-4de\""
+  },
+  "live_browser_observations": {
+    "url": "https://ferroui.com/Reader/#feed/1",
+    "observed_build_id": "f3ffc9bb9161ea03",
+    "new_release_activation_observed": false,
+    "saved_subscriptions": 6,
+    "saved_unread_articles": 146,
+    "saved_hacker_news_unread_articles": 9,
+    "storage_cleared": false,
+    "forced_worker_activation": false,
+    "result": "The existing cloud-browser session continued to load the previous offline build after normal reload and closing/reopening Reader tabs. Saved subscriptions and read state remained intact. The cause was not established; the final release UI is verified by the isolated rendered CI run, not by this stale live session."
+  }
+}

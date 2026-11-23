@@ -1,0 +1,5 @@
+{
+  "expected": "https://notebook.invalid/save?url=https%3A%2F%2Fnews.invalid%2Farticle%3Fq%3D1%26next%3Dtwo%23section&title=Rust%20%26%20%E6%97%A5%E6%9C%AC%E8%AA%9E%20%2F%20%24%7Bsource%7D&source=Renamed%20%26%20Unicode%20source",
+  "source": "Renamed & Unicode source",
+  "title": "Rust & 日本語 / ${source}"
+}

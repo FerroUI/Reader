@@ -1,6 +1,46 @@
 # Verification record
 
-## Current article-reading and scrolling release — 22 November 2026
+## Desktop parity refinement — 23 November 2026
+
+This revision refines final-era Reader article layout, read-state presentation, keyboard navigation and configured Send to destinations. It also corrects a phone realization gap found by inspecting screenshots after the initial assertions passed. The historical contracts and remaining differences are documented in [reference.md](reference.md) and [parity.md](parity.md).
+
+**Final verification status: all checks and Pages deployment succeeded.** The final screenshots and control trees below were copied from this revision's verified artifact.
+
+| Evidence | Final result |
+|---|---|
+| Application revision | [`bcc36dc2b623f4eb1da20a7c56b0a2fb8f2e038d`](https://github.com/FerroUI/Reader/commit/bcc36dc2b623f4eb1da20a7c56b0a2fb8f2e038d) |
+| Workflow | [45129206147](https://github.com/FerroUI/Reader/actions/runs/45129206147); build job **137540548380 — succeeded**, Pages job **137543256248 — succeeded** |
+| Build identifier | **bd938668d9e27169** |
+| Automated checks | **113 Rust**, **54 JavaScript**, **46 rendered scenarios**; **[exact scenario results](parity-verification-results.json)** |
+| Local native compile | Passed in **5.96s**; this is separate from browser execution and deployment |
+| Recorded durations | Browser compilation **3m 55s**, extraction compilation **10.73s**; summed rendered scenario durations **86,600ms** |
+| Preserved artifact | **[artifact 14796793070](https://github.com/FerroUI/Reader/actions/runs/45129206147/artifacts/14796793070), verified SHA-256 `85fdf2b403b84b7888b02b9ac954c6088308dbb6486e390f27ea2a3f91e74b41`**; release metadata **[parity-release.json](evidence/parity-release.json)** |
+
+The 113 Rust checks include the two new viewport-range regressions. The rendered gate remains opt-in through the existing commit marker; the ordinary workflow was not expanded with an always-on browser suite. Scenario durations include harness work and are not device-independent performance measurements.
+
+### Implementation and controlled evidence
+
+1. **List layout and densities.** Expansion retains the compact headline and appends the full title, body and footer without card margins. Title/snippet share a shaped line, with independent star and original-link controls. Assertions cover headline typography, collapse through title/date, density heights 37/31/27px, right insets 33/21/10px and a blue current-card left edge with gray remaining borders. Desktop list actions use a 17px native line including focus borders, producing a 30px footer; this is a native font-metric approximation. Evidence: [expanded headline](screenshots/16-list-expanded-headline.png), the three `16-density-*` screenshots, and [layout measurements](evidence/16-article-layout-evidence.json).
+
+2. **Native palette, selection and tables.** Unread/current article text is black with blue hyperlinks; inactive read text uses `#222222`, links `#444444`, and source metadata `#666666`. Appearance updates existing native hyperlinks rather than rebuilding their document. A real drag selection followed by read/current transitions must retain control, paragraph and link identities plus exact selection/caret/text. Table headers retain body font size and bold styling. Evidence: [palette screenshot](screenshots/16-article-palette.png) and [native identity/selection records](evidence/16-article-palette-evidence.json).
+
+3. **Space navigation.** Space/Shift+Space page within tall articles by viewport height minus 50px until the relevant edge is visible, then open a neighbor. Forward completion can open the next unread tree occurrence without wrapping. Scenarios cover both reading modes, no-current-item behavior, non-stream paging and native input exclusions. Evidence: [expanded Space navigation](screenshots/16-space-expanded.png), [list Space navigation](screenshots/16-space-list.png) and [exact scenario results](parity-verification-results.json).
+
+4. **Send to and read-state controls.** Saved HTTPS destinations support `${url}`, `${title}` and `${source}`, with subscription display names and per-value URL encoding. Scenarios cover validation, editing/canceling, disabling, reload, exact controlled navigation, pointer/keyboard menu anchors, touch containment and Back dismissal. Automatic Keep unread checks the explicit lock; manual Mark as read checks the read flag. Evidence: [Send to settings](screenshots/17-send-to-settings.png), [desktop menu](screenshots/17-send-to-menu.png), [phone menu](screenshots/17-send-to-phone.png), [activation values](evidence/17-send-to-activation.json) and [read-state controls](screenshots/17-reader-read-state.png). These fixtures do not establish third-party service availability.
+
+5. **Phone viewport coverage.** Earlier 320/390px captures left approximately 94px empty below an expanded article despite more headlines fitting. Realization now uses the native ScrollViewer's finite viewport/offset; bounded overscan never clips visible coverage to an outdated estimated extent. The phone scenario now requires the following two headlines at consecutive positions inside the viewport, preserving touch targets and collapse behavior. Evidence: [320px screenshot](screenshots/16-list-phone-320.png) / [tree](evidence/16-list-phone-320.json) and [390px screenshot](screenshots/16-list-phone-390.png) / [tree](evidence/16-list-phone-390.json).
+
+6. **Preserved large-stream and offline behavior.** The suite retains heterogeneous 1,200-item scrolling, distant seeks, delayed-image anchoring, phone reflow and 10,000-item bounded-realization checks. Final snapshot counts are **56 article containers / 1,919 native visuals for 10,000 list items; 2 / 626 in the distant mixed-height capture**, not peak-memory measurements. New-document offline reload must retain **`bd938668d9e27169`**, **10,000 articles** and **37 verified resources**. This run's [10,000-item snapshot](evidence/parity-09-virtualized.json), [mixed-height screenshot](screenshots/parity-15-mixed-height-stream.png) and other `15-*` captures are preserved with a `parity-` prefix, leaving earlier release files intact.
+
+### Published application and limits
+
+The public [Reader application](https://ferroui.com/Reader/#home), index document and service worker publish build **`bd938668d9e27169`**. All **37** manifest resources were fetched independently from the published origin using the worker's build-qualified query; every decoded size and SHA-256 matched. The [integrity report](evidence/parity-published-integrity.json) records each result. The unqualified index also returned HTTP 200 with the new build identifier and a `Last-Modified` value of `Mon, 23 Nov 2026 07:18:07 GMT`.
+
+The existing cloud-browser session continued to open the previous offline build **`f3ffc9bb9161ea03`**, including after normal reload and closing/reopening Reader tabs. Its six saved subscriptions, 146 unread items and Hacker News read state remained intact. Storage was not cleared and service-worker activation was not forced. The cause of the stale session was not established. Consequently, the final UI screenshots and interaction results above come from the isolated rendered CI run; this independent live session does **not** establish activation of the new release. The deployed file integrity check and the live browser observation are separate evidence.
+
+Japanese fixture text exposed missing CJK glyphs in the bundled font despite correct UTF-8 destination values. Font coverage remains separate from encoding correctness. Article virtualization does not virtualize every body block; images may need a connection after reload. The narrow interface adapts the desktop design rather than reproducing Google's separate mobile applications. Retired backend services, complete historical settings and 100% visual/functional parity remain unverified or unavailable as detailed in the parity contract.
+
+## Previous article-reading and scrolling release — 22 November 2026
 
 Publisher articles now open inside the native reading pane through **Read full article**, with selectable text, inline links, structured tables, horizontally scrolling code and responsive images. The feed body remains available, and successful downloads are saved with the library. The stream now reuses FerroUI's TreeDataGrid presenter for variable-height article realization. See [article-reading.md](article-reading.md) for behavior, architecture and connection limits.
 

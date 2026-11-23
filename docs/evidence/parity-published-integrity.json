@@ -1,0 +1,341 @@
+{
+  "build_id": "bd938668d9e27169",
+  "resources": 37,
+  "all_verified": true,
+  "duration_seconds": 62.87,
+  "results": [
+    {
+      "path": "./app.css",
+      "status": 200,
+      "expected_size": 1601,
+      "actual_size": 1601,
+      "expected_sha256": "80bc36c39001243e87b034a23efaf5b8fecc83d1a6f844851ebae82f564f9744",
+      "actual_sha256": "80bc36c39001243e87b034a23efaf5b8fecc83d1a6f844851ebae82f564f9744",
+      "verified": true
+    },
+    {
+      "path": "./article-download.js",
+      "status": 200,
+      "expected_size": 6283,
+      "actual_size": 6283,
+      "expected_sha256": "792f0cf29fb3c307efcab5d3ca87b1c04f3cae69cc6bdce469eaa060ea95abd5",
+      "actual_sha256": "792f0cf29fb3c307efcab5d3ca87b1c04f3cae69cc6bdce469eaa060ea95abd5",
+      "verified": true
+    },
+    {
+      "path": "./article-worker.js",
+      "status": 200,
+      "expected_size": 735,
+      "actual_size": 735,
+      "expected_sha256": "42804e7209582336f24e44cb28a83da8fe96728f748e2d80fdfa2233d9e4ecf0",
+      "actual_sha256": "42804e7209582336f24e44cb28a83da8fe96728f748e2d80fdfa2233d9e4ecf0",
+      "verified": true
+    },
+    {
+      "path": "./articles.js",
+      "status": 200,
+      "expected_size": 3194,
+      "actual_size": 3194,
+      "expected_sha256": "cd956865b59357770f5e70d4f680027755bf6ec8e5844194a03dbb2a2ef24e14",
+      "actual_sha256": "cd956865b59357770f5e70d4f680027755bf6ec8e5844194a03dbb2a2ef24e14",
+      "verified": true
+    },
+    {
+      "path": "./extractor/reader_extract.js",
+      "status": 200,
+      "expected_size": 7385,
+      "actual_size": 7385,
+      "expected_sha256": "aa85a7065f47e7b7ba74d26a9d877d37a73e16b7270b3be45facf45c455c9491",
+      "actual_sha256": "aa85a7065f47e7b7ba74d26a9d877d37a73e16b7270b3be45facf45c455c9491",
+      "verified": true
+    },
+    {
+      "path": "./extractor/reader_extract_bg.wasm",
+      "status": 200,
+      "expected_size": 1687650,
+      "actual_size": 1687650,
+      "expected_sha256": "1ef05d80ebbfcc5611306f8f5c7160dee07f73636fcab2f51f6e70c65630b8bb",
+      "actual_sha256": "1ef05d80ebbfcc5611306f8f5c7160dee07f73636fcab2f51f6e70c65630b8bb",
+      "verified": true
+    },
+    {
+      "path": "./feed-connection.js",
+      "status": 200,
+      "expected_size": 2804,
+      "actual_size": 2804,
+      "expected_sha256": "74f09a33aa3a05fcba4152ac46fdad1716ec515e6e9b7626ff1017b5b203f684",
+      "actual_sha256": "74f09a33aa3a05fcba4152ac46fdad1716ec515e6e9b7626ff1017b5b203f684",
+      "verified": true
+    },
+    {
+      "path": "./feed-discovery.js",
+      "status": 200,
+      "expected_size": 1640,
+      "actual_size": 1640,
+      "expected_sha256": "223398ce9ab77121fb2e10b077eeb41f363d6129f794738f843f0d8efe668be7",
+      "actual_sha256": "223398ce9ab77121fb2e10b077eeb41f363d6129f794738f843f0d8efe668be7",
+      "verified": true
+    },
+    {
+      "path": "./feed-download.js",
+      "status": 200,
+      "expected_size": 2629,
+      "actual_size": 2629,
+      "expected_sha256": "afd7bedc98f90cb2b9d42244e1109405b12a2b5bdd51a9d631d3cd8c236f01ad",
+      "actual_sha256": "afd7bedc98f90cb2b9d42244e1109405b12a2b5bdd51a9d631d3cd8c236f01ad",
+      "verified": true
+    },
+    {
+      "path": "./feed-errors.js",
+      "status": 200,
+      "expected_size": 1664,
+      "actual_size": 1664,
+      "expected_sha256": "a6448af0f183eda3261b61a6efa58e804f6a26f3db5436ad48cb3139a04da47d",
+      "actual_sha256": "a6448af0f183eda3261b61a6efa58e804f6a26f3db5436ad48cb3139a04da47d",
+      "verified": true
+    },
+    {
+      "path": "./feed-public.js",
+      "status": 200,
+      "expected_size": 4976,
+      "actual_size": 4976,
+      "expected_sha256": "dc993f815ee64351ea565c0a76ae3b273a2da74161e35ba934fd428701aae906",
+      "actual_sha256": "dc993f815ee64351ea565c0a76ae3b273a2da74161e35ba934fd428701aae906",
+      "verified": true
+    },
+    {
+      "path": "./feeds.js",
+      "status": 200,
+      "expected_size": 4668,
+      "actual_size": 4668,
+      "expected_sha256": "f629f56675f71d45ed1d35054a235ed1dd9ab475ee98f00b1a640facc0e6aea3",
+      "actual_sha256": "f629f56675f71d45ed1d35054a235ed1dd9ab475ee98f00b1a640facc0e6aea3",
+      "verified": true
+    },
+    {
+      "path": "./ferroui-loader.js",
+      "status": 200,
+      "expected_size": 16165,
+      "actual_size": 16165,
+      "expected_sha256": "817aa151802ca2aa17c25861fac1271538edeaac4161b198e461d2e306fe5db6",
+      "actual_sha256": "817aa151802ca2aa17c25861fac1271538edeaac4161b198e461d2e306fe5db6",
+      "verified": true
+    },
+    {
+      "path": "./ferroui-sw.js",
+      "status": 200,
+      "expected_size": 1528,
+      "actual_size": 1528,
+      "expected_sha256": "339767474c06dc15f8230f690701a6b5e915cbeea68ff1dce53a830e71d8bbbb",
+      "actual_sha256": "339767474c06dc15f8230f690701a6b5e915cbeea68ff1dce53a830e71d8bbbb",
+      "verified": true
+    },
+    {
+      "path": "./ferroui.js",
+      "status": 200,
+      "expected_size": 63171,
+      "actual_size": 63171,
+      "expected_sha256": "78c0510f61dc1086059de6f687f87d58bbef571b8f2c403d50a3948c9ff286f5",
+      "actual_sha256": "78c0510f61dc1086059de6f687f87d58bbef571b8f2c403d50a3948c9ff286f5",
+      "verified": true
+    },
+    {
+      "path": "./fonts/LiberationMono-Regular.ttf",
+      "status": 200,
+      "expected_size": 319624,
+      "actual_size": 319624,
+      "expected_sha256": "5883330d94debd992952cd8f0571b225f478c2d797d3f36c7521b0a5c9bde0f2",
+      "actual_sha256": "5883330d94debd992952cd8f0571b225f478c2d797d3f36c7521b0a5c9bde0f2",
+      "verified": true
+    },
+    {
+      "path": "./fonts/LiberationSans-Bold.ttf",
+      "status": 200,
+      "expected_size": 414568,
+      "actual_size": 414568,
+      "expected_sha256": "1b5f2da6f4cadce4c05b9ecebe3a6fcd374eb95ae443605e799f4c3287978939",
+      "actual_sha256": "1b5f2da6f4cadce4c05b9ecebe3a6fcd374eb95ae443605e799f4c3287978939",
+      "verified": true
+    },
+    {
+      "path": "./fonts/LiberationSans-BoldItalic.ttf",
+      "status": 200,
+      "expected_size": 409108,
+      "actual_size": 409108,
+      "expected_sha256": "352e9dc2be89f210dbd3c0fd5dfaf97135de70e0beb5f22378601861462493a7",
+      "actual_sha256": "352e9dc2be89f210dbd3c0fd5dfaf97135de70e0beb5f22378601861462493a7",
+      "verified": true
+    },
+    {
+      "path": "./fonts/LiberationSans-Italic.ttf",
+      "status": 200,
+      "expected_size": 415920,
+      "actual_size": 415920,
+      "expected_sha256": "93ff5260834141b6f9d8f2b846d427f3a5dc492dbdce8ebdad406e38a38f34bb",
+      "actual_sha256": "93ff5260834141b6f9d8f2b846d427f3a5dc492dbdce8ebdad406e38a38f34bb",
+      "verified": true
+    },
+    {
+      "path": "./fonts/LiberationSans-Regular.ttf",
+      "status": 200,
+      "expected_size": 410820,
+      "actual_size": 410820,
+      "expected_sha256": "bade59d822652f76e6941aa87b40a87c13d1cc70db98ededb5011127efafd1d3",
+      "actual_sha256": "bade59d822652f76e6941aa87b40a87c13d1cc70db98ededb5011127efafd1d3",
+      "verified": true
+    },
+    {
+      "path": "./fonts/LiberationSerif-Regular.ttf",
+      "status": 200,
+      "expected_size": 393692,
+      "actual_size": 393692,
+      "expected_sha256": "9caef765d2e891c10dd73658894f01e660fe0c1c83e0bda7d6edf561d8f623d4",
+      "actual_sha256": "9caef765d2e891c10dd73658894f01e660fe0c1c83e0bda7d6edf561d8f623d4",
+      "verified": true
+    },
+    {
+      "path": "./fonts/OFL.txt",
+      "status": 200,
+      "expected_size": 5756,
+      "actual_size": 5756,
+      "expected_sha256": "f32df582a2aab128c07b2f7e36e7b928dc5f6bd82657b905c04f91459f9e5cf9",
+      "actual_sha256": "f32df582a2aab128c07b2f7e36e7b928dc5f6bd82657b905c04f91459f9e5cf9",
+      "verified": true
+    },
+    {
+      "path": "./host.js",
+      "status": 200,
+      "expected_size": 5017,
+      "actual_size": 5017,
+      "expected_sha256": "102f052f54c1c580d4e921876e6537b9d4e445f776ec395d53c24370bdf4643f",
+      "actual_sha256": "102f052f54c1c580d4e921876e6537b9d4e445f776ec395d53c24370bdf4643f",
+      "verified": true
+    },
+    {
+      "path": "./icon.svg",
+      "status": 200,
+      "expected_size": 277,
+      "actual_size": 277,
+      "expected_sha256": "8c505486448b3104851d2ecf55d9387d934367b0ea6f241ddd7d9b8a0bff6bfe",
+      "actual_sha256": "8c505486448b3104851d2ecf55d9387d934367b0ea6f241ddd7d9b8a0bff6bfe",
+      "verified": true
+    },
+    {
+      "path": "./index.html",
+      "status": 200,
+      "expected_size": 1246,
+      "actual_size": 1246,
+      "expected_sha256": "70730a9a892120c90e99bbb19214e13429bdf54a8923e50c505d7d9859cacef3",
+      "actual_sha256": "70730a9a892120c90e99bbb19214e13429bdf54a8923e50c505d7d9859cacef3",
+      "verified": true
+    },
+    {
+      "path": "./input.js",
+      "status": 200,
+      "expected_size": 2341,
+      "actual_size": 2341,
+      "expected_sha256": "20cbf5b680d3b59e1680f4b2cdcac8ada981ad228d6ac8db153e930963d78e24",
+      "actual_sha256": "20cbf5b680d3b59e1680f4b2cdcac8ada981ad228d6ac8db153e930963d78e24",
+      "verified": true
+    },
+    {
+      "path": "./main.js",
+      "status": 200,
+      "expected_size": 2506,
+      "actual_size": 2506,
+      "expected_sha256": "510c95820b4886925b423cc338770d5064139526ddb36c556f74cfde0cd33cc0",
+      "actual_sha256": "510c95820b4886925b423cc338770d5064139526ddb36c556f74cfde0cd33cc0",
+      "verified": true
+    },
+    {
+      "path": "./manifest.webmanifest",
+      "status": 200,
+      "expected_size": 333,
+      "actual_size": 333,
+      "expected_sha256": "55b3a74d6d138abeebc40f3f94a12640ad6b4fdaf1592259cc7899e8159e14ee",
+      "actual_sha256": "55b3a74d6d138abeebc40f3f94a12640ad6b4fdaf1592259cc7899e8159e14ee",
+      "verified": true
+    },
+    {
+      "path": "./navigation.js",
+      "status": 200,
+      "expected_size": 3640,
+      "actual_size": 3640,
+      "expected_sha256": "d9567a163112d043e8af592a7ee96ea773ccd90d4e41bc04af757442078c1198",
+      "actual_sha256": "d9567a163112d043e8af592a7ee96ea773ccd90d4e41bc04af757442078c1198",
+      "verified": true
+    },
+    {
+      "path": "./qr-worker.LICENSE.txt",
+      "status": 200,
+      "expected_size": 11358,
+      "actual_size": 11358,
+      "expected_sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+      "actual_sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+      "verified": true
+    },
+    {
+      "path": "./qr-worker.js",
+      "status": 200,
+      "expected_size": 133157,
+      "actual_size": 133157,
+      "expected_sha256": "76872c4f5c209d3d7594c0ffe652f42afc3e1fe32b6c8c7b23c6380ce6f18ce6",
+      "actual_sha256": "76872c4f5c209d3d7594c0ffe652f42afc3e1fe32b6c8c7b23c6380ce6f18ce6",
+      "verified": true
+    },
+    {
+      "path": "./reader-browser.js",
+      "status": 200,
+      "expected_size": 196888,
+      "actual_size": 196888,
+      "expected_sha256": "99b40a2a04323354055946d7d9be3843b5d2471db116fbc01aa81ab8ca02498e",
+      "actual_sha256": "99b40a2a04323354055946d7d9be3843b5d2471db116fbc01aa81ab8ca02498e",
+      "verified": true
+    },
+    {
+      "path": "./reader-storage.js",
+      "status": 200,
+      "expected_size": 2872,
+      "actual_size": 2872,
+      "expected_sha256": "c90e4016079dc31996200f3d10bc5ea4613fe3a360b3c04386033d903beaa206",
+      "actual_sha256": "c90e4016079dc31996200f3d10bc5ea4613fe3a360b3c04386033d903beaa206",
+      "verified": true
+    },
+    {
+      "path": "./reader_browser.wasm",
+      "status": 200,
+      "expected_size": 19841324,
+      "actual_size": 19841324,
+      "expected_sha256": "bac57811e314445b7465d0cfad1ce297d9d5779dc3718d903eb75efc77bc4c5d",
+      "actual_sha256": "bac57811e314445b7465d0cfad1ce297d9d5779dc3718d903eb75efc77bc4c5d",
+      "verified": true
+    },
+    {
+      "path": "./storage.js",
+      "status": 200,
+      "expected_size": 27573,
+      "actual_size": 27573,
+      "expected_sha256": "a0c9d1ba7aef2a9e7cba10a79d61a99ba61db9faaa9290224ab07d39112d61fb",
+      "actual_sha256": "a0c9d1ba7aef2a9e7cba10a79d61a99ba61db9faaa9290224ab07d39112d61fb",
+      "verified": true
+    },
+    {
+      "path": "./transfers.js",
+      "status": 200,
+      "expected_size": 4853,
+      "actual_size": 4853,
+      "expected_sha256": "dea65e879136b66d105510e3bab96a55ee1c6a09938cfd4d38bb9c7866d452d2",
+      "actual_sha256": "dea65e879136b66d105510e3bab96a55ee1c6a09938cfd4d38bb9c7866d452d2",
+      "verified": true
+    },
+    {
+      "path": "./viewport.js",
+      "status": 200,
+      "expected_size": 2569,
+      "actual_size": 2569,
+      "expected_sha256": "48e6debd77405c4216f1da881879e2f74c34995cf7fa207cf700b4f10a41f143",
+      "actual_sha256": "48e6debd77405c4216f1da881879e2f74c34995cf7fa207cf700b4f10a41f143",
+      "verified": true
+    }
+  ]
+}
