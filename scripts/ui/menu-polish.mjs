@@ -142,7 +142,15 @@ export async function menuPolishChecks(h, check) {
       await h.page.mouseMove(opener.x + opener.width / 2, opener.y + opener.height / 2);
       await h.page.press("ArrowDown");
       assert(inside(opener, await getMenu(h)), "this constrained popup covers its stationary opener pointer");
-      await itemState(h, "List view", {selected: true, focused: true});
+      const initial = await itemState(h, "List view", {selected: true, focused: true});
+      await h.until(async () => {
+        const view = await h.snapshot(), menu = view.elements.find(element => element.name === "ReaderMenu");
+        const highlights = view.elements.filter(element => element.name === "StateLayer"
+          && element.background === "#EEEEEE" && inside(element, menu));
+        assert.equal(highlights.length, 1, "a resting mouse must not paint a second menu highlight");
+        assert(Math.abs(highlights[0].y - initial.y) <= 1, "only the keyboard-selected row is highlighted");
+        return true;
+      }, "the covered opener pointer leaves one keyboard highlight");
       await h.page.press("ArrowDown");
       await itemState(h, "Expanded view", {selected: true});
       await h.page.press("ArrowDown");

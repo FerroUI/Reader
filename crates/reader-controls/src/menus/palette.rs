@@ -34,6 +34,11 @@ pub(super) fn install(app: &Application) {
         );
     }
     app.styles().add(
+        style("ContextMenu.reader-keyboard-menu MenuItem.reader-menu:pointerover:not(MenuItem:selected) /template/ Border#StateLayer")
+            .set(Border::background_property(), "Transparent")
+            .build(),
+    );
+    app.styles().add(
         style("MenuItem.reader-menu:disabled")
             .set(TemplatedControl::foreground_property(), "#CCCCCC")
             .build(),
