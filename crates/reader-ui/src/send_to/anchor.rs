@@ -1,8 +1,7 @@
 //! A keyboard menu has its own tiny native anchor, so it need not expand an
 //! unread list item or scroll a long article to its footer to open Send to.
-use super::menu;
+use super::{menu, request_at};
 use crate::session::{Panel, Session};
-use ferroui_base::input::ContextRequestedEventArgs;
 use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
 use ferroui_base::{Point, Rect};
 use ferroui_controls::Control;
@@ -97,7 +96,12 @@ pub(crate) fn popup(vm: Rc<AppViewModel>, ui: Rc<Session>, id: Id) -> Element {
                 .is_some_and(|ui| ui.panel.get_untracked() == Panel::SendToMenu(id))
             {
                 if let Some(control) = event.source().and_then(|source| source.cast::<Control>()) {
-                    control.raise_event(&ContextRequestedEventArgs::new());
+                    // Loaded can precede the first arrange; use the dimensions
+                    // assigned to this anchor rather than its initial bounds.
+                    request_at(
+                        &control,
+                        Rect::new(0.0, 0.0, rect.width.max(1.0), rect.height.max(1.0)),
+                    );
                 }
             }
         })

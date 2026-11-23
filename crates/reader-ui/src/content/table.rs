@@ -1,8 +1,8 @@
 use ferroui_controls::primitives::ScrollBarVisibility;
 use ferroui_view::prelude::*;
-use reader_content::projection::{CellPlacement, Span, Table};
+use reader_content::projection::{Cell, CellPlacement, Span, Table};
 use reader_state::AppViewModel;
-use std::rc::Rc;
+use std::{borrow::Cow, rc::Rc};
 
 pub(super) fn view(
     vm: Rc<AppViewModel>,
@@ -27,9 +27,9 @@ pub(super) fn view(
     {
         let text = super::text::view(
             vm.clone(),
-            &cell.spans,
+            &cell_spans(cell),
             size,
-            if cell.heading { 6 } else { 0 },
+            0,
             false,
             subdued,
             format!("{key}-{row}-{column}"),
@@ -83,7 +83,7 @@ pub(super) fn view(
             bold: true,
             ..Default::default()
         }];
-        spans.extend_from_slice(&cell.spans);
+        spans.extend_from_slice(&cell_spans(cell));
         panel = panel.child(super::text::view(
             vm.clone(),
             &spans,
@@ -95,4 +95,21 @@ pub(super) fn view(
         ));
     }
     panel.into()
+}
+
+/// A table header inherits the body size; only its weight differs. Treating it
+/// as an HTML heading would enlarge the line box and shift the surrounding rows.
+fn cell_spans(cell: &Cell) -> Cow<'_, [Span]> {
+    if cell.heading {
+        cell.spans
+            .iter()
+            .map(|span| Span {
+                bold: true,
+                ..span.clone()
+            })
+            .collect::<Vec<_>>()
+            .into()
+    } else {
+        cell.spans.as_slice().into()
+    }
 }

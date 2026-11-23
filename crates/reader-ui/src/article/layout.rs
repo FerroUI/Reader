@@ -1,6 +1,18 @@
 use crate::rows::Row;
 use reader_domain::Density;
 
+pub(crate) fn action_height(row: &Row) -> f64 {
+    if row.touch {
+        44.0
+    } else if row.list_mode {
+        // A 13px normal text line plus the native button's two focus-border
+        // pixels. List actions retain inline density; cards use their own bar.
+        17.0
+    } else {
+        26.0
+    }
+}
+
 pub(crate) fn headline_height(row: &Row) -> f64 {
     if row.touch {
         44.0

@@ -130,8 +130,14 @@ export async function sendToChecks(h, check) {
       await dismiss(h);
       await h.resize(1363, 936);
       const articles = (await h.state()).articles;
+      const footerAnchor = await h.control(e => e.name === "ArticleSendTo", "footer Send to anchor");
       await h.clickName("ArticleSendTo");
       await menu(h, "Notebook 日本語");
+      const footerMenu = await h.control(e => e.name === "ArticleSendToMenu", "anchored footer Send to menu");
+      assert(Math.abs(footerMenu.x - footerAnchor.x) <= 1,
+        "desktop Send to must align its left edge with the footer action");
+      assert(Math.abs(footerMenu.y - (footerAnchor.y + footerAnchor.height)) <= 1,
+        "the desktop footer menu must open immediately below its action");
       await h.capture("17-send-to-menu");
       await dismiss(h);
       assert.deepEqual((await h.state()).articles, articles, "opening or dismissing Send to must not modify the article");
@@ -141,7 +147,12 @@ export async function sendToChecks(h, check) {
       await scanItem(h);
       await h.page.press("t", ["shift"]);
       await menu(h, "Notebook 日本語");
-      assert(!(await h.snapshot()).elements.some(e => e.name === "ArticleEntry"), "Shift+T preserves a collapsed scanned item");
+      const keyboardView = await h.snapshot();
+      const keyboardAnchor = keyboardView.elements.find(e => e.name === "SendToKeyboardAnchor");
+      const keyboardMenu = keyboardView.elements.find(e => e.name === "ArticleSendToMenu");
+      assert(keyboardAnchor && keyboardMenu && Math.abs(keyboardMenu.x - keyboardAnchor.x) <= 1,
+        "Shift+T preserves the native anchor's left edge");
+      assert(!keyboardView.elements.some(e => e.name === "ArticleEntry"), "Shift+T preserves a collapsed scanned item");
       await clickMenu(h, "Customize Send to");
       await h.clickLabel("Remove Notebook 日本語");
       await h.until(async () => !(await destinations(h)).length, "destination removed");

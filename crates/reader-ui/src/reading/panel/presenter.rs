@@ -89,6 +89,24 @@ impl TreeDataGridPresenterHooks for ArticlePanel {
     }
 
     fn get_measure_viewport(&self, viewport: Rect) -> Rect {
+        // TreeDataGrid intersects its cached effective viewport with the old
+        // panel bounds. After short content expands, that clipped rectangle
+        // need not change again. The owning ScrollViewer has the actual finite
+        // visible window; transient unarranged sizes retain the base fallback.
+        let viewport = self
+            .scroll_viewer()
+            .and_then(|scroll| {
+                let offset = scroll.offset();
+                let size = scroll.viewport();
+                (offset.x.is_finite()
+                    && offset.y.is_finite()
+                    && size.width.is_finite()
+                    && size.height.is_finite()
+                    && size.width > 0.0
+                    && size.height > 0.0)
+                    .then(|| Rect::new(offset.x, offset.y, size.width, size.height))
+            })
+            .unwrap_or(viewport);
         let viewport = if let Some(target) = self.requested.get() {
             let height = self
                 .scroll_viewer()
@@ -116,21 +134,14 @@ impl TreeDataGridPresenterHooks for ArticlePanel {
         };
         // TreeDataGrid-style overscan: half a viewport on each side, redistributed
         // at the ends. Rapid wheel/touch frames inside this range only translate.
-        if viewport.height <= 0.0 || !viewport.height.is_finite() {
+        let Some((start, end)) = crate::reading::viewport::realization_range(
+            viewport.top(),
+            viewport.height,
+            self.metrics.borrow().extents.total(),
+        ) else {
             return viewport;
-        }
-        let extent = self.metrics.borrow().extents.total();
-        let buffer = viewport.height * 0.5;
-        let mut start = (viewport.top() - buffer).max(0.0);
-        let mut end = (viewport.bottom() + buffer).min(extent);
-        let missing_before = buffer - (viewport.top() - start);
-        let missing_after = buffer - (end - viewport.bottom());
-        if missing_before > 0.0 {
-            end = (end + missing_before).min(extent);
-        } else if missing_after > 0.0 {
-            start = (start - missing_after).max(0.0);
-        }
-        Rect::new(viewport.x, start, viewport.width, (end - start).max(0.0))
+        };
+        Rect::new(viewport.x, start, viewport.width, end - start)
     }
 
     fn needs_measure_for_viewport_change(&self, measured: Rect, viewport: Rect) -> bool {

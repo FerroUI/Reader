@@ -76,7 +76,9 @@ export async function articleLayoutChecks(h, check) {
       const current = rowChild(view, "ArticleHeadlineText", retained);
       assert.equal(current.headlineRuns[0].weight, 400, "opened/read title returns to normal weight");
       const readState = view.elements.find(e => e.name === "ArticleReadState" && within(e, expanded));
-      assert.equal(readState?.height, 26, "the native footer checkbox has no Material 48px layout column");
+      assert.equal(readState?.height, 17, "list actions retain inline density without a Material 48px layout column");
+      const footer = view.elements.find(e => e.name === "ArticleActions" && within(e, expanded));
+      assert.equal(footer?.height, 30, "list footer contains one native text line, its focus border and 6px vertical padding");
       const outline = view.elements.find(e => e.name === "ReaderReadStateOutline" && within(e, readState));
       assert(outline && outline.width === 13 && outline.height === 13, "the compact native checkbox uses the original-sized outline");
       await h.capture("16-list-expanded-headline");
@@ -133,6 +135,22 @@ export async function articleLayoutChecks(h, check) {
           const next = await h.snapshot();
           return item(next, "ArticleEntry", id) && next;
         }, "phone headline opens on touch release");
+        view = await h.until(async () => {
+          const next = await h.snapshot(), list = item(next, "ArticleList");
+          const expanded = item(next, "ArticleEntry", id);
+          const bottom = expanded.y + expanded.height;
+          assert(list.y + list.height - bottom >= 90,
+            "the fixture leaves room for two following phone headlines");
+          let expectedTop = bottom + 1; // The expanded item's outer separator.
+          for (const following of data.articles.slice(1, 3)) {
+            const headline = item(next, "ArticleRow", following.id);
+            assert(headline && headline.hit && Math.abs(headline.y - expectedTop) <= 1
+              && headline.y + headline.height <= list.y + list.height + 1,
+            `following headline ${following.id} fills the visible space after expansion`);
+            expectedTop = headline.y + headline.height + 1;
+          }
+          return next;
+        }, `phone ${width}px expansion fills its remaining viewport`);
         row = item(view, "ArticleRow", id);
         assert(row && row.height >= 43, "expanded headline retains its touch-sized line and separator");
         const date = rowChild(view, "ArticleHeadlineDate", row);

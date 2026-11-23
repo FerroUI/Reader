@@ -19,21 +19,21 @@ pub(super) fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, row: &Row) -> El<Borde
     let note = ui.clone();
     let print = vm.clone();
     let touch = row.touch;
-    let height = if touch { 44.0 } else { 26.0 };
+    let height = super::action_height(row);
     let mut actions = wrap_panel()
         .orientation(Orientation::Horizontal)
         .child(
-            action_control(touch, if row.article.starred { "Remove star" } else { "Add star" }, move || star.toggle_star(id))
+            action_control(row, if row.article.starred { "Remove star" } else { "Add star" }, move || star.toggle_star(id))
                 .child(rsx! {StackPanel{orientation:Orientation::Horizontal,spacing:4.0,vertical_alignment:V::Center,
                     {icon(if row.article.starred{Icon::Starred}else{Icon::Star},12.0,if row.article.starred{"#E9BC36"}else{"#777777"})}
                     TextBlock{text:if row.article.starred{"Remove star"}else{"Add star"},font_size:13.0,foreground:"#444444",vertical_alignment:V::Center}
                 }}),
         )
         .child(read_state(vm.clone(), row))
-        .child(action(touch, "Email", move || email.email_article(id)))
+        .child(action(row, "Email", move || email.email_article(id)))
         .child(crate::send_to::button(vm.clone(), ui, row))
         .child(
-            action(touch, if row.article.tags.is_empty() { "Add tags" } else { "Edit tags:" }, move || tags.show(Panel::Tags(id)))
+            action(row, if row.article.tags.is_empty() { "Add tags" } else { "Edit tags:" }, move || tags.show(Panel::Tags(id)))
                 .name("ArticleTags")
                 .tag(Some(Rc::new(id) as ferroui_base::BoxedValue))
                 .automation_properties_name(if row.article.tags.is_empty() { "Add tags" } else { "Edit tags" }),
@@ -77,12 +77,11 @@ pub(super) fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, row: &Row) -> El<Borde
         );
     }
     actions = actions
-        .child(action(touch, "Add note", move || {
-            note.show(Panel::Note(id))
-        }))
-        .child(action(touch, "Print", move || print.print_article(id)));
+        .child(action(row, "Add note", move || note.show(Panel::Note(id))))
+        .child(action(row, "Print", move || print.print_article(id)));
 
     border()
+        .name("ArticleActions")
         .background("#FAFAFA")
         .border_brush("#EBEBEB")
         .border_thickness((0.0, 1.0, 0.0, 0.0))
@@ -120,8 +119,8 @@ fn read_state(vm: Rc<AppViewModel>, row: &Row) -> Element {
         .font_size(13.0)
         .foreground("#444444")
         .padding((8.0, 0.0))
-        .height(if row.touch { 44.0 } else { 26.0 })
-        .min_height(if row.touch { 44.0 } else { 26.0 })
+        .height(super::action_height(row))
+        .min_height(super::action_height(row))
         .is_checked(Some(checked))
         .on_click(move |event| {
             event.set_handled(true);
@@ -138,18 +137,18 @@ fn read_state(vm: Rc<AppViewModel>, row: &Row) -> Element {
         .into()
 }
 
-fn action(touch: bool, label: &str, invoke: impl Fn() + 'static) -> El<Button> {
-    action_control(touch, label, invoke).content(label)
+fn action(row: &Row, label: &str, invoke: impl Fn() + 'static) -> El<Button> {
+    action_control(row, label, invoke).content(label)
 }
 
-fn action_control(touch: bool, label: &str, invoke: impl Fn() + 'static) -> El<Button> {
+fn action_control(row: &Row, label: &str, invoke: impl Fn() + 'static) -> El<Button> {
     button()
         .class("reader-link")
         .font_size(13.0)
         .foreground("#444444")
         .padding((8.0, 0.0))
-        .height(if touch { 44.0 } else { 26.0 })
-        .min_width(if touch { 44.0 } else { 0.0 })
+        .height(super::action_height(row))
+        .min_width(if row.touch { 44.0 } else { 0.0 })
         .automation_properties_name(label)
         .on_click(move |event| {
             event.set_handled(true);

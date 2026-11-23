@@ -62,7 +62,11 @@ export async function articlePaletteChecks(h, check) {
         return first(view) && cells(view).length === 2 && view;
       }, "both read article paragraphs and table cells are visible");
       palette(first(initial), "#222222", "#444444");
-      for (const cell of cells(initial)) palette(cell, "#222222", "#444444");
+      for (const cell of cells(initial)) {
+        palette(cell, "#222222", "#444444");
+        assert.equal(cell.fontSize, data.settings.font_size,
+          "table headings and ordinary cells inherit the configured body size");
+      }
       const unread = initial.elements.find(element => element.name === "ArticleBodyText"
         && element.text?.startsWith("Unread article text"));
       palette(unread, "#000000", "#1155CC");
@@ -76,11 +80,16 @@ export async function articlePaletteChecks(h, check) {
         assert.deepEqual(identity(paragraph), original, "the native control, paragraph, and link retain their identities");
         assert.deepEqual(paragraph.textSelection, selection, "the user's exact native text selection survives appearance changes");
         assert.equal(table.length, 2, "both table cells remain visible");
-        table.forEach(cell => palette(cell, body, link));
+        table.forEach(cell => {
+          palette(cell, body, link);
+          assert.equal(cell.fontSize, data.settings.font_size,
+            "table headings retain body sizing across read/current transitions");
+        });
         assert.deepEqual(table.map(identity), tableIdentities, "table paragraphs also reconcile in place");
         evidence.push({name, foreground: paragraph.foreground, links: paragraph.links,
           identity: identity(paragraph), selection: paragraph.textSelection,
-          table: table.map(cell => ({foreground: cell.foreground, links: cell.links, identity: identity(cell)}))});
+          table: table.map(cell => ({fontSize: cell.fontSize, foreground: cell.foreground,
+            links: cell.links, identity: identity(cell)}))});
         return true;
       }, name);
 

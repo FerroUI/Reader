@@ -7,7 +7,7 @@ use crate::{content, rows::Row, session::Session};
 use ferroui_base::layout::HorizontalAlignment as H;
 use ferroui_base::media::BoxShadows;
 use ferroui_view::prelude::*;
-pub(crate) use layout::{headline_height, right_inset};
+pub(crate) use layout::{action_height, headline_height, right_inset};
 use reader_state::AppViewModel;
 use std::rc::Rc;
 

@@ -84,6 +84,8 @@ The following rules come from the [preserved main stylesheet](https://github.com
 
 The native implementation follows this retained-headline structure in `article/headline.rs` and `article.rs`, with card density geometry in `article/layout.rs`. Touch target expansion remains a deliberate narrow/coarse-pointer adaptation.
 
+The list footer has no explicit height or line-height in the source. Its inherited Arial size is approximately 13 px with `line-height: normal`; the inline action rules add 1 px vertical paint padding without increasing that line box. The separate `.card-common .card-actions` wrapper has an explicit 30 px height plus its top border. Reader's desktop list actions use 17 px native controls, accommodating a 15 px text line and two focus-border pixels, producing a 30 px footer with the original vertical padding. This is a native font-metric approximation; phone actions retain 44 px targets.
+
 ### Body and hyperlink palette
 
 The [main stylesheet](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/2139832829-en-scroll.css) defines body link color under `.entry-container .entry-body a`, its `.read` override and the more-specific `#current-entry` override:
@@ -120,6 +122,8 @@ The current native footer uses these two checkbox contracts. Its label does not 
 ### Configured Send to destinations
 
 The [official August 2009 announcement](https://googlereader.blogspot.com/2009/08/flurry-of-features-for-feed-readers.html) introduced configurable destinations. The [saved client's](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/3564210627-en-scroll.js) `nE` renders the Send to label with a dropdown arrow. `IG` hides that footer control when there are no enabled destinations; `MG` and `FG` combine selected built-in services with configured custom links. `ix.fA` and `zx` connect Shift+T to this menu.
+
+The `nE` toggle uses `Cu` with the control's bottom-left anchor (`ql = 1`) aligned to the menu's top-left (`tl = 0`). Reader supplies an explicit native placement rectangle for footer and keyboard opening, preserving that alignment and allowing the popup positioner to constrain it to a narrow viewport.
 
 `LG` prepares template values and `KG` substitutes them. The current app implements three original GET-template values:
 

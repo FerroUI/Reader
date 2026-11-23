@@ -94,7 +94,8 @@ pub fn inspect_view() -> String {
                 json!({"type":visual.get_type().name(),"name":name,"text":text,
             "foreground":visual.cast::<TextBlock>().and_then(|text|rich_text::foreground(text.foreground()))
                 .or_else(||visual.cast::<RichTextBlock>().and_then(|text|rich_text::foreground(text.foreground()))),
-            "fontSize":visual.cast::<TextBlock>().map(|text|text.font_size()),
+            "fontSize":visual.cast::<TextBlock>().map(|text|text.font_size())
+                .or_else(||visual.cast::<RichTextBlock>().map(|text|text.font_size())),
             "headlineRuns":visual.cast::<TextBlock>().filter(|text|text.has_name("ArticleHeadlineText"))
                 .and_then(|text|text.inlines()).map(|inlines|inlines.snapshot().iter().map(|inline|{
                     let mut text = String::new();

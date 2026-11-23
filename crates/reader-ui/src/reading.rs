@@ -7,6 +7,7 @@ mod metrics;
 mod page;
 mod page_policy;
 mod panel;
+mod viewport;
 
 use crate::session::{Panel, Session};
 use ferroui_base::threading::{Dispatcher, DispatcherPriority};
