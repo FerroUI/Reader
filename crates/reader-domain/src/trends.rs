@@ -32,6 +32,7 @@ impl AppState {
         let mut by_feed = self
             .feeds
             .iter()
+            .filter(|feed| !feed.archived)
             .map(|f| {
                 (
                     f.id,
@@ -44,11 +45,14 @@ impl AppState {
             })
             .collect::<BTreeMap<_, _>>();
         let mut result = Trends {
-            total: self.articles.len(),
-            subscriptions: self.feeds.len(),
+            subscriptions: by_feed.len(),
             ..Trends::default()
         };
         for article in &self.articles {
+            if !by_feed.contains_key(&article.feed_id) {
+                continue;
+            }
+            result.total += 1;
             result.read += usize::from(article.read);
             result.starred += usize::from(article.starred);
             if let Some(at) = article.read_at {

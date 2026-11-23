@@ -18,6 +18,7 @@ mod sample;
 mod send_to;
 mod starter;
 mod stream;
+mod subscriptions;
 mod trends;
 
 pub use action::{Action, Changes};

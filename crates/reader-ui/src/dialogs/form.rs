@@ -67,6 +67,40 @@ pub(super) fn prepare(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Fo
             return;
         }
         let value = save_ui.entry.get_untracked().trim().to_string();
+        if matches!(save_panel, Panel::NewFolder | Panel::RenameFolder(_)) {
+            let previous = if let Panel::RenameFolder(ref name) = save_panel {
+                Some(name.as_str())
+            } else {
+                None
+            };
+            let name = match vm.validate_folder_name(previous, &value) {
+                Ok(name) => name,
+                Err(error) => {
+                    save_ui.form_error.set(error);
+                    if let Some(field) = save_ui.field.get_untracked() {
+                        field.focus();
+                    }
+                    return;
+                }
+            };
+            let success = match previous {
+                Some(previous) if previous == name => true,
+                Some(previous) => {
+                    let changed = vm.rename_folder(previous.to_owned(), name.clone());
+                    if changed {
+                        save_ui.renamed_folder(previous, &name);
+                    }
+                    changed
+                }
+                None => vm.create_folder(name),
+            };
+            if success {
+                save_ui.close();
+            } else {
+                save_ui.form_error.set(vm.status());
+            }
+            return;
+        }
         if value.is_empty()
             && !matches!(save_panel, Panel::Move(_) | Panel::Tags(_) | Panel::Note(_))
         {
@@ -80,7 +114,6 @@ pub(super) fn prepare(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Fo
         match save_panel {
             Panel::Subscribe => vm.subscribe(value),
             Panel::Rename(id) => vm.rename_feed(id, value),
-            Panel::RenameFolder(ref name) => vm.rename_folder(name.clone(), value),
             Panel::Move(id) => vm.move_feed(id, value),
             Panel::Tags(id) => vm.set_tags(
                 id,
@@ -92,7 +125,6 @@ pub(super) fn prepare(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Fo
                     .collect(),
             ),
             Panel::Note(id) => vm.set_note(id, value),
-            Panel::NewFolder => vm.create_folder(value),
             _ => {}
         }
     });

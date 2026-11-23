@@ -18,6 +18,9 @@ impl AppState {
             .feed_index
             .get(&target)
             .ok_or("The drop target no longer exists.")?;
+        if self.feeds[source_index].archived || self.feeds[target_index].archived {
+            return Err("This subscription is no longer active.".into());
+        }
         if id == target {
             return Ok(false);
         }

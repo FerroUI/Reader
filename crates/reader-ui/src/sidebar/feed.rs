@@ -33,9 +33,20 @@ pub(super) fn feed_row(
     let rename = ui.clone();
     let folders = ui.clone();
     let remove = ui.clone();
+    let refresh = vm.clone();
+    let refresh_url = feed.url.clone();
+    let generation = vm.library_generation();
     let menu = menus::context(
         &vm,
         vec![
+            menus::item_enabled("Refresh subscription", !vm.is_refreshing(), move || {
+                if refresh.library_generation() == generation
+                    && refresh.feed(id).is_some_and(|feed| feed.url == refresh_url)
+                {
+                    refresh.refresh_view(View::Feed(id));
+                }
+            }),
+            menus::separator(),
             menus::item("Rename subscription...", move || {
                 rename.show(Panel::Rename(id))
             }),

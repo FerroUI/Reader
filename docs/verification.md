@@ -1,5 +1,17 @@
 # Verification record
 
+## Reading, menus, settings and explicit updates — 23 November 2026
+
+The previously unfinished handoff completed successfully at application revision [`f28e3bb6a46a8f66f2ffb8304b2550fe36d7ca5c`](https://github.com/FerroUI/Reader/commit/f28e3bb6a46a8f66f2ffb8304b2550fe36d7ca5c). [Workflow 45142540301](https://github.com/FerroUI/Reader/actions/runs/45142540301) passed its build job **137583807956**, rendered gate and Pages deployment **137587954662**. Build identifier: **`4abdca5ae1e9f289`**.
+
+The completed run passed **118 Rust tests**, **65 JavaScript tests** and **61 rendered scenarios**. Its [verification artifact](https://github.com/FerroUI/Reader/actions/runs/45142540301/artifacts/14802508712) was downloaded and its SHA-256 independently matched **`7671797c67e89b5803bb19ef4b78ca4a73954cf1b13e7c249215bfa37e8a5eb6`**. The recorded checks include current-article magnification and native selection retention, wider hidden-sidebar bodies, menu focus/placement/disabled states, wrapping settings and connection drafts, long touch menus, heterogeneous scrolling and explicit application updates.
+
+The reading-width assertion now checks the native **650px body constraint** and text containment rather than requiring a naturally measured inner text control to equal the cap. The same check verifies that sidebar hiding produces a body and inner text wider than **1000px**, retains the native document identity, leaves the title capped, and restores the original measured widths when the sidebar returns.
+
+The isolated update scenario staged a temporary second build, protected another Reader tab, then explicitly activated the update and restored **10,000 saved articles**. Its staged build identifier is a test fixture, not the deployed revision. The harness restored the deployable files before publication.
+
+A separate review of the live application initially opened the preceding offline build `bd938668d9e27169`. Closing and reopening the review tab through the normal browser lifecycle activated **`4abdca5ae1e9f289`**, preserving the existing subscriptions and unread counts. No storage reset, service-worker unregister or forced activation was used. This closes the earlier live-session activation uncertainty for this observed session; it does not establish behavior for every browser profile.
+
 ## Desktop parity refinement — 23 November 2026
 
 This revision refines final-era Reader article layout, read-state presentation, keyboard navigation and configured Send to destinations. It also corrects a phone realization gap found by inspecting screenshots after the initial assertions passed. The historical contracts and remaining differences are documented in [reference.md](reference.md) and [parity.md](parity.md).

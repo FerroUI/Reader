@@ -213,6 +213,7 @@ fn retain_route_scroll(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) {
             ui.close();
         }
         if generation_changed {
+            ui.search_scope.set(View::All);
             ui.tree_cursor.set(None);
             *ui.tree_opened.borrow_mut() = None;
         }

@@ -14,6 +14,7 @@ use reader_domain::{Action, Feed, View};
 use reader_state::{AppViewModel, HostRequest, HostServices};
 use std::{
     cell::{Cell, RefCell},
+    collections::BTreeMap,
     path::PathBuf,
     rc::Rc,
     time::Duration,
@@ -108,9 +109,13 @@ async fn handle(
         }
     }
     match request {
-        HostRequest::Refresh { feeds, .. } => {
-            refresh(vm, feeds, operations, ticket.expect("refresh operation"))
-        }
+        HostRequest::Refresh { feeds, epochs, .. } => refresh(
+            vm,
+            feeds,
+            epochs,
+            operations,
+            ticket.expect("refresh operation"),
+        ),
         HostRequest::Subscribe { url, .. } => {
             let ticket = ticket.expect("subscription operation");
             let now = vm.now();
@@ -194,6 +199,7 @@ fn finish(vm: &AppViewModel, operations: &FeedOperations, ticket: Ticket) {
 fn refresh(
     vm: &Rc<AppViewModel>,
     feeds: Vec<Feed>,
+    epochs: BTreeMap<reader_domain::Id, u64>,
     operations: Rc<FeedOperations>,
     ticket: Ticket,
 ) {
@@ -202,13 +208,15 @@ fn refresh(
         return;
     }
     let remaining = Rc::new(Cell::new(feeds.len()));
+    let accepted = Rc::new(Cell::new(0_usize));
     let failed = Rc::new(Cell::new(0_usize));
     let first_error = Rc::new(RefCell::new(None));
-    let total = feeds.len();
     for feed in feeds {
+        let epoch = epochs.get(&feed.id).copied().unwrap_or_default();
         let vm = vm.clone();
         let operations = operations.clone();
         let remaining = remaining.clone();
+        let accepted = accepted.clone();
         let failed = failed.clone();
         let first_error = first_error.clone();
         Dispatcher::ui_thread().spawn_local(async move {
@@ -217,7 +225,8 @@ fn refresh(
             let result = background::run(move || transport::feed(url, now, false)).await;
             let current = vm.library_generation() == ticket.generation;
             // A user may unsubscribe while a request is running. Never recreate it.
-            if current && vm.state().feed(feed.id).is_some_and(|f| f.url == feed.url) {
+            if current && vm.accepts_feed_result(feed.id, &feed.url, epoch) {
+                accepted.set(accepted.get() + 1);
                 match result {
                     Ok(response) => vm.dispatch(Action::MergeFeed {
                         url: feed.url,
@@ -234,7 +243,8 @@ fn refresh(
             }
             remaining.set(remaining.get() - 1);
             if remaining.get() == 0 {
-                if current {
+                let total = accepted.get();
+                if current && total > 0 {
                     vm.set_status(if failed.get() == 0 {
                         format!("Updated {total} subscriptions.")
                     } else {

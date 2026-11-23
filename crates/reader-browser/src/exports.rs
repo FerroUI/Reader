@@ -24,14 +24,10 @@ pub fn receive_feed(
     open: bool,
     expected_id: f64,
     base_url: &str,
+    expected_epoch: f64,
 ) -> Result<(), JsValue> {
     let vm = vm()?;
-    if expected_id > 0.0
-        && !vm
-            .state()
-            .feeds
-            .iter()
-            .any(|feed| feed.id == expected_id as u64 && feed.url == url)
+    if expected_id > 0.0 && !vm.accepts_feed_result(expected_id as u64, url, expected_epoch as u64)
     {
         return Ok(()); // An unsubscribed/replaced feed must not reappear when its request finishes.
     }
@@ -42,10 +38,21 @@ pub fn receive_feed(
     Ok(())
 }
 #[wasm_bindgen(js_name = feedError)]
-pub fn feed_error(url: &str, message: &str) {
+pub fn feed_error(url: &str, message: &str, expected_id: f64, expected_epoch: f64) {
     if let Ok(vm) = vm() {
+        if expected_id > 0.0
+            && !vm.accepts_feed_result(expected_id as u64, url, expected_epoch as u64)
+        {
+            return;
+        }
         vm.feed_error(url, message);
     }
+}
+#[wasm_bindgen(js_name = subscriptionEpoch)]
+pub fn subscription_epoch(id: f64) -> f64 {
+    vm().ok()
+        .and_then(|vm| vm.subscription_epoch(id as u64))
+        .unwrap_or_default() as f64
 }
 #[wasm_bindgen(js_name = finishRefresh)]
 pub fn finish_refresh() {

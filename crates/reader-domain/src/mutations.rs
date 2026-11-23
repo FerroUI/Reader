@@ -73,6 +73,7 @@ impl AppState {
                 }
                 let feed = self
                     .feed_mut(id)
+                    .filter(|feed| !feed.archived)
                     .ok_or("This subscription no longer exists.")?;
                 changes.feeds = feed.title != title;
                 feed.title = title.into();
@@ -92,32 +93,18 @@ impl AppState {
                 changes.feeds = self.set_feed_folders(id, folders)?;
             }
             Action::RemoveFeed(id) => {
-                changes.removed = self
-                    .articles
-                    .iter()
-                    .filter(|a| a.feed_id == id)
-                    .map(|a| a.id)
-                    .collect();
-                changes.feeds = self.feeds.iter().any(|f| f.id == id);
-                self.feeds.retain(|f| f.id != id);
-                self.articles.retain(|a| a.feed_id != id);
-                self.reindex();
+                if self.feed(id).is_some_and(|feed| !feed.archived) {
+                    return self.remove_feeds(vec![id]);
+                }
             }
+            Action::RemoveFeeds(ids) => return self.remove_feeds(ids),
             Action::CreateFolder(name) => {
-                let name = name.trim().to_string();
-                if name.is_empty() {
-                    return Err("Enter a folder name.".into());
-                }
-                if !self.folders().contains(&name) {
-                    self.folders.push(name);
-                    changes.feeds = true;
-                }
+                let name = self.validate_folder_name(None, &name)?;
+                self.folders.push(name);
+                changes.feeds = true;
             }
             Action::RenameFolder { from, to } => {
-                let to = to.trim().to_string();
-                if to.is_empty() {
-                    return Err("Enter a folder name.".into());
-                }
+                let to = self.validate_folder_name(Some(&from), &to)?;
                 if from != to {
                     for folder in &mut self.folders {
                         if *folder == from {
@@ -138,15 +125,21 @@ impl AppState {
                         }
                     }
                     if let Some(display) = self.stream_settings.remove(&format!("folder:{from}")) {
-                        self.stream_settings
-                            .entry(format!("folder:{to}"))
-                            .or_insert(display);
+                        self.stream_settings.insert(format!("folder:{to}"), display);
+                        changes.settings = true;
+                    }
+                    if self.settings.start_page == crate::View::Folder(from) {
+                        self.settings.start_page = crate::View::Folder(to);
+                        changes.settings = true;
                     }
                     self.folders = crate::document::clean_names(std::mem::take(&mut self.folders));
                 }
             }
             Action::DeleteFolder(name) => {
                 changes.feeds = self.folders().contains(&name);
+                if !changes.feeds {
+                    return Err("This folder no longer exists.".into());
+                }
                 self.folders.retain(|f| *f != name);
                 for feed in &mut self.feeds {
                     feed.folders = feed
@@ -155,6 +148,14 @@ impl AppState {
                         .filter(|f| f != &name)
                         .collect();
                     feed.folder = feed.folders.first().cloned().unwrap_or_default();
+                }
+                changes.settings = self
+                    .stream_settings
+                    .remove(&format!("folder:{name}"))
+                    .is_some();
+                if self.settings.start_page == crate::View::Folder(name) {
+                    self.settings.start_page = crate::View::Home;
+                    changes.settings = true;
                 }
             }
             Action::SetSettings(mut settings) => {
@@ -187,7 +188,7 @@ impl AppState {
             }
             Action::MergeFeed { url, feed } => return self.merge_feed(url, feed, now),
             Action::FeedError { url, message } => {
-                if let Some(feed) = self.feeds.iter_mut().find(|f| f.url == url) {
+                if let Some(feed) = self.feeds.iter_mut().find(|f| !f.archived && f.url == url) {
                     changes.feeds = feed.error.as_ref() != Some(&message);
                     feed.error = Some(message);
                 }

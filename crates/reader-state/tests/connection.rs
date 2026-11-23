@@ -44,6 +44,7 @@ fn subscriptions_and_refresh_send_the_persisted_policy_with_normalized_addresses
                 feeds,
                 proxy,
                 connection,
+                ..
             } => Some((feeds.len(), proxy.clone(), *connection)),
             _ => None,
         })

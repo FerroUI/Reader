@@ -1,5 +1,5 @@
 use super::controls::{heading, help};
-use crate::session::{Panel, Session};
+use crate::session::{FolderTarget, Panel, Session};
 use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
 use ferroui_base::media::{FontWeight, TextWrapping};
 use ferroui_view::prelude::*;
@@ -55,15 +55,15 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     if !folders.is_empty() {
         page = page.child(separator()).child(heading("Folders"));
         for folder in folders {
-            let model = vm.clone();
-            let name = folder.clone();
+            let delete_ui = ui.clone();
+            let delete_target = FolderTarget::capture(&vm, &folder);
             let rename_name = folder.clone();
             let rename_ui = ui.clone();
             page=page.child(rsx! {StackPanel {key:format!("settings-folder:{folder}"),spacing:4.0,
                 TextBlock {text:folder.clone(),font_weight:FontWeight::Bold,text_wrapping:TextWrapping::Wrap}
                 {action_row([
                     row_action("Rename",&format!("Rename folder {folder}"),height,move||rename_ui.show(Panel::RenameFolder(rename_name.clone()))),
-                    row_action("Remove folder",&format!("Remove folder {folder}"),height,move||model.delete_folder(name.clone()))
+                    row_action("Delete folder",&format!("Delete folder {folder}"),height,move||delete_ui.show(Panel::DeleteFolder(delete_target.clone())))
                 ],16.0)}
             }});
         }

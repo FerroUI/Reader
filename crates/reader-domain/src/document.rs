@@ -27,7 +27,12 @@ impl AppState {
     }
     pub fn folders(&self) -> Vec<String> {
         let mut result = self.folders.iter().cloned().collect::<BTreeSet<_>>();
-        result.extend(self.feeds.iter().flat_map(Feed::folder_names));
+        result.extend(
+            self.feeds
+                .iter()
+                .filter(|feed| !feed.archived)
+                .flat_map(Feed::folder_names),
+        );
         result.into_iter().collect()
     }
     pub fn tags(&self) -> Vec<String> {
@@ -78,6 +83,11 @@ impl AppState {
             feed.folders = feed.folder_names();
             if feed.folder.is_empty() {
                 feed.folder = feed.folders.first().cloned().unwrap_or_default();
+            }
+            if feed.archived {
+                feed.folder.clear();
+                feed.folders.clear();
+                feed.error = None;
             }
         }
         let feeds = used.clone();

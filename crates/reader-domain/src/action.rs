@@ -44,6 +44,9 @@ pub enum Action {
         folders: Vec<String>,
     },
     RemoveFeed(Id),
+    /// Unsubscribe an exact set in one transaction. Missing/inactive identities
+    /// reject the entire operation; repeated identities are removed only once.
+    RemoveFeeds(Vec<Id>),
     CreateFolder(String),
     RenameFolder {
         from: String,

@@ -80,7 +80,7 @@ export async function refreshFeeds(feeds, proxy, receive, failure, connection = 
     while (cursor < feeds.length) {
       const feed = feeds[cursor++];
       try { const result = await fetchFeed(feed.url, proxy, connection); receive(feed.url, result.contents, feed.id, result.url); }
-      catch (error) { failure(feed.url, error?.message || String(error)); }
+      catch (error) { failure(feed.url, error?.message || String(error), feed.id); }
     }
   }));
 }

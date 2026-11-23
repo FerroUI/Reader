@@ -52,17 +52,22 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, id: Id) -> Element {
     let done = ui.clone();
     let unfiled = vm.clone();
     let create: Rc<dyn Fn()> = Rc::new(move || {
-        let name = new_ui.entry.get_untracked().trim().to_owned();
-        if name.is_empty() {
-            new_ui.form_error.set("Enter a folder name.".into());
-            return;
-        }
+        let name = match new_vm.validate_folder_name(None, &new_ui.entry.get_untracked()) {
+            Ok(name) => name,
+            Err(error) => {
+                new_ui.form_error.set(error);
+                return;
+            }
+        };
         let Some(feed) = new_vm.feed(id) else {
             return;
         };
         let mut folders = feed.folder_names();
         folders.push(name.clone());
-        new_vm.create_folder(name);
+        if !new_vm.create_folder(name) {
+            new_ui.form_error.set(new_vm.status());
+            return;
+        }
         new_vm.set_feed_folders(id, folders);
         new_ui.entry.set(String::new());
         new_ui.form_error.set(String::new());

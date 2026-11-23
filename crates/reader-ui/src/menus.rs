@@ -96,7 +96,7 @@ pub fn attach(vm: &AppViewModel, element: El<Button>, items: Vec<Element>) -> El
         .into()
 }
 
-fn request(control: &Control) {
+pub(crate) fn request(control: &Control) {
     let event = ContextRequestedEventArgs::new();
     event.set_placement_rect(control, Rect::from_size(control.bounds().size()));
     control.raise_event(&event);

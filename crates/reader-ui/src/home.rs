@@ -49,7 +49,7 @@ fn welcome(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     } else {
         let state = vm.state();
         let mut groups = 0;
-        for feed in &state.feeds {
+        for feed in state.feeds.iter().filter(|feed| !feed.archived) {
             let articles: Vec<_> = state
                 .articles
                 .iter()
@@ -240,7 +240,7 @@ fn explore(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             .state()
             .feeds
             .iter()
-            .find(|saved| saved.url == url)
+            .find(|saved| !saved.archived && saved.url == url)
             .map(|saved| saved.id);
         content=content.child(separator()).child(rsx!{Grid{column_definitions:if narrow{"*"}else{"*,Auto"},row_definitions:if narrow{"Auto,Auto"}else{"Auto"},column_spacing:20.0,row_spacing:8.0,
         StackPanel{spacing:6.0,

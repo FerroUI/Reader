@@ -95,10 +95,10 @@ fn request_mark_all(vm: &AppViewModel, ui: &Session, cutoff: Option<i64>) {
     }
 }
 pub(super) fn sort_menu(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
-    let label = if matches!(vm.view(), View::Feed(_)) {
-        "Feed settings"
-    } else {
-        "View settings"
+    let label = match vm.view() {
+        View::Feed(_) => "Feed settings",
+        View::Folder(_) => "Folder settings",
+        _ => "View settings",
     };
     menus::attach(
         &vm,
@@ -138,19 +138,39 @@ fn sort_items(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Vec<Element> {
         ),
     ];
     if let View::Feed(id) = vm.view() {
-        let rename = ui.clone();
-        let folders = ui.clone();
-        let unsubscribe = ui.clone();
+        if vm.feed(id).is_some() {
+            let rename = ui.clone();
+            let folders = ui.clone();
+            let unsubscribe = ui.clone();
+            items.push(menus::separator());
+            items.push(menus::item("Rename subscription...", move || {
+                rename.show(Panel::Rename(id))
+            }));
+            items.push(menus::item("Change folders...", move || {
+                folders.show(Panel::Move(id))
+            }));
+            items.push(menus::item("Unsubscribe...", move || {
+                unsubscribe.show(Panel::Unsubscribe(id))
+            }));
+        } else if let Some(source) = vm.state().feed(id).filter(|feed| feed.archived).cloned() {
+            let subscribe = vm.clone();
+            let generation = vm.library_generation();
+            items.push(menus::separator());
+            items.push(menus::item("Subscribe again", move || {
+                if subscribe.library_generation() == generation
+                    && subscribe
+                        .state()
+                        .feed(id)
+                        .is_some_and(|feed| feed.archived && feed.url == source.url)
+                {
+                    subscribe.subscribe(source.url.clone());
+                }
+            }));
+        }
+    }
+    if let View::Folder(name) = vm.view() {
         items.push(menus::separator());
-        items.push(menus::item("Rename subscription...", move || {
-            rename.show(Panel::Rename(id))
-        }));
-        items.push(menus::item("Change folders...", move || {
-            folders.show(Panel::Move(id))
-        }));
-        items.push(menus::item("Unsubscribe...", move || {
-            unsubscribe.show(Panel::Unsubscribe(id))
-        }));
+        items.extend(crate::sidebar::folder::items(vm, ui, &name));
     }
     items
 }

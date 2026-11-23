@@ -90,6 +90,39 @@ fn removed_demo_subscription_is_not_restored_or_replaced_by_another_default() {
 }
 
 #[test]
+fn archived_demo_rows_keep_user_annotations_but_retire_shipped_stars_and_tags() {
+    let mut state = AppState::sample(1000);
+    let saved_id = state.articles[0].id;
+    let shipped_id = state.articles[2].id;
+    state
+        .apply(
+            Action::SetNote {
+                id: saved_id,
+                note: "My own saved note".into(),
+            },
+            1000,
+        )
+        .unwrap();
+    let user_source = state.articles[0].feed_id;
+    let shipped_source = state.articles[2].feed_id;
+    state
+        .apply(Action::RemoveFeeds(vec![user_source, shipped_source]), 1000)
+        .unwrap();
+    assert!(state.feed(user_source).unwrap().archived);
+    assert!(state.feed(shipped_source).unwrap().archived);
+    assert!(state.migrate_legacy_samples());
+    assert_eq!(state.article(saved_id).unwrap().note, "My own saved note");
+    assert!(state.article(shipped_id).is_none());
+    assert!(state.feed(user_source).unwrap().archived);
+    assert!(state.feed(shipped_source).unwrap().archived);
+    assert!(!state.migrate_legacy_samples());
+    assert_eq!(
+        AppState::from_json(&state.to_json().unwrap()).unwrap(),
+        state
+    );
+}
+
+#[test]
 fn customized_library_retains_real_records_and_user_annotations_on_demo_rows() {
     let mut state = AppState::sample(1000);
     state.articles[0].note = "My own note".into();

@@ -71,16 +71,16 @@ async function perform(message, generation) {
         const result = await fetchFeed(message.url, message.proxy, message.connection);
         if (generation !== runtime.libraryGeneration()) break;
         const open = subscription === latestSubscription && runtime.currentView() === startingView;
-        runtime.receiveFeed(result.url, result.contents, open, 0, result.url);
-      } catch (error) { if (generation === runtime.libraryGeneration()) runtime.feedError(message.url, error?.message || String(error)); }
+        runtime.receiveFeed(result.url, result.contents, open, 0, result.url, 0);
+      } catch (error) { if (generation === runtime.libraryGeneration()) runtime.feedError(message.url, error?.message || String(error), 0, 0); }
       finally { finishOperation(generation); }
       break;
     }
     case "refresh":
       if (!beginOperation(generation)) break;
       try { await refreshFeeds(message.feeds, message.proxy,
-        (url, xml, id, base) => { if (generation === runtime.libraryGeneration()) runtime.receiveFeed(url, xml, false, id, base); },
-        (url, error) => { if (generation === runtime.libraryGeneration()) runtime.feedError(url, error); }, message.connection); }
+        (url, xml, id, base) => { if (generation === runtime.libraryGeneration()) runtime.receiveFeed(url, xml, false, id, base, message.epochs?.[id] ?? 0); },
+        (url, error, id) => { if (generation === runtime.libraryGeneration()) runtime.feedError(url, error, id, message.epochs?.[id] ?? 0); }, message.connection); }
       finally { finishOperation(generation); }
       break;
     case "fetchImage":

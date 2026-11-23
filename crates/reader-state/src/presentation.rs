@@ -23,10 +23,15 @@ impl AppViewModel {
         self.state().article(id).cloned()
     }
     pub fn feed(&self, id: Id) -> Option<Feed> {
-        self.state().feed(id).cloned()
+        self.state().feed(id).filter(|feed| !feed.archived).cloned()
     }
     pub fn feeds(&self) -> Vec<Feed> {
-        self.state().feeds.clone()
+        self.state()
+            .feeds
+            .iter()
+            .filter(|feed| !feed.archived)
+            .cloned()
+            .collect()
     }
     pub fn folders(&self) -> Vec<String> {
         self.state().folders()

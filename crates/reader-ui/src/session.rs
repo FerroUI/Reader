@@ -2,6 +2,7 @@ use crate::sidebar::tree::TreeNode;
 use ferroui_controls::{Button, ListBox, ScrollViewer, TextBox};
 use ferroui_view::prelude::*;
 use reader_domain::{Id, View};
+use reader_state::AppViewModel;
 use std::{
     cell::{Cell, RefCell},
     collections::BTreeSet,
@@ -25,11 +26,44 @@ pub enum Panel {
     Note(Id),
     Rename(Id),
     RenameFolder(String),
+    DeleteFolder(FolderTarget),
+    UnsubscribeFolder(FolderTarget),
     Move(Id),
     Unsubscribe(Id),
     NewFolder,
     MarkAll(Option<i64>),
     About,
+}
+
+/// Destructive folder dialogs retain the exact set the user was shown. Ordinary
+/// refreshes may update article text, but replacement libraries or membership
+/// changes require a fresh confirmation instead of silently broadening it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FolderTarget {
+    pub name: String,
+    pub feeds: Vec<(Id, String)>,
+    generation: u64,
+}
+impl FolderTarget {
+    pub fn capture(vm: &AppViewModel, name: &str) -> Self {
+        let mut feeds = vm
+            .feeds()
+            .into_iter()
+            .filter(|feed| feed.in_folder(name))
+            .map(|feed| (feed.id, feed.url))
+            .collect::<Vec<_>>();
+        feeds.sort_unstable();
+        Self {
+            name: name.to_owned(),
+            feeds,
+            generation: vm.library_generation(),
+        }
+    }
+    pub fn valid(&self, vm: &AppViewModel) -> bool {
+        self.generation == vm.library_generation()
+            && vm.folders().contains(&self.name)
+            && Self::capture(vm, &self.name).feeds == self.feeds
+    }
 }
 /// Transient presentation state is separate from the persisted feed document.
 pub struct Session {
@@ -172,5 +206,60 @@ impl Session {
                 folders.insert(folder.to_string());
             }
         });
+    }
+    pub fn renamed_folder(&self, from: &str, to: &str) {
+        if from == to {
+            return;
+        }
+        if self.search_scope.get_untracked() == View::Folder(from.to_owned()) {
+            self.search_scope.set(View::Folder(to.to_owned()));
+        }
+        self.collapsed.update(|folders| {
+            if folders.remove(from) {
+                folders.insert(to.to_owned());
+            }
+        });
+        let rename = |node: &mut TreeNode| match node {
+            TreeNode::Folder(name) | TreeNode::Feed { folder: name, .. } if name == from => {
+                *name = to.to_owned();
+            }
+            _ => {}
+        };
+        self.tree_cursor.update(|cursor| {
+            if let Some(node) = cursor {
+                rename(node);
+            }
+        });
+        if let Some(node) = self.tree_opened.borrow_mut().as_mut() {
+            rename(node);
+        }
+    }
+    pub fn removed_folder(&self, vm: &AppViewModel, name: &str) {
+        if self.search_scope.get_untracked() == View::Folder(name.to_owned()) {
+            self.search_scope.set(View::All);
+        }
+        self.collapsed.update(|folders| {
+            folders.remove(name);
+        });
+        let nodes = crate::sidebar::cursor::visible(vm, self);
+        let recover = |current: Option<TreeNode>| {
+            current.and_then(|node| match node {
+                TreeNode::Feed { id, folder } if folder == name => nodes.iter()
+                    .find(|node| matches!(node, TreeNode::Feed { id: candidate, .. } if *candidate == id))
+                    .cloned(),
+                TreeNode::Folder(folder) if folder == name => None,
+                node => crate::sidebar::tree::resolve(&nodes, Some(&node)),
+            })
+        };
+        self.tree_cursor
+            .set(recover(self.tree_cursor.get_untracked()));
+        let opened = self.tree_opened.borrow_mut().take();
+        *self.tree_opened.borrow_mut() = recover(opened);
+    }
+
+    pub fn removed_subscriptions(&self, ids: &[Id]) {
+        if matches!(self.search_scope.get_untracked(), View::Feed(id) if ids.contains(&id)) {
+            self.search_scope.set(View::All);
+        }
     }
 }

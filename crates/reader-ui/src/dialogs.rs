@@ -1,4 +1,5 @@
 mod editor_focus;
+mod folder_confirmation;
 mod folders;
 mod form;
 mod navigate;
@@ -52,9 +53,15 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             | Panel::About
             | Panel::MarkAll(_)
             | Panel::Unsubscribe(_)
+            | Panel::DeleteFolder(_)
+            | Panel::UnsubscribeFolder(_)
             | Panel::Move(_)
     );
-    let dialog_key = format!("dialog:{panel:?}");
+    let dialog_key = match &panel {
+        Panel::DeleteFolder(target) => format!("dialog:delete-folder:{}", target.name),
+        Panel::UnsubscribeFolder(target) => format!("dialog:unsubscribe-folder:{}", target.name),
+        _ => format!("dialog:{panel:?}"),
+    };
     let close = ui.clone();
     let close_key = ui.clone();
     let title = match panel {
@@ -72,6 +79,8 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         Panel::Note(_) => "Add a note",
         Panel::Rename(_) => "Rename subscription",
         Panel::RenameFolder(_) => "Rename folder",
+        Panel::DeleteFolder(_) => "Delete folder?",
+        Panel::UnsubscribeFolder(_) => "Unsubscribe from all?",
         Panel::Move(_) => "Change folders",
         Panel::Unsubscribe(_) => "Unsubscribe",
         Panel::NewFolder => "Create a new folder",
@@ -99,6 +108,12 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         Panel::GoToSubscription => navigate::view(vm.clone(), ui.clone(), false),
         Panel::GoToTag => navigate::view(vm.clone(), ui.clone(), true),
         Panel::Move(id) => folders::view(vm.clone(), ui.clone(), id),
+        Panel::DeleteFolder(target) => {
+            folder_confirmation::view(vm.clone(), ui.clone(), target, false)
+        }
+        Panel::UnsubscribeFolder(target) => {
+            folder_confirmation::view(vm.clone(), ui.clone(), target, true)
+        }
         Panel::MarkAll(_) | Panel::Unsubscribe(_) => {
             confirmation(vm.clone(), ui.clone(), panel.clone())
         }
@@ -151,7 +166,7 @@ fn confirmation(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Element 
     let generation = vm.library_generation();
     let route = vm.view();
     let text = match &panel {
-        Panel::Unsubscribe(id) => format!("Are you sure you want to unsubscribe from {}? Starred and tagged items will remain in your library.", vm.feed(*id).map(|f| f.title).unwrap_or_default()),
+        Panel::Unsubscribe(id) => format!("Are you sure you want to unsubscribe from {}? Starred, tagged and noted items will remain in your library; other items from this subscription will be removed. You can undo this change.", vm.feed(*id).map(|f| f.title).unwrap_or_default()),
         Panel::MarkAll(Some(cutoff)) => {
             let date = chrono::DateTime::from_timestamp(*cutoff, 0)
                 .map(|date| date.format("%b %-d, %Y at %H:%M UTC").to_string())
@@ -170,7 +185,10 @@ fn confirmation(vm: Rc<AppViewModel>, ui: Rc<Session>, panel: Panel) -> Element 
                 confirm.close();
                 if vm.library_generation() != generation || vm.view() != route { return; }
                 match panel {
-                    Panel::Unsubscribe(id) => vm.unsubscribe(id),
+                    Panel::Unsubscribe(id) => {
+                        vm.unsubscribe(id);
+                        confirm.removed_subscriptions(&[id]);
+                    }
                     Panel::MarkAll(cutoff) => {
                         if suppress_confirmation {
                             let mut settings=vm.state().settings.clone();

@@ -10,8 +10,25 @@ impl AppState {
         folder: String,
     ) -> Result<(Id, bool), String> {
         let url = crate::safe_url(&url, None).ok_or("Enter an http or https feed URL.")?;
-        if let Some(feed) = self.feeds.iter().find(|f| f.url == url) {
-            return Ok((feed.id, false));
+        if let Some(index) = self.feeds.iter().position(|f| f.url == url) {
+            if !self.feeds[index].archived {
+                return Ok((self.feeds[index].id, false));
+            }
+            let folder = folder.trim().to_owned();
+            if !folder.is_empty() && !self.folders.contains(&folder) {
+                self.folders.push(folder.clone());
+            }
+            let feed = &mut self.feeds[index];
+            feed.archived = false;
+            feed.error = None;
+            feed.fetched_at = 0;
+            feed.folder = folder.clone();
+            feed.folders = if folder.is_empty() {
+                Vec::new()
+            } else {
+                vec![folder]
+            };
+            return Ok((feed.id, true));
         }
         let id = self.allocate();
         let title = if title.trim().is_empty() {
@@ -46,6 +63,8 @@ impl AppState {
         parsed: ParsedFeed,
         now: i64,
     ) -> Result<Changes, String> {
+        let previously_known = crate::safe_url(&url, None)
+            .is_some_and(|url| self.feeds.iter().any(|feed| feed.url == url));
         let (id, added) = self.add_subscription(
             parsed.title.clone(),
             url,
@@ -127,7 +146,7 @@ impl AppState {
         }
         let feed = self.feed_mut(id).unwrap();
         // Preserve user-renamed titles after the first fetch.
-        if added || was_sample || feed.title == feed.url {
+        if (added && !previously_known) || was_sample || feed.title == feed.url {
             feed.title = parsed.title;
         }
         feed.site_url = parsed.site_url;

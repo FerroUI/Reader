@@ -18,6 +18,10 @@ pub struct Feed {
     pub fetched_at: i64,
     pub error: Option<String>,
     pub sample: bool,
+    /// An unsubscribed source retained only to identify saved, annotated items.
+    /// Archived sources do not participate in subscriptions or feed refresh.
+    #[serde(skip_serializing_if = "crate::article_content::is_false")]
+    pub archived: bool,
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
@@ -50,6 +54,10 @@ pub struct Article {
 }
 
 impl Article {
+    pub fn has_user_annotations(&self) -> bool {
+        self.starred || !self.tags.is_empty() || !self.note.trim().is_empty()
+    }
+
     pub fn content_base_url(&self) -> &str {
         if self.content_base.is_empty() {
             &self.url

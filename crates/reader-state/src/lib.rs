@@ -3,6 +3,7 @@ mod article_content;
 mod commands;
 mod connection;
 mod counts;
+mod feed_epochs;
 mod history;
 mod navigation;
 mod persistence;
@@ -30,6 +31,7 @@ pub struct AppViewModel {
     revision: RefCell<u64>,
     document: RefCell<AppState>,
     library_generation: Cell<u64>,
+    feed_epochs: RefCell<feed_epochs::FeedEpochs>,
     article_loads: article_content::ArticleLoads,
     now: Cell<i64>,
     view: RefCell<View>,
@@ -84,6 +86,7 @@ impl AppViewModel {
             cache.add_or_update_items(&mut state.articles.iter().cloned().map(Rc::new))
         });
         let counts = counts::CountIndex::new(&state);
+        let feed_epochs = feed_epochs::FeedEpochs::new(&state, 0);
         let vm = Rc::new_cyclic(|weak: &std::rc::Weak<Self>| {
             let receiver = weak.clone();
             Self {
@@ -91,6 +94,7 @@ impl AppViewModel {
                 revision: RefCell::new(0),
                 document: RefCell::new(state),
                 library_generation: Cell::new(0),
+                feed_epochs: RefCell::new(feed_epochs),
                 article_loads: article_content::ArticleLoads::default(),
                 now: Cell::new(now),
                 view: RefCell::new(start_page),

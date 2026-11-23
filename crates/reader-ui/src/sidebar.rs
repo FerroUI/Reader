@@ -1,14 +1,15 @@
 pub(crate) mod cursor;
 mod feed;
+pub(crate) mod folder;
 mod navigation;
 pub(crate) mod tree;
 use crate::session::{Panel, Session};
 use feed::feed_row;
 use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
-use ferroui_base::media::{FontWeight, TextTrimming};
+use ferroui_base::media::FontWeight;
 use ferroui_controls::primitives::ScrollBarVisibility;
 use ferroui_view::prelude::*;
-use navigation::{group, nav, row_class};
+use navigation::{group, nav};
 use reader_controls::{icon, Icon};
 use reader_domain::{Density, View};
 use reader_state::AppViewModel;
@@ -149,29 +150,15 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         if !show_all && count == 0 {
             continue;
         }
-        let drop_vm = vm.clone();
-        let drop_folder = folder.clone();
-        let folder_vm = vm.clone();
-        let folder_name = folder.clone();
-        let folder_ui = ui.clone();
         let folder_cursor = keyboard_cursor.as_ref() == Some(&TreeNode::Folder(folder.clone()));
-        let disclosure_ui = ui.clone();
-        let disclosure_folder = folder.clone();
-        let selected = vm.view() == View::Folder(folder.clone());
-        content=content.child(rsx! {
-            Grid {key:format!("folder:{folder}"),with:move |target|crate::drag::attach_target(&target.clone().upcast(),drop_vm.clone(),drop_folder.clone()),column_definitions:if touch{"44,*"}else{"20,*"},margin:((inset-18.0).max(0.0),0.0,8.0,0.0),height:if touch{44.0}else{23.0},
-                Button {class:"reader-flat",automation_properties_name:format!("Toggle {folder}"),on_click:move |_|disclosure_ui.toggle_folder(&disclosure_folder),
-                    {icon(if collapsed.contains(&folder){Icon::ChevronRight}else{Icon::ChevronDown},8.0,"#777777")}
-                }
-                Button {Grid.column:1,name:"SubscriptionFolder",class:row_class(selected,folder_cursor),horizontal_content_alignment:H::Stretch,automation_properties_name:folder.clone(),on_click:move |_|cursor::open(&folder_vm,&folder_ui,TreeNode::Folder(folder_name.clone())),
-                    Grid {column_definitions:"20,*,Auto",
-                        {icon(Icon::Folder,14.0,"#A1A1A1")}
-                        TextBlock {Grid.column:1,text:folder.clone(),text_trimming:<dyn TextTrimming>::character_ellipsis(),vertical_alignment:V::Center,font_weight:if count>0{FontWeight::Bold}else{FontWeight::Normal}}
-                        TextBlock {Grid.column:2,text:crate::format::unread_badge(count),font_size:11.0,foreground:"#666666",margin:(4.0,0.0,8.0,0.0),vertical_alignment:V::Center}
-                    }
-                }
-            }
-        });
+        content = content.child(folder::row(
+            vm.clone(),
+            ui.clone(),
+            &folder,
+            count,
+            inset,
+            folder_cursor,
+        ));
         if !collapsed.contains(&folder) {
             for feed in folder_feeds {
                 let n = counts.get(&feed.id).copied().unwrap_or(0);

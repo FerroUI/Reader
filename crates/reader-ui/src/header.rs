@@ -102,7 +102,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
 }
 fn submit(vm: &AppViewModel, ui: &Session) {
     let query = ui.search.get_untracked();
-    let suffix = match ui.search_scope.get_untracked() {
+    let suffix = match effective_scope(vm, ui.search_scope.get_untracked()) {
         View::Starred => "is:starred".to_string(),
         View::Feed(id) => format!("feed-id:{id}"),
         View::Folder(name) => format!("folder:\"{}\"", name.replace('"', "")),
@@ -112,7 +112,7 @@ fn submit(vm: &AppViewModel, ui: &Session) {
     vm.navigate(View::Search(format!("{query} {suffix}").trim().to_string()));
 }
 fn scope(vm: Rc<AppViewModel>, ui: Rc<Session>, compact: bool) -> Element {
-    let current = ui.search_scope.get();
+    let current = effective_scope(&vm, ui.search_scope.get());
     let mut choices = vec![
         ("All items".to_string(), View::All),
         ("Starred items".to_string(), View::Starred),
@@ -156,6 +156,19 @@ fn scope(vm: Rc<AppViewModel>, ui: Rc<Session>, compact: bool) -> Element {
             .automation_properties_name("Search scope")
     };
     menus::attach(&vm, control, items)
+}
+
+/// A removed or archived source cannot leave an invisible filter behind the
+/// "All items" label. Display and submission must resolve the same scope even
+/// when a host/import/undo changes subscriptions outside the current dialog.
+fn effective_scope(vm: &AppViewModel, scope: View) -> View {
+    match scope {
+        View::Feed(id) if vm.feed(id).is_some() => View::Feed(id),
+        View::Folder(name) if vm.folders().contains(&name) => View::Folder(name),
+        View::Starred => View::Starred,
+        View::Search(query) if query == "is:unread" => View::Search(query),
+        _ => View::All,
+    }
 }
 fn logo(narrow: bool, reader: bool) -> Element {
     let mut word = stack_panel()

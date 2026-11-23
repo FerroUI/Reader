@@ -114,9 +114,10 @@ impl Rows {
         let selected = vm.selected();
         let cursor = vm.cursor();
         let titles: std::collections::HashMap<_, Rc<str>> = vm
-            .feeds()
-            .into_iter()
-            .map(|f| (f.id, Rc::from(f.title)))
+            .state()
+            .feeds
+            .iter()
+            .map(|f| (f.id, Rc::from(f.title.as_str())))
             .collect();
         let narrow = vm.viewport() < 700.0;
         let sidebar_hidden = narrow

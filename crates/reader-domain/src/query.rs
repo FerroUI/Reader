@@ -6,10 +6,12 @@ pub fn matches_view(article: &Article, state: &AppState, view: &View) -> bool {
         View::Feed(id) => article.feed_id == *id,
         View::Folder(name) => state
             .feed(article.feed_id)
-            .is_some_and(|f| f.in_folder(name)),
+            .is_some_and(|f| !f.archived && f.in_folder(name)),
         View::Tag(tag) => article.tags.contains(tag),
         View::Search(query) => search_matches(article, state, query),
-        View::Home | View::All | View::Trends => true,
+        View::Home | View::All | View::Trends => state
+            .feed(article.feed_id)
+            .is_some_and(|feed| !feed.archived),
         View::Explore | View::Settings => false,
     }
 }
@@ -32,9 +34,11 @@ pub fn search_matches(article: &Article, state: &AppState, query: &str) -> bool 
             value.parse::<crate::Id>().ok() == Some(article.feed_id)
         } else if let Some(value) = lower.strip_prefix("folder:") {
             state.feed(article.feed_id).is_some_and(|feed| {
-                feed.folder_names()
-                    .iter()
-                    .any(|folder| folder.to_lowercase() == value)
+                !feed.archived
+                    && feed
+                        .folder_names()
+                        .iter()
+                        .any(|folder| folder.to_lowercase() == value)
             })
         } else if let Some(value) = lower
             .strip_prefix("tag:")

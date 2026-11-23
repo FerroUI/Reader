@@ -37,6 +37,7 @@ fn initial_download_batches_only_pending_feeds_and_keeps_the_current_location() 
             feeds,
             proxy,
             connection,
+            ..
         } => {
             assert_eq!(*feeds, expected);
             assert_eq!(proxy, "https://trusted.example/?url={url}");

@@ -1,5 +1,6 @@
 use reader_domain::{Feed, FeedConnection, Id};
 use serde::Serialize;
+use std::collections::BTreeMap;
 use std::rc::Rc;
 
 #[derive(Clone, Debug, Serialize)]
@@ -18,6 +19,9 @@ pub enum HostRequest {
     },
     Refresh {
         feeds: Vec<Feed>,
+        /// Captured lifetimes; archive/reactivation invalidates old completions
+        /// even when saved source metadata retains its numeric identifier.
+        epochs: BTreeMap<Id, u64>,
         proxy: String,
         connection: FeedConnection,
     },

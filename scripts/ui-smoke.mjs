@@ -15,6 +15,7 @@ import { updateChecks } from "./ui/updates.mjs";
 import { menuPolishChecks } from "./ui/menu-polish.mjs";
 import { settingsPolishChecks } from "./ui/settings-polish.mjs";
 import { readingScaleChecks } from "./ui/reading-scale.mjs";
+import { folderChecks } from "./ui/folders.mjs";
 import { interceptStarterFeeds, starterChecks } from "./ui/starter.mjs";
 import { sleep } from "../FerroUI/scripts/browser/harness.mjs";
 
@@ -144,6 +145,7 @@ try {
     await menuPolishChecks(h, check);
     await readingScaleChecks(h, check);
     await settingsPolishChecks(h, check);
+    await folderChecks(h, check, site);
     await mobileChecks(h, check);
     await check("expanded read tracking follows user scrolling and preserves Keep unread", async () => {
       const data = await h.state();

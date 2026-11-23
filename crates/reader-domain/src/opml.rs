@@ -79,7 +79,11 @@ pub fn parse_opml(source: &str) -> Result<Vec<OpmlSubscription>, String> {
 impl AppState {
     pub fn export_opml(&self) -> String {
         let mut output = String::from("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<opml version=\"2.0\">\n<head><title>FerroUI Reader subscriptions</title></head>\n<body>\n");
-        for feed in self.feeds.iter().filter(|f| f.folder_names().is_empty()) {
+        for feed in self
+            .feeds
+            .iter()
+            .filter(|f| !f.archived && f.folder_names().is_empty())
+        {
             outline(&mut output, feed);
         }
         for folder in self.folders() {
@@ -88,7 +92,11 @@ impl AppState {
                 escape(&folder),
                 escape(&folder)
             ));
-            for feed in self.feeds.iter().filter(|f| f.in_folder(&folder)) {
+            for feed in self
+                .feeds
+                .iter()
+                .filter(|f| !f.archived && f.in_folder(&folder))
+            {
                 outline(&mut output, feed);
             }
             output.push_str("</outline>\n");

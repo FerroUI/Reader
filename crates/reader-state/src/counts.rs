@@ -1,5 +1,5 @@
 use reader_domain::{AppState, Article, Id, View};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(Clone, Copy, Default)]
 struct Count {
@@ -35,6 +35,8 @@ struct Entry {
 #[derive(Default)]
 pub(crate) struct CountIndex {
     all: Count,
+    archived: Count,
+    archived_sources: BTreeSet<Id>,
     starred: Count,
     feeds: BTreeMap<Id, Count>,
     tags: BTreeMap<String, Count>,
@@ -43,11 +45,38 @@ pub(crate) struct CountIndex {
 
 impl CountIndex {
     pub fn new(state: &AppState) -> Self {
-        let mut index = Self::default();
+        let mut index = Self {
+            archived_sources: state
+                .feeds
+                .iter()
+                .filter(|feed| feed.archived)
+                .map(|feed| feed.id)
+                .collect(),
+            ..Self::default()
+        };
         for article in &state.articles {
             index.update(article);
         }
         index
+    }
+    /// Subscription transitions are infrequent. Reconcile their aggregate once
+    /// so ordinary read/star updates keep All/Home counts independent of size.
+    pub fn reconcile_sources(&mut self, state: &AppState) {
+        self.archived_sources = state
+            .feeds
+            .iter()
+            .filter(|feed| feed.archived)
+            .map(|feed| feed.id)
+            .collect();
+        self.archived = self
+            .archived_sources
+            .iter()
+            .filter_map(|id| self.feeds.get(id))
+            .fold(Count::default(), |mut total, count| {
+                total.total += count.total;
+                total.unread += count.unread;
+                total
+            });
     }
     pub fn remove(&mut self, id: Id) {
         if let Some(entry) = self.entries.remove(&id) {
@@ -67,6 +96,9 @@ impl CountIndex {
     }
     fn adjust(&mut self, entry: &Entry, add: bool) {
         self.all.update(entry.read, add);
+        if self.archived_sources.contains(&entry.feed) {
+            self.archived.update(entry.read, add);
+        }
         if entry.starred {
             self.starred.update(entry.read, add);
         }
@@ -83,13 +115,16 @@ impl CountIndex {
     }
     pub fn count(&self, view: &View, state: &AppState, unread: bool) -> usize {
         match view {
-            View::All | View::Home | View::Trends => self.all.get(unread),
+            View::All | View::Home | View::Trends => self
+                .all
+                .get(unread)
+                .saturating_sub(self.archived.get(unread)),
             View::Starred => self.starred.get(unread),
             View::Feed(id) => self.feeds.get(id).copied().unwrap_or_default().get(unread),
             View::Folder(folder) => state
                 .feeds
                 .iter()
-                .filter(|f| f.in_folder(folder))
+                .filter(|f| !f.archived && f.in_folder(folder))
                 .map(|f| {
                     self.feeds
                         .get(&f.id)
