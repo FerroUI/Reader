@@ -1,170 +1,126 @@
 mod footer;
 mod header;
+mod headline;
+mod layout;
 mod reading;
 use crate::{content, rows::Row, session::Session};
-use ferroui_base::layout::{HorizontalAlignment as H, VerticalAlignment as V};
-use ferroui_base::media::{FontWeight, TextTrimming};
+use ferroui_base::layout::HorizontalAlignment as H;
+use ferroui_base::media::BoxShadows;
 use ferroui_view::prelude::*;
-use reader_controls::{icon, Icon};
-use reader_domain::Density;
+pub(crate) use layout::{headline_height, right_inset};
 use reader_state::AppViewModel;
 use std::rc::Rc;
 
 pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, row: Row) -> Element {
-    if row.expanded {
-        expanded(vm, ui, row)
+    if row.list_mode {
+        list_entry(vm, ui, row)
     } else {
-        collapsed(vm, row)
+        card(vm, ui, row)
     }
 }
-fn collapsed(vm: Rc<AppViewModel>, row: Row) -> Element {
-    let id = row.article.id;
-    let selected = row.selected;
-    let star = vm.clone();
-    let open = vm.clone();
-    let row_open = vm.clone();
-    let height = if row.touch {
-        44.0
-    } else {
-        match row.density {
-            Density::Comfortable => 37.0,
-            Density::Cozy => 31.0,
-            Density::Compact => 27.0,
-        }
-    };
-    let source_width = if row.narrow || row.single_source {
-        "0"
-    } else {
-        "165"
-    };
-    let mut line = grid()
-        .name("ArticleRow")
-        .tag(Some(Rc::new(id) as ferroui_base::BoxedValue))
-        .with(move |node| {
-            crate::gestures::attach_article_tap(&node.clone().upcast(), row_open.clone())
-        })
-        .column_definitions(&format!(
-            "{},{source_width},*,70",
-            if row.touch { 44 } else { 28 }
-        ))
-        .height(height)
-        .background(if selected {
-            "#FFFFCC"
-        } else if row.article.read {
-            "#EEEEEE"
+
+/// A list expansion appends its body below the same compact headline. Keeping
+/// the headline at a stable key also retains its native focus and hit targets.
+fn list_entry(vm: Rc<AppViewModel>, ui: Rc<Session>, row: Row) -> Element {
+    let mut entry = grid()
+        .name(if row.expanded {
+            "ArticleEntry"
         } else {
-            "#FFFFFF"
-        });
-    line = line.child(
-        button()
-            .class("reader-flat")
-            .width(if row.touch { 44.0 } else { 28.0 })
-            .height(height)
-            .automation_properties_name(if row.article.starred {
-                "Remove star"
-            } else {
-                "Add star"
-            })
-            .on_click(move |event| {
-                event.set_handled(true);
-                star.toggle_star(id);
-            })
-            .child(icon(
-                if row.article.starred {
-                    Icon::Starred
-                } else {
-                    Icon::Star
-                },
-                14.0,
-                if row.article.starred {
-                    "#E6BA35"
-                } else {
-                    "#B8B8B8"
-                },
-            )),
-    );
-    if !row.narrow && !row.single_source {
-        line = line.child(
-            text_block()
-                .grid_column(1)
-                .text(row.source.to_string())
-                .font_size(11.0)
-                .foreground("#666666")
-                .text_trimming(<dyn TextTrimming>::character_ellipsis())
-                .margin((0.0, 0.0, 10.0, 0.0))
-                .vertical_alignment(V::Center),
+            "ArticleListItem"
+        })
+        .tag(Some(Rc::new(row.article.id) as ferroui_base::BoxedValue))
+        .row_definitions("Auto,Auto")
+        .background("White")
+        .child(headline::view(vm.clone(), &row).key("headline"));
+    if row.expanded {
+        entry = entry.child(
+            border()
+                .key("expanded-body")
+                .grid_row(1)
+                .name("ArticleListBody")
+                .border_brush(if row.selected { "#4D90F0" } else { "#FFFFFF" })
+                .border_thickness((1.0, 0.0, 0.0, 0.0))
+                .child(details(vm, ui, &row, 13.0)),
         );
     }
-    line=line.child(button().class("reader-flat").grid_column(2).horizontal_content_alignment(H::Stretch).automation_properties_name(row.article.title.clone())
-        .on_click(move |_|open.select(Some(id))).child(rsx!{
-            Grid {column_definitions:if row.narrow{"*"}else{"Auto,*"},
-                TextBlock {text:row.article.title.clone(),font_size:13.0,font_weight:if row.article.read{FontWeight::Normal}else{FontWeight::Bold},text_trimming:<dyn TextTrimming>::character_ellipsis(),max_width:if row.narrow{f64::INFINITY}else{570.0},vertical_alignment:V::Center}
-                if !row.narrow {TextBlock {Grid.column:1,text:format!(" — {}",row.article.summary),foreground:"#777777",font_size:13.0,text_trimming:<dyn TextTrimming>::character_ellipsis(),vertical_alignment:V::Center}}
-            }
-        }));
-    line = line.child(
-        text_block()
-            .grid_column(3)
-            .text(date(row.article.published))
-            .font_size(11.0)
-            .foreground("#666666")
-            .horizontal_alignment(H::Right)
-            .margin((5.0, 0.0, 10.0, 0.0))
-            .vertical_alignment(V::Center),
-    );
     border()
-        .border_brush(if selected { "#4D90F0" } else { "#DDDDDD" })
-        .border_thickness((if selected { 1.0 } else { 0.0 }, 0.0, 0.0, 1.0))
-        .child(line)
+        .border_brush("#CCCCCC")
+        .border_thickness((0.0, 0.0, 0.0, 1.0))
+        .child(entry)
         .into()
 }
-fn expanded(vm: Rc<AppViewModel>, ui: Rc<Session>, row: Row) -> Element {
-    let id = row.article.id;
-    let select = vm.clone();
-    let spacing = if row.narrow {
-        12.0
-    } else {
-        match row.density {
-            Density::Comfortable => 20.0,
-            Density::Cozy => 10.0,
-            Density::Compact => 5.0,
-        }
-    };
-    let body = content::view(vm.clone(), &row.article, row.font_size, row.selected);
-    let mut card = grid()
-        .name("ArticleEntry")
-        .tag(Some(Rc::new(id) as ferroui_base::BoxedValue))
-        .row_definitions("Auto,Auto,Auto")
-        .background("White");
-    card = card.child(header::view(vm.clone(), &row, spacing));
-    card = card.child(
-        border()
-            .grid_row(1)
-            .margin((spacing, 6.0, spacing, 20.0))
-            .horizontal_alignment(H::Stretch)
-            .with(move |node| {
-                crate::gestures::attach_article_tap(&node.clone().upcast(), select.clone())
-            })
-            .child(
-                stack_panel()
-                    .spacing(12.0)
-                    .child(reading::view(vm.clone(), &row))
-                    .child(body),
-            ),
-    );
-    card = card.child(footer::view(vm, ui, &row).grid_row(2));
-    border()
-        .border_brush(if row.selected { "#4D90F0" } else { "#DDDDDD" })
-        .border_thickness(1.0)
+
+fn card(vm: Rc<AppViewModel>, ui: Rc<Session>, row: Row) -> Element {
+    let spacing = layout::card_padding(&row);
+    let mut frame = grid()
+        .name("ArticleCard")
         .margin((
             5.0,
             spacing,
-            if row.narrow { 10.0 } else { spacing + 13.0 },
+            if row.narrow {
+                10.0
+            } else {
+                right_inset(row.density)
+            },
             spacing,
         ))
-        .child(card)
+        .child(
+            border()
+                .name("ArticleCardFrame")
+                .border_brush("#DDDDDD")
+                .border_thickness(1.0)
+                .box_shadow(BoxShadows::parse("0 0 4 #E3E5EB").expect("Reader card shadow"))
+                .child(details(vm, ui, &row, spacing)),
+        );
+    if row.selected {
+        frame = frame.child(
+            border()
+                .name("ArticleSelectionEdge")
+                .border_brush("#4D90F0")
+                .border_thickness((1.0, 0.0, 0.0, 0.0))
+                .is_hit_test_visible(false),
+        );
+    }
+    frame.into()
+}
+
+fn details(vm: Rc<AppViewModel>, ui: Rc<Session>, row: &Row, padding: f64) -> Element {
+    let select = vm.clone();
+    let body = content::view(vm.clone(), &row.article, row.font_size, row.selected);
+    grid()
+        .name(if row.list_mode {
+            "ArticleExpandedContent"
+        } else {
+            "ArticleEntry"
+        })
+        .tag(Some(Rc::new(row.article.id) as ferroui_base::BoxedValue))
+        .row_definitions("Auto,Auto,Auto")
+        .background("White")
+        .child(header::view(vm.clone(), row, padding))
+        .child(
+            border()
+                .grid_row(1)
+                .margin((
+                    padding,
+                    6.5,
+                    padding,
+                    if row.list_mode { 6.5 } else { 20.0 },
+                ))
+                .horizontal_alignment(H::Stretch)
+                .with(move |node| {
+                    crate::gestures::attach_article_tap(&node.clone().upcast(), select.clone())
+                })
+                .child(
+                    stack_panel()
+                        .spacing(12.0)
+                        .child(reading::view(vm.clone(), row))
+                        .child(body),
+                ),
+        )
+        .child(footer::view(vm, ui, row).grid_row(2))
         .into()
 }
+
 pub fn date(timestamp: i64) -> String {
     chrono::DateTime::from_timestamp(timestamp, 0)
         .map(|d| d.format("%b %-d").to_string())

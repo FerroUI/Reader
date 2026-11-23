@@ -7,8 +7,11 @@ use reader_domain::View;
 use reader_state::AppViewModel;
 
 pub(crate) fn visible(vm: &AppViewModel, ui: &Session) -> Vec<TreeNode> {
+    nodes(vm, ui, vm.state().settings.show_all_subscriptions)
+}
+
+fn nodes(vm: &AppViewModel, ui: &Session, show_all: bool) -> Vec<TreeNode> {
     let feeds = vm.feeds();
-    let show_all = vm.state().settings.show_all_subscriptions;
     let include = |id| show_all || vm.count(&View::Feed(id)) > 0;
     let mut nodes: Vec<_> = feeds
         .iter()
@@ -87,6 +90,28 @@ pub(crate) fn move_cursor(vm: &AppViewModel, ui: &Session, forward: bool) {
 
 pub(crate) fn open_cursor(vm: &AppViewModel, ui: &Session) {
     if let Some(node) = current(&visible(vm, ui), ui) {
+        open(vm, ui, node);
+        ui.restore_article_focus();
+    }
+}
+
+/// Finishing a stream with Space advances to the next visible unread
+/// subscription occurrence, following Reader's independent tree cursor.
+pub(crate) fn open_next_unread(vm: &AppViewModel, ui: &Session) {
+    // Keep the just-finished occurrence as our starting point even when the
+    // "show unread" preference has removed it from the painted tree.
+    let nodes = nodes(vm, ui, true);
+    let start = current(&nodes, ui).or_else(|| opened(vm, ui, &nodes));
+    let next = start
+        .as_ref()
+        .and_then(|node| nodes.iter().position(|candidate| candidate == node))
+        .map_or(0, |index| index + 1);
+    if let Some(node) = nodes
+        .into_iter()
+        .skip(next)
+        .find(|node| vm.count(&view(node)) > 0)
+    {
+        ui.tree_cursor.set(Some(node.clone()));
         open(vm, ui, node);
         ui.restore_article_focus();
     }

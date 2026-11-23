@@ -14,29 +14,24 @@ use std::rc::Rc;
 pub(super) fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, row: &Row) -> El<Border> {
     let id = row.article.id;
     let star = vm.clone();
-    let read = vm.clone();
-    let was_read = row.article.read;
-    let share = vm.clone();
     let email = vm.clone();
     let tags = ui.clone();
-    let note = ui;
+    let note = ui.clone();
     let print = vm.clone();
     let touch = row.touch;
     let height = if touch { 44.0 } else { 26.0 };
     let mut actions = wrap_panel()
         .orientation(Orientation::Horizontal)
         .child(
-            action_control(touch, if row.article.starred { "Unstar" } else { "Add star" }, move || star.toggle_star(id))
+            action_control(touch, if row.article.starred { "Remove star" } else { "Add star" }, move || star.toggle_star(id))
                 .child(rsx! {StackPanel{orientation:Orientation::Horizontal,spacing:4.0,vertical_alignment:V::Center,
                     {icon(if row.article.starred{Icon::Starred}else{Icon::Star},12.0,if row.article.starred{"#E9BC36"}else{"#777777"})}
-                    TextBlock{text:if row.article.starred{"Unstar"}else{"Add star"},font_size:13.0,foreground:"#444444",vertical_alignment:V::Center}
+                    TextBlock{text:if row.article.starred{"Remove star"}else{"Add star"},font_size:13.0,foreground:"#444444",vertical_alignment:V::Center}
                 }}),
         )
-        .child(action(touch, if was_read { "Keep unread" } else { "Mark as read" }, move || {
-            if was_read { read.keep_unread(id); } else { read.set_read(id, true); }
-        }))
+        .child(read_state(vm.clone(), row))
         .child(action(touch, "Email", move || email.email_article(id)))
-        .child(action(touch, "Send to", move || share.share_article(id)))
+        .child(crate::send_to::button(vm.clone(), ui, row))
         .child(
             action(touch, if row.article.tags.is_empty() { "Add tags" } else { "Edit tags:" }, move || tags.show(Panel::Tags(id)))
                 .name("ArticleTags")
@@ -91,8 +86,55 @@ pub(super) fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, row: &Row) -> El<Borde
         .background("#FAFAFA")
         .border_brush("#EBEBEB")
         .border_thickness((0.0, 1.0, 0.0, 0.0))
-        .padding((if row.narrow { 4.0 } else { 12.0 }, 2.0))
+        .padding(if row.list_mode {
+            (7.0, 6.0, 0.0, 6.0)
+        } else {
+            (
+                if row.narrow { 4.0 } else { 12.0 },
+                2.0,
+                if row.narrow { 4.0 } else { 12.0 },
+                2.0,
+            )
+        })
         .child(actions)
+}
+
+fn read_state(vm: Rc<AppViewModel>, row: &Row) -> Element {
+    let id = row.article.id;
+    let automatic = row.auto_read;
+    let checked = if automatic {
+        row.kept_unread
+    } else {
+        row.article.read
+    };
+    let label = if automatic {
+        "Keep unread"
+    } else {
+        "Mark as read"
+    };
+    check_box()
+        .name("ArticleReadState")
+        .class("reader-check")
+        .content(label)
+        .automation_properties_name(label)
+        .font_size(13.0)
+        .foreground("#444444")
+        .padding((8.0, 0.0))
+        .min_height(if row.touch { 44.0 } else { 26.0 })
+        .is_checked(Some(checked))
+        .on_click(move |event| {
+            event.set_handled(true);
+            if automatic {
+                if checked {
+                    vm.set_read(id, true);
+                } else {
+                    vm.keep_unread(id);
+                }
+            } else {
+                vm.toggle_read(id);
+            }
+        })
+        .into()
 }
 
 fn action(touch: bool, label: &str, invoke: impl Fn() + 'static) -> El<Button> {

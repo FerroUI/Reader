@@ -102,13 +102,7 @@ pub fn attach(list: &Ref<ListBox>, vm: Rc<AppViewModel>, ui: Rc<Session>) {
                 .intersects(KeyModifiers::ALT | KeyModifiers::CONTROL | KeyModifiers::META)
                 && matches!(
                     event.key,
-                    Key::Space
-                        | Key::PageUp
-                        | Key::PageDown
-                        | Key::Home
-                        | Key::End
-                        | Key::Up
-                        | Key::Down
+                    Key::PageUp | Key::PageDown | Key::Home | Key::End | Key::Up | Key::Down
                 )
                 && !crate::keyboard::editing_source(event)
             {

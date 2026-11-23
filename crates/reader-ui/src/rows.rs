@@ -15,6 +15,7 @@ pub struct Row {
     pub source: Rc<str>,
     pub selected: bool,
     pub expanded: bool,
+    pub list_mode: bool,
     /// Re-project fixed-width media on same-breakpoint resizes. Widths beyond
     /// the reading cap and collapsed headline rows need no template changes.
     pub media_width: f64,
@@ -25,6 +26,9 @@ pub struct Row {
     pub single_source: bool,
     pub article_loading: bool,
     pub article_error: Option<String>,
+    pub send_to_revision: u64,
+    pub auto_read: bool,
+    pub kept_unread: bool,
 }
 impl PartialEq for Row {
     fn eq(&self, other: &Self) -> bool {
@@ -32,6 +36,7 @@ impl PartialEq for Row {
             && self.source == other.source
             && self.selected == other.selected
             && self.expanded == other.expanded
+            && self.list_mode == other.list_mode
             && (!self.expanded || self.media_width == other.media_width)
             && self.density == other.density
             && self.font_size == other.font_size
@@ -40,6 +45,9 @@ impl PartialEq for Row {
             && self.single_source == other.single_source
             && self.article_loading == other.article_loading
             && self.article_error == other.article_error
+            && (!self.expanded || self.send_to_revision == other.send_to_revision)
+            && (!self.expanded
+                || (self.auto_read == other.auto_read && self.kept_unread == other.kept_unread))
     }
 }
 impl Row {
@@ -54,6 +62,9 @@ pub struct Rows {
     pub template: Rc<dyn IDataTemplate>,
     applying: Cell<bool>,
     pending: RefCell<Option<Vec<Row>>>,
+    send_to: RefCell<Vec<reader_domain::SendToDestination>>,
+    send_to_generation: Cell<u64>,
+    send_to_revision: Cell<u64>,
 }
 impl Rows {
     pub fn new(vm: Rc<AppViewModel>, session: Rc<Session>) -> Self {
@@ -65,6 +76,9 @@ impl Rows {
             }),
             applying: Cell::new(false),
             pending: RefCell::new(None),
+            send_to: RefCell::new(Vec::new()),
+            send_to_generation: Cell::new(0),
+            send_to_revision: Cell::new(0),
         }
     }
     pub fn source(&self) -> ItemsSource {
@@ -82,6 +96,15 @@ impl Rows {
     }
     pub fn synchronize(&self, vm: &AppViewModel) {
         let settings = vm.state().settings.clone();
+        if *self.send_to.borrow() != settings.send_to
+            || self.send_to_generation.get() != vm.library_generation()
+        {
+            *self.send_to.borrow_mut() = settings.send_to.clone();
+            self.send_to_generation.set(vm.library_generation());
+            self.send_to_revision
+                .set(self.send_to_revision.get().wrapping_add(1));
+        }
+        let send_to_revision = self.send_to_revision.get();
         let selected = vm.selected();
         let cursor = vm.cursor();
         let titles: std::collections::HashMap<_, Rc<str>> = vm
@@ -106,10 +129,14 @@ impl Rows {
                     selected: cursor.or(selected) == Some(article.id),
                     article_loading: vm.article_loading(article.id),
                     article_error: vm.article_error(article.id),
+                    send_to_revision,
+                    auto_read: settings.mark_read_on_scroll,
+                    kept_unread: vm.is_kept_unread(article.id),
                     single_source,
                     article,
                     source,
                     expanded,
+                    list_mode: settings.view_mode == ViewMode::List,
                     media_width,
                     density: settings.density,
                     font_size: settings.font_size,

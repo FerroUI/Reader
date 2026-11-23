@@ -7,6 +7,10 @@ import { refinementChecks } from "./ui/refinement.mjs";
 import { feedNetworkChecks } from "./ui/feed-network.mjs";
 import { articleChecks } from "./ui/articles.mjs";
 import { scrollingChecks } from "./ui/scrolling.mjs";
+import { articlePaletteChecks } from "./ui/article-palette.mjs";
+import { readingNavigationChecks } from "./ui/reading-navigation.mjs";
+import { articleLayoutChecks } from "./ui/article-layout.mjs";
+import { sendToChecks } from "./ui/send-to.mjs";
 import { interceptStarterFeeds, starterChecks } from "./ui/starter.mjs";
 import { sleep } from "../FerroUI/scripts/browser/harness.mjs";
 
@@ -125,6 +129,10 @@ try {
     await refinementChecks(h, check);
     await feedNetworkChecks(h, check);
     await articleChecks(h, check);
+    await articleLayoutChecks(h, check);
+    await articlePaletteChecks(h, check);
+    await readingNavigationChecks(h, check);
+    await sendToChecks(h, check);
     await mobileChecks(h, check);
     await check("expanded read tracking follows user scrolling and preserves Keep unread", async () => {
       const data = await h.state();

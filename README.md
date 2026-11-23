@@ -37,7 +37,7 @@ The articles come from each publisher through the normal feed connection. If a c
 
 ### Reading on a phone or tablet
 
-The narrow layout keeps Previous, reading mode and Next along the bottom edge. Tap a headline or the blank area around its date to expand a list item in place. Stars remain independent actions. A vertical drag scrolls without opening the item where the gesture began; cancellation, a second finger or moving away and returning also cancel a pending tap.
+The narrow layout keeps Previous, reading mode and Next along the bottom edge. Tap a headline or its date to expand or collapse a list item in place. Its compact headline remains above the article body. Stars and the original-link button remain independent actions with touch-sized targets. A vertical drag scrolls without opening the item where the gesture began; cancellation, a second finger or moving away and returning also cancel a pending tap.
 
 Open subscriptions with the menu button. Hold a subscription and release without moving to open its actions; move after holding to reorder it or move it to another folder. A blue line previews the insertion point, and a held drag near the sidebar edge scrolls the list. Reordering within a folder retains the subscription's other folder memberships. The order is shared across folder views.
 
@@ -130,10 +130,10 @@ Shortcuts apply outside text inputs. Press `?` for the in-app reference.
 | `Shift+n` / `Shift+p` (`Shift+j` / `Shift+k`) | Move the subscription-tree cursor without opening |
 | `Shift+o` / `Shift+x` | Open the cursor's stream / toggle its folder or parent folder |
 | `o` / `Enter` | Expand or collapse the selected row |
-| `Space` / `Shift+Space` | Page down / page up |
+| `Space` / `Shift+Space` | Next / previous article when its edge is visible; otherwise page with 50 pixels of overlap |
 | `s`, `m`, `t` | Toggle star, toggle read state, edit tags |
 | `v`, `e` | Open original article, prepare email |
-| `Shift+s` / `Shift+t` | Share / send through the supported host integration |
+| `Shift+s` / `Shift+t` | Share through the host / open the configured Send to menu |
 | `Shift+a`, `r` | Mark stream read, refresh subscriptions |
 | `1` / `2` | Expanded / list view |
 | `g` then `h`, `a`, `s` | Home, All items, Starred |
@@ -146,7 +146,15 @@ Shortcuts apply outside text inputs. Press `?` for the in-app reference.
 | `Escape` | Close the dialog or selected entry |
 | `Ctrl+z` / `Cmd+z` | Undo a recent library change |
 
-The subscription cursor follows visible feeds, folders and tags independently of the open article stream, without wrapping. Shift+O opens it; Shift+X toggles its folder or a feed's parent folder. Some original commands remain different: there is no Popular items destination (`g p`), and Shift+T uses the supported host sharing action rather than the historical custom Send to menu. The complete historical map in [reference.md](docs/reference.md) is a fidelity target; [parity.md](docs/parity.md) records the remaining differences.
+The subscription cursor follows visible feeds, folders and tags independently of the open article stream, without wrapping. Shift+O opens it; Shift+X toggles its folder or a feed's parent folder. At the end of the final article, Space opens the next unread subscription occurrence without wrapping to earlier feeds. Search fields, editors, focused buttons and inline links retain their native keyboard behavior. There is no Popular items destination (`g p`). The complete historical map in [reference.md](docs/reference.md) is a fidelity target; [parity.md](docs/parity.md) records the remaining differences.
+
+### Custom Send to destinations
+
+Open **Reader settings → Customize Send to** to create, edit, enable or remove destinations. A destination has a name and an HTTPS URL template, for example `https://example.com/save?url=${url}&title=${title}&source=${source}`. Reader encodes the article address, title and subscription name separately before inserting them. The destination host stays fixed; templates cannot execute scripts or supply embedded credentials.
+
+Enabled destinations appear in each expanded article's **Send to** menu. **Shift+T** opens that menu for the current cursor item, including a collapsed list item; with no enabled destinations it opens configuration. Choosing a destination opens its URL through the browser or desktop launcher. Opening the menu or editing preferences does not send anything. Destinations are included in the normal saved library and JSON backup.
+
+This is separate from **Share** / **Shift+S**, which uses the supported host sharing interface. No retired Google service endpoints are preconfigured. The portable template supports `${url}`, `${title}` and `${source}`; historical body/shortener/escaped-field templates and service icons remain outside the implemented subset.
 
 ## Architecture and checks
 

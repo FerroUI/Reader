@@ -4,7 +4,13 @@ use reader_content::projection::{CellPlacement, Span, Table};
 use reader_state::AppViewModel;
 use std::rc::Rc;
 
-pub(super) fn view(vm: Rc<AppViewModel>, table: &Table, size: f64, key: &str) -> Element {
+pub(super) fn view(
+    vm: Rc<AppViewModel>,
+    table: &Table,
+    size: f64,
+    subdued: bool,
+    key: &str,
+) -> Element {
     let layout = table.layout();
     let mut grid = grid()
         .name("ArticleTable")
@@ -25,7 +31,7 @@ pub(super) fn view(vm: Rc<AppViewModel>, table: &Table, size: f64, key: &str) ->
             size,
             if cell.heading { 6 } else { 0 },
             false,
-            false,
+            subdued,
             format!("{key}-{row}-{column}"),
         );
         grid = grid.child(
@@ -68,7 +74,7 @@ pub(super) fn view(vm: Rc<AppViewModel>, table: &Table, size: f64, key: &str) ->
             size,
             0,
             false,
-            false,
+            subdued,
             format!("{key}-overflow"),
         ));
     for (index, (row, cell)) in layout.overflow.into_iter().enumerate() {
@@ -84,7 +90,7 @@ pub(super) fn view(vm: Rc<AppViewModel>, table: &Table, size: f64, key: &str) ->
             size,
             0,
             false,
-            false,
+            subdued,
             format!("{key}-extra-{index}"),
         ));
     }

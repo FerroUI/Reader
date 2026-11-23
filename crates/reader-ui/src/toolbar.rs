@@ -49,7 +49,11 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         .margin((
             if narrow { 0.0 } else { 3.0 },
             0.0,
-            if narrow { 8.0 } else { 38.0 },
+            if narrow {
+                8.0
+            } else {
+                crate::article::right_inset(settings.density)
+            },
             0.0,
         ));
     let mut actions = stack_panel()
@@ -153,7 +157,7 @@ pub fn page_header(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         57.0
     };
     rsx! { Border {height,border_brush:"#EBEBEB",border_thickness:(0.0,0.0,0.0,1.0),
-        Grid {column_definitions:"*,Auto",column_spacing:8.0,margin:(if narrow{0.0}else{13.0},0.0,if narrow{8.0}else{38.0},0.0),
+        Grid {column_definitions:"*,Auto",column_spacing:8.0,margin:(if narrow{0.0}else{13.0},0.0,if narrow{8.0}else{crate::article::right_inset(vm.state().settings.density)},0.0),
             TextBlock {text:if vm.view()==View::Home{if narrow{"Home".to_string()}else{"A look at what's new in Reader".to_string()}}else{vm.title()},font_size:13.0,foreground:"#777777",text_trimming:<dyn TextTrimming>::character_ellipsis(),vertical_alignment:V::Center}
             Border {Grid.column:1,vertical_alignment:V::Center,margin:(0.0,if touch{0.0}else{6.0},0.0,0.0),
                 {menus::attach(&vm,toolbar_icon(Icon::Settings,"Settings").width(if narrow{44.0}else{72.0}),settings_items(vm.clone(),ui))}

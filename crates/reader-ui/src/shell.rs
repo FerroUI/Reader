@@ -113,6 +113,8 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>, rows: Rc<Rows>) -> Element {
         main = main.child(
             grid().key("settings-view").grid_row(1).child(
                 scroll_viewer()
+                    .name("ReaderPageScroll")
+                    .node_ref(ui.page_scroll)
                     .horizontal_scroll_bar_visibility(ScrollBarVisibility::Disabled)
                     .vertical_scroll_bar_visibility(ScrollBarVisibility::Auto)
                     .child(

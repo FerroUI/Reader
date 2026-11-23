@@ -9,6 +9,7 @@ use reader_state::AppViewModel;
 use std::rc::Rc;
 
 pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64, selected: bool) -> Element {
+    let subdued = article.read && !selected;
     let (fingerprint, blocks) =
         cache::project(article.reading_content(), article.reading_base_url());
     let mut body = stack_panel()
@@ -17,7 +18,18 @@ pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64, selected: bool) 
         .horizontal_alignment(H::Left)
         .spacing(14.0);
     if blocks.is_empty() {
-        body = body.child(reader_controls::paragraph(article.summary.clone()));
+        body = body.child(text::view(
+            vm.clone(),
+            &[reader_content::projection::Span {
+                text: article.summary.clone(),
+                ..Default::default()
+            }],
+            size,
+            0,
+            false,
+            subdued,
+            format!("{}-{fingerprint}-summary", article.id),
+        ));
     }
     for (index, block) in blocks.iter().enumerate() {
         let key = format!("{}-{fingerprint}-{index}", article.id);
@@ -26,7 +38,7 @@ pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64, selected: bool) 
             continue;
         }
         if let Some(table) = &block.table {
-            body = body.child(table::view(vm.clone(), table, size, &key));
+            body = body.child(table::view(vm.clone(), table, size, subdued, &key));
             continue;
         }
         if block.rule {
@@ -39,7 +51,7 @@ pub fn view(vm: Rc<AppViewModel>, article: &Article, size: f64, selected: bool) 
             size,
             block.heading,
             block.pre,
-            article.read && !selected,
+            subdued,
             key,
         );
         let content = if block.pre {

@@ -158,6 +158,7 @@ impl AppState {
                 }
             }
             Action::SetSettings(mut settings) => {
+                crate::validate_send_to(&mut settings.send_to)?;
                 if !settings.font_size.is_finite() {
                     return Err("Text size must be a finite number.".into());
                 }

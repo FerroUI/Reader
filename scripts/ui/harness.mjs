@@ -24,7 +24,7 @@ export function expectedNetworkFailure(entry, scope) {
 // Real browser input is delivered to the compiled FerroUI control tree.
 export async function createHarness(site, output, {beforeNavigate} = {}) {
   await mkdir(output, { recursive: true });
-  const page = await open(site, { query: "?nooffline=1", width: 1363, height: 936, network: true, navigate: false });
+  const page = await open(site, { query: "?nooffline=1", width: 1363, height: 936, network: true, navigate: false, chromeArgs: ["--enable-automation"] });
   const snapshot = async () => JSON.parse(await page.evaluate("readerApp.inspectView()"));
   const state = async () => JSON.parse(await page.evaluate("readerApp.exportData()"));
   const expectedErrors = new Map(), networkScopes = new Set();

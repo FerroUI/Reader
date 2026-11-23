@@ -4,6 +4,8 @@ mod extent;
 mod geometry;
 mod input;
 mod metrics;
+mod page;
+mod page_policy;
 mod panel;
 
 use crate::session::{Panel, Session};
@@ -11,6 +13,7 @@ use ferroui_base::threading::{Dispatcher, DispatcherPriority};
 use ferroui_base::{Point, Ref, WeakRef};
 use ferroui_controls::{Control, ListBox};
 pub use input::attach;
+pub(crate) use page::page;
 use reader_domain::{View, ViewMode};
 use reader_state::AppViewModel;
 use std::{

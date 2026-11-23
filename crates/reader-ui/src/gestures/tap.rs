@@ -12,6 +12,16 @@ use std::rc::Rc;
 /// A mounted hook outlives its recycled row: resolve the current article tag at
 /// input time instead of retaining the item that first created this control.
 pub(crate) fn attach_article_tap(control: &Ref<Control>, vm: Rc<AppViewModel>) {
+    attach_tap(control, vm, false);
+}
+
+/// The compact headline toggles list expansion, while a body tap only selects.
+/// Resolve the article through the live visual tree after row recycling.
+pub(crate) fn attach_headline_tap(control: &Ref<Control>, vm: Rc<AppViewModel>) {
+    attach_tap(control, vm, true);
+}
+
+fn attach_tap(control: &Ref<Control>, vm: Rc<AppViewModel>, headline: bool) {
     let mouse_vm = vm.clone();
     let mouse_control = control.downgrade();
     let pressed = control.add_handler_with(
@@ -22,7 +32,7 @@ pub(crate) fn attach_article_tap(control: &Ref<Control>, vm: Rc<AppViewModel>) {
                 && (!event.handled() || body_text_source(event.source()).is_some())
             {
                 if let Some(id) = mouse_control.upgrade().as_ref().and_then(current_article) {
-                    mouse_vm.select(Some(id));
+                    select(&mouse_vm, id, headline);
                 }
             }
         },
@@ -44,7 +54,7 @@ pub(crate) fn attach_article_tap(control: &Ref<Control>, vm: Rc<AppViewModel>) {
                     .is_some_and(|text| text.cast::<RichTextBlock>().is_some())
             {
                 if let Some(id) = text_control.upgrade().as_ref().and_then(current_article) {
-                    text_vm.select(Some(id));
+                    select(&text_vm, id, headline);
                 }
             }
         },
@@ -58,7 +68,7 @@ pub(crate) fn attach_article_tap(control: &Ref<Control>, vm: Rc<AppViewModel>) {
             && event.initial_press_mouse_button() == MouseButton::Left
         {
             if let Some(id) = touch_control.upgrade().as_ref().and_then(current_article) {
-                vm.select(Some(id));
+                select(&vm, id, headline);
             }
         }
     });
@@ -70,6 +80,17 @@ pub(crate) fn attach_article_tap(control: &Ref<Control>, vm: Rc<AppViewModel>) {
             control.remove_handler(InputElement::pointer_released_event(), released);
         }
     });
+}
+
+fn select(vm: &AppViewModel, id: Id, headline: bool) {
+    if headline
+        && vm.state().settings.view_mode == reader_domain::ViewMode::List
+        && vm.selected() == Some(id)
+    {
+        vm.select(None);
+    } else {
+        vm.select(Some(id));
+    }
 }
 
 /// Native text controls handle their press to establish selection/capture.

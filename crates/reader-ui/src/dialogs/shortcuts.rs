@@ -55,7 +55,7 @@ fn view(wide: bool) -> Element {
                 ("o / Enter", "Expand / collapse item (list only)"),
                 ("m", "Mark item read / unread"),
                 ("Shift + a", "Mark all as read"),
-                ("Shift + t", "Send item"),
+                ("Shift + t", "Send to menu"),
             ],
         ),
     ];

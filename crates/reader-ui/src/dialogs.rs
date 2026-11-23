@@ -27,6 +27,9 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     if panel == Panel::Shortcuts {
         return shortcuts::overlay(ui, &vm);
     }
+    if let Panel::SendToMenu(id) = panel {
+        return crate::send_to::popup(vm, ui, id);
+    }
     let popup = desktop_popup(&vm, &ui);
     if panel == Panel::Subscribe && popup {
         return subscribe::popup(vm, ui);
@@ -43,6 +46,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let focus_dialog = matches!(
         panel,
         Panel::Preferences
+            | Panel::SendToSettings
             | Panel::Subscriptions
             | Panel::ImportExport
             | Panel::About
@@ -61,6 +65,9 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         Panel::GoToSubscription => "Go to a subscription",
         Panel::GoToTag => "Go to a tag or folder",
         Panel::ImportExport => "Import/Export",
+        Panel::SendToSettings => "Send to",
+        Panel::EditSendTo(_) => "Custom Send to link",
+        Panel::SendToMenu(_) => "Send to",
         Panel::Tags(_) => "Edit tags",
         Panel::Note(_) => "Add a note",
         Panel::Rename(_) => "Rename subscription",
@@ -74,7 +81,7 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     };
     let width: f64 = if matches!(
         panel,
-        Panel::Shortcuts | Panel::Subscriptions | Panel::Preferences
+        Panel::Shortcuts | Panel::Subscriptions | Panel::Preferences | Panel::SendToSettings
     ) {
         760.0
     } else {
@@ -86,6 +93,8 @@ pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         Panel::Subscriptions => settings::subscriptions(vm.clone(), ui.clone()),
         Panel::Preferences => settings::preferences(vm.clone(), ui.clone()),
         Panel::ImportExport => settings::import_export(vm.clone()),
+        Panel::SendToSettings => settings::send_to(vm.clone(), ui.clone()),
+        Panel::EditSendTo(id) => settings::edit_send_to(vm.clone(), ui.clone(), id),
         Panel::About => about(),
         Panel::GoToSubscription => navigate::view(vm.clone(), ui.clone(), false),
         Panel::GoToTag => navigate::view(vm.clone(), ui.clone(), true),

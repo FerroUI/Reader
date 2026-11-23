@@ -12,7 +12,7 @@ use std::rc::Rc;
 
 pub fn view(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     match vm.view() {
-        View::Trends => trends(vm),
+        View::Trends => trends(vm, ui),
         View::Explore => explore(vm, ui),
         _ => welcome(vm, ui),
     }
@@ -140,9 +140,10 @@ fn welcome(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         } else {
             (13.0, 28.0, 46.0, 32.0)
         },
+        &ui,
     )
 }
-fn trends(vm: Rc<AppViewModel>) -> Element {
+fn trends(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let narrow = crate::responsive::narrow(&vm);
     let columns = if narrow { "*,48,48,56" } else { "*,80,80,100" };
     let data = vm.trends();
@@ -202,7 +203,7 @@ fn trends(vm: Rc<AppViewModel>) -> Element {
             TextBlock{Grid.column:3,text:format!("{:.0}%",feed.percent),vertical_alignment:V::Center}
         }});
     }
-    scroll(content.into(), narrow)
+    scroll(content.into(), narrow, &ui)
 }
 fn explore(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let narrow = crate::responsive::narrow(&vm);
@@ -252,9 +253,9 @@ fn explore(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         })}}
     }});
     }
-    scroll(content.into(), narrow)
+    scroll(content.into(), narrow, &ui)
 }
-fn scroll(content: Element, narrow: bool) -> Element {
+fn scroll(content: Element, narrow: bool, ui: &Session) -> Element {
     scroll_inset(
         content,
         if narrow {
@@ -262,10 +263,13 @@ fn scroll(content: Element, narrow: bool) -> Element {
         } else {
             (24.0, 26.0, 36.0, 32.0)
         },
+        ui,
     )
 }
-fn scroll_inset(content: Element, padding: (f64, f64, f64, f64)) -> Element {
+fn scroll_inset(content: Element, padding: (f64, f64, f64, f64), ui: &Session) -> Element {
     scroll_viewer()
+        .name("ReaderPageScroll")
+        .node_ref(ui.page_scroll)
         .horizontal_scroll_bar_visibility(ScrollBarVisibility::Disabled)
         .vertical_scroll_bar_visibility(ScrollBarVisibility::Auto)
         .child(border().padding(padding).child(content))

@@ -1,6 +1,6 @@
 # Google Reader reference specification
 
-The visual reference is the final desktop Google Reader client from 2011–2013, using its light appearance. Research was checked on 22 November 2026. The Material theme supplies FerroUI's underlying control behavior; Reader resources and templates supply the historical appearance.
+The visual reference is the final desktop Google Reader client from 2011–2013, using its light appearance. Research was checked on 22–23 November 2026. The Material theme supplies FerroUI's underlying control behavior; Reader resources and templates supply the historical appearance.
 
 ## Primary reference
 
@@ -10,7 +10,7 @@ Reader's implementation in this repository is original Rust using FerroUI. The p
 
 The following publicly served reference resources provide exact values:
 
-- [Main stylesheet](https://readerisdead.com/reader/ui/2139832829-en-scroll.css).
+- [Main stylesheet at the preserved source revision](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/2139832829-en-scroll.css), also [served by the archive](https://readerisdead.com/reader/ui/2139832829-en-scroll.css).
 - [Preserved final client behavior](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/3564210627-en-scroll.js).
 - [Comfortable density](https://readerisdead.com/reader/ui/2159580021-en-scroll_large_density.css).
 - [Cozy density](https://readerisdead.com/reader/ui/1771541332-en-scroll_medium_density.css).
@@ -35,7 +35,9 @@ Values below are read from the preserved density stylesheets, in CSS pixels. Ren
 | Expanded article inner padding | 20 | 10 | 5 |
 | Expanded article top/bottom margin | 20 / 40 | 10 / 20 | 5 / 10 |
 
-The default density is Comfortable. The separate top search header is 60 pixels high. The sidebar collapse strip is 8 pixels wide. Sidebar entries use 21-pixel line heights; primary section headings use 30 pixels. Collapsed source labels occupy approximately 11 em, followed by the title/snippet and a right-aligned date. Expanded article titles and bodies have a maximum width of 650 pixels.
+The default density is Comfortable. The separate top search header is 60 pixels high. The sidebar collapse strip is 8 pixels wide. Sidebar entries use 21-pixel line heights; primary section headings use 30 pixels. Collapsed source labels occupy approximately 11 em, followed by the title/snippet and a right-aligned date. Expanded article titles and bodies normally have a maximum width of 650 pixels; the original body-width exception when the sidebar is hidden is recorded below.
+
+The margin row transcribes the CSS declarations on `#entries.cards .entry`. Adjacent vertical block margins collapse in the reference: the native layout must reproduce their resulting gap rather than add both CSS values together. The density-specific headline heights exclude the containing entry's bottom separator. For an expanded list entry, the headline's content height becomes 36/30/26 pixels and gains a 1-pixel bottom rule, retaining its previous headline footprint. These are the `#entries.list .entry .collapsed` and `#entries.list #current-entry.expanded .collapsed` rules in each density stylesheet.
 
 ## Typography, colors and states
 
@@ -63,7 +65,36 @@ Selected navigation uses a slim red edge and red text. Toolbar buttons are compa
 
 Standard buttons use a `#f5f5f5` to `#f1f1f1` gradient, `#dcdcdc` border and `#444444` text. Subscribe uses uppercase white text with a `#dd4b39` to `#d14836` gradient, minimum width 80 pixels and height 27 pixels. Search uses a `#4d90fe` to `#4787ed` gradient and `#3079ed` border. The fallback header has a 250-pixel search field and a 130-pixel scope selector.
 
-In list view, unread titles are bold and read titles regular. Selection and read state are independent. In expanded view the currently selected article retains blue links even after becoming read. Article footers expose star, keep unread, email, tags and send-to actions with approximately 16 pixels between controls.
+In list view, unread titles are bold and read titles regular. Selection and read state are independent. In expanded view the currently selected article retains blue links even after becoming read. Article footers expose star, the configured read-state checkbox, email, tags and enabled send-to destinations with approximately 16 pixels between controls.
+
+### Retained list headline and flush expansion
+
+The [saved client](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/3564210627-en-scroll.js) creates the compact headline in `MH.Ef`. `MH.expand` appends the `tH` article container and `iw` action footer below it; `MH.collapse` removes those appended sections. Expansion keeps the headline and its star, source, title/snippet, date and original-link target. The larger title in `tH` repeats the headline title intentionally. Its star placeholder remains empty in list mode; `xH.pm` fills that placeholder for card mode.
+
+The following rules come from the [preserved main stylesheet](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/2139832829-en-scroll.css):
+
+| Detail | Original rule and meaning |
+|---|---|
+| Flush list entries | `#entries.list .entry` has zero margin/padding and a 1 px `#ccc` bottom separator. Expanding a list item does not introduce card margins. |
+| Headline appearance | `.read .collapsed` is `#eee`; the current collapsed headline is `#ffc`. `#current-entry.expanded .collapsed` returns to white, or `#eee` when read, and adds a `#ebebeb` bottom separator. |
+| Headline typography | Source/date use the inherited approximately 13 px size. `MH.Ef` separates title and snippet with the literal ` - `. Title and snippet share a single line. |
+| Expanded body inset | `#entries.list .entry .entry-container` has a 1 px left edge, `.5em` top padding and `1em` left padding. The duplicated full date is hidden by its `.entry-date` rule. |
+| List footer | `.entry-actions` has a `#ebebeb` top rule, 1 px left edge and padding `6px 0 6px 7px`. The current entry's body/footer left edges become `#4d90f0`. |
+| Card selection | `.card` retains its 1 px `#ddd` frame; `#current-entry .card` changes only the left edge to `#4d90f0`. The reference also has a subtle `0 0 4px #e3e5eb` shadow. |
+
+The native implementation follows this retained-headline structure in `article/headline.rs` and `article.rs`, with card density geometry in `article/layout.rs`. Touch target expansion remains a deliberate narrow/coarse-pointer adaptation.
+
+### Body and hyperlink palette
+
+The [main stylesheet](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/2139832829-en-scroll.css) defines body link color under `.entry-container .entry-body a`, its `.read` override and the more-specific `#current-entry` override:
+
+| Article state | Body | Body links | Source link |
+|---|---|---|---|
+| Unread, current or inactive | `#000000` | `#1155cc` | `#1155cc` |
+| Read and current | `#000000` | `#1155cc` | `#1155cc` |
+| Read and inactive | `#222222` | `#444444` | `#666666` |
+
+Title and source rules remove underlines explicitly; body links retain the normal anchor underline. In the native implementation, paragraph foreground changes update the existing `Hyperlink` objects, including links in table cells. Appearance changes must preserve native paragraph identity, link interaction and the user's text selection; rebuilding the rich document solely to recolor it is not part of the behavior contract.
 
 ## Navigation and menus
 
@@ -74,6 +105,33 @@ The reading toolbar contains refresh, an All items/New items filter, a split Mar
 The Mark all as read dropdown offers all items, items older than a day, older than a week and older than two weeks. The [official feature announcement](https://googlereader.blogspot.com/2009/08/flurry-of-features-for-feed-readers.html) explains the age-based choices and configurable send-to destinations.
 
 Feed settings include newest/oldest/magic sorting, rename, unsubscribe, translation, details/statistics and folder membership. Folder settings include rename/delete and unsubscribe from all. Subscription-section settings include alphabetical/manual ordering, all/updated visibility, favicon/default icon preference, add and manage subscriptions.
+
+### Read-state checkbox
+
+The [saved client's](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/3564210627-en-scroll.js) `aw` chooses `it` when automatic read tracking is enabled and `ht` otherwise. `ct` and `bt` define their respective labels and state transitions; `Gp` names the kept-unread state and `Fp` the read state.
+
+| Preference | Constant checkbox label | Checked meaning | Checking / unchecking |
+|---|---|---|---|
+| Automatic read tracking | Keep unread | Explicitly kept unread, not merely an unread article | Checking adds kept-unread and removes read; unchecking adds read and removes kept-unread. |
+| Manual read tracking | Mark as read | Article is read | Checking adds read and removes kept-unread; unchecking adds kept-unread and removes read. |
+
+The current native footer uses these two checkbox contracts. Its label does not switch between Keep unread and Mark as read solely because the article's read flag changes.
+
+### Configured Send to destinations
+
+The [official August 2009 announcement](https://googlereader.blogspot.com/2009/08/flurry-of-features-for-feed-readers.html) introduced configurable destinations. The [saved client's](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/3564210627-en-scroll.js) `nE` renders the Send to label with a dropdown arrow. `IG` hides that footer control when there are no enabled destinations; `MG` and `FG` combine selected built-in services with configured custom links. `ix.fA` and `zx` connect Shift+T to this menu.
+
+`LG` prepares template values and `KG` substitutes them. The current app implements three original GET-template values:
+
+| Placeholder | Meaning |
+|---|---|
+| `${url}` | Original article address. |
+| `${title}` | Article title, with the original HTML text decoded. |
+| `${source}` | Subscription display name, including the user's rename; this is the title produced by `hw`, not the source site's URL. |
+
+Original GET destinations URL-encode substituted values with `encodeURIComponent`; the current resolver applies that encoding to each value and expands templates once. Reader settings allow creating, editing, enabling, disabling and removing custom destinations. Enabled destinations appear in the article menu and Shift+T. With none enabled, the footer action is absent and Shift+T opens configuration, an explicit usability adaptation.
+
+Current destinations require HTTPS and a fixed host, and use URL navigation after an explicit selection. The original service catalog, service icons, POST forms, URL shortener, and additional body/Google-identifier/escaped-title placeholders are not implemented. Exact historical settings-page layout and wording are not established by the preserved client templates used in this review.
 
 ## Secondary surfaces and interaction details
 
@@ -101,7 +159,7 @@ The Subscribe and tag editors support focused input, Enter to save, Escape to cl
 
 ## Keyboard map
 
-This table transcribes behavior from the preserved final keyboard-help resource. A space-separated sequence means successive keys, not a simultaneous chord. It is the historical map, not a list of every currently implemented destination: the app has no Popular items destination (`g p`), and Shift+T currently invokes host sharing rather than the original custom Send to menu. The in-app help omits the unavailable destination and calls the host action Send item. Current coverage and adaptations are recorded in [parity.md](parity.md#implemented-coverage-and-remaining-differences).
+This table transcribes behavior from the preserved final keyboard-help resource. A space-separated sequence means successive keys, not a simultaneous chord. It is the historical map, not a list of every currently implemented destination: the app has no Popular items destination (`g p`), and its in-app help omits that destination. Shift+T opens configured Send to destinations; host sharing remains a separate adaptation on Shift+S. Current coverage and adaptations are recorded in [parity.md](parity.md#implemented-coverage-and-remaining-differences).
 
 | Shortcut | Action |
 |---|---|
@@ -139,6 +197,26 @@ This table transcribes behavior from the preserved final keyboard-help resource.
 | `?` | Keyboard help |
 
 Shortcut handlers must respect text input, composition, open dialogs and platform modifier keys. A partial `g` sequence expires and unrelated keys cancel it.
+
+### Space and Shift+Space
+
+The [saved client's](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/3564210627-en-scroll.js) `xE` binds Space/Shift+Space to `XG.iu`, while Page Down/Page Up bind directly to `XG.Le`. These are distinct commands:
+
+| Situation | Space | Shift+Space |
+|---|---|---|
+| Stream has no current article | Open the first article. | Leave the cursor unchanged. |
+| Current article's relevant edge is outside the viewport | Page forward until its bottom is visible. | Page backward until its top is visible. |
+| Relevant edge is visible | Open the next article. | Open the previous article; do not wrap before the first. |
+| Last article's bottom is visible | `kE.ju` advances to the next unread subscription-tree occurrence through `iG`, without wrapping. | Apply the ordinary previous-article/top rule. |
+| Home or another non-stream page | Page the active page. | Page the active page backward. |
+
+`XG.Le` moves by the viewport height minus 50 pixels, preserving a reading overlap. The native implementation uses measured or indexed variable-height article geometry, keeps list scans distinct from opening, and uses the subscription cursor's unread traversal at the stream boundary. Page Up/Page Down continue to perform viewport paging.
+
+### Verified magnification and hidden-sidebar differences
+
+The original `wE` binds magnification changes in ten-point steps; `XG.Wp` clamps them to 100–150%. The [stylesheet's](https://github.com/mihaip/readerisdead/blob/0e35cf26e88f27e0a07432182757c1ce230f6936/zombie_reader/static/2139832829-en-scroll.css) `.magnification110` through `.magnification150` rules target `#current-entry` and `.cursor`, not all article bodies. The current `=`/`-` commands instead change the saved global body size within 11–24 pixels. This remains a functional and visual difference.
+
+The same stylesheet's `.lhn-hidden #entries .entry-body` rule raises the body's maximum width to 100% when the sidebar is hidden. The current native body remains capped at 650 pixels in that mode. Hiding the sidebar is implemented, but this full-width reading behavior remains outstanding.
 
 ### Subscription cursor and help overlay
 

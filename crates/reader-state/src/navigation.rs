@@ -77,8 +77,14 @@ impl AppViewModel {
         self.request(HostRequest::ScrollToArticle { id });
     }
     pub fn keep_unread(&self, id: Id) {
-        self.kept_unread.borrow_mut().insert(id);
+        let Some(was_read) = self.state().article(id).map(|article| article.read) else {
+            return;
+        };
+        let added = self.kept_unread.borrow_mut().insert(id);
         self.dispatch(Action::SetRead { id, read: false });
+        if added && !was_read {
+            self.notify();
+        }
     }
     pub fn is_kept_unread(&self, id: Id) -> bool {
         self.kept_unread.borrow().contains(&id)

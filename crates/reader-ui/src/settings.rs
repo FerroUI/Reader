@@ -7,6 +7,10 @@ use reader_domain::{Density, View};
 use reader_state::AppViewModel;
 use std::rc::Rc;
 mod connection;
+mod send_to;
+mod send_to_editor;
+pub use send_to::view as send_to;
+pub use send_to_editor::view as edit_send_to;
 
 pub fn preferences(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
     let settings = vm.state().settings.clone();
@@ -130,8 +134,17 @@ pub fn preferences(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
             },
         ));
     }
+    let customize_send_to = ui.clone();
     form = form
         .child(action_row(fonts, 8.0))
+        .child(separator())
+        .child(text_block().text("Send to").font_weight(FontWeight::Bold))
+        .child(paragraph(
+            "Choose the services shown in an article's Send to menu.",
+        ))
+        .child(action("Customize Send to", move || {
+            customize_send_to.show(Panel::SendToSettings)
+        }))
         .child(separator())
         .child(connection::view(vm, ui));
     form.into()

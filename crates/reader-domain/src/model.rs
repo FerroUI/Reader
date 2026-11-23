@@ -128,6 +128,8 @@ pub struct Settings {
     pub feed_connection: crate::FeedConnection,
     /// Optional trusted CORS endpoint; `{url}` is replaced with the encoded feed URL.
     pub feed_proxy: String,
+    /// Explicit outbound actions; no service is enabled in a fresh library.
+    pub send_to: Vec<crate::SendToDestination>,
 }
 
 impl Default for Settings {
@@ -144,6 +146,7 @@ impl Default for Settings {
             start_page: View::Home,
             feed_connection: crate::FeedConnection::Automatic,
             feed_proxy: String::new(),
+            send_to: Vec::new(),
         }
     }
 }

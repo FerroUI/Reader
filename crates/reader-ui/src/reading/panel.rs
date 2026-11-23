@@ -5,7 +5,10 @@ mod anchors;
 mod changes;
 mod containers;
 mod navigation;
+mod paging;
 mod presenter;
+
+pub(super) use paging::position;
 
 use super::metrics::Metrics;
 use crate::session::Session;

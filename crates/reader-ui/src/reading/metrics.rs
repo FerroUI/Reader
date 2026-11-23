@@ -1,7 +1,6 @@
 use super::geometry::GeometryCache;
 use crate::rows::Row;
 use ferroui_controls::ItemsSourceView;
-use reader_domain::Density;
 use std::ops::{Deref, DerefMut};
 
 /// Cache lifetimes follow the source collection, never the realized window.
@@ -70,6 +69,7 @@ impl PartialEq for RowGeometry {
     fn eq(&self, other: &Self) -> bool {
         let (old, new) = (&self.0, &other.0);
         old.expanded == new.expanded
+            && old.list_mode == new.list_mode
             && old.density == new.density
             && old.font_size == new.font_size
             && old.narrow == new.narrow
@@ -79,6 +79,8 @@ impl PartialEq for RowGeometry {
                     && old.single_source == new.single_source
                     && old.article_loading == new.article_loading
                     && old.article_error == new.article_error
+                    && old.send_to_revision == new.send_to_revision
+                    && old.auto_read == new.auto_read
                     && old.article.has_full_content() == new.article.has_full_content()
                     && old.article.show_full_content == new.article.show_full_content
                     && old.article.title == new.article.title
@@ -92,16 +94,7 @@ impl PartialEq for RowGeometry {
 
 fn estimate(row: &Row, width: f64) -> f64 {
     if !row.expanded {
-        return 1.0
-            + if row.touch {
-                44.0
-            } else {
-                match row.density {
-                    Density::Comfortable => 37.0,
-                    Density::Cozy => 31.0,
-                    Density::Compact => 27.0,
-                }
-            };
+        return 1.0 + crate::article::headline_height(row);
     }
     let text_width = (width - if row.narrow { 24.0 } else { 48.0 }).clamp(160.0, 650.0);
     let characters_per_line = (text_width / (row.font_size * 0.49)).max(12.0);

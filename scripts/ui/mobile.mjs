@@ -11,6 +11,16 @@ async function visibleRow(h) {
   assert(row, "an article row must be visible for touch input");
   return row;
 }
+async function headlineBackgroundPoint(h, row) {
+  const view = await h.snapshot();
+  const date = view.elements.find(e => e.name === "ArticleHeadlineDate"
+    && e.x >= row.x && e.x + e.width <= row.x + row.width
+    && e.y >= row.y && e.y + e.height <= row.y + row.height);
+  assert(date, "the headline date identifies the non-button tap region");
+  // Stay below its glyphs but within its column: the far-right 44px region
+  // now belongs to the independent View original action.
+  return [date.x + date.width / 2, row.y + row.height - 8];
+}
 async function settledScroll(h) {
   let last = -1;
   let stable = 0;
@@ -75,7 +85,7 @@ export async function mobileChecks(h, check) {
       await h.until(async () => (await h.state()).settings.view_mode === "List", "phone list view");
       const row = await visibleRow(h);
       assert(row.height >= 44, "touch article rows need a 44px target");
-      const from = [row.x + row.width - 28, row.y + row.height / 2];
+      const from = await headlineBackgroundPoint(h, row);
       const beforeOffset = (await h.snapshot()).articleScroll.offsetY;
       await touch.start(from);
       await sleep(60);
@@ -88,7 +98,7 @@ export async function mobileChecks(h, check) {
 
       const canceled = await visibleRow(h);
       // Tap below the date's glyphs: the entire 44px row is the target.
-      const point = [canceled.x + canceled.width - 28, canceled.y + canceled.height - 8];
+      const point = await headlineBackgroundPoint(h, canceled);
       await touch.start(point);
       await touch.cancel();
       await sleep(120);
@@ -115,8 +125,8 @@ export async function mobileChecks(h, check) {
       await h.until(async () => (await h.snapshot()).elements.some(e => e.name === "ArticleEntry" && e.articleId === canceled.articleId), "headline expands in place");
       assert.equal(readCount(await h.state()), 1);
       await h.capture("08-mobile-reading");
-      await touch.tapControl(await h.control(e => /Button$/.test(e.type) && e.automationName === "Keep unread", "in-place Keep unread"));
-      await h.until(async () => readCount(await h.state()) === 0, "touch Keep unread");
+      await touch.tapControl(await h.control(e => e.name === "ArticleReadState" && e.automationName === "Mark as read", "in-place read state"));
+      await h.until(async () => readCount(await h.state()) === 0, "touch read-state checkbox marks the item unread");
     });
 
     await check("browser Back dismisses mobile overlays before changing streams", async () => {

@@ -100,6 +100,7 @@ impl AppState {
         }
         self.trim_article_cache(None);
         self.folders = clean_names(std::mem::take(&mut self.folders));
+        crate::validate_send_to(&mut self.settings.send_to)?;
         self.settings.font_size = if self.settings.font_size.is_finite() {
             self.settings.font_size.clamp(11.0, 26.0)
         } else {

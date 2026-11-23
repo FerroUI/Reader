@@ -14,6 +14,7 @@ mod menus;
 mod reading;
 mod responsive;
 mod rows;
+mod send_to;
 mod session;
 mod settings;
 mod shell;

@@ -3,7 +3,7 @@ use crate::session::{Panel, Session};
 pub use attach::attach;
 use ferroui_base::input::{Key, KeyEventArgs, KeyModifiers};
 use ferroui_base::threading::{Dispatcher, DispatcherPriority};
-use ferroui_controls::{Control, ScrollViewer, TextBox};
+use ferroui_controls::{Control, TextBox};
 use reader_domain::{View, ViewMode};
 use reader_state::AppViewModel;
 
@@ -139,7 +139,7 @@ fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
         }
         Key::T if shift => {
             if let Some(id) = vm.cursor().or(vm.selected()) {
-                vm.share_article(id);
+                crate::send_to::open(vm, ui, id);
             }
         }
         Key::S => {
@@ -216,21 +216,7 @@ fn handle(vm: &AppViewModel, ui: &Session, event: &KeyEventArgs) {
                 DispatcherPriority::BACKGROUND,
             );
         }
-        Key::Space => {
-            crate::reading::user_scroll();
-            if let Some(list) = ui.article_list.get_untracked() {
-                if let Some(scroll) = list
-                    .get_visual_descendants()
-                    .find_map(|v| v.cast::<ScrollViewer>())
-                {
-                    if shift {
-                        scroll.page_up();
-                    } else {
-                        scroll.page_down();
-                    }
-                }
-            }
-        }
+        Key::Space => crate::reading::page(vm, ui, !shift),
         _ => return,
     }
     event.set_handled(true);

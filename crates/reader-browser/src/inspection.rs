@@ -3,8 +3,8 @@ mod rich_text;
 
 use ferroui_base::{input::InputElement, Point, Visual};
 use ferroui_controls::{
-    automation::AutomationProperties, Application, Button, Control, ListBox, MenuItem,
-    RichTextBlock, ScrollViewer, TextBlock, TextBox,
+    automation::AutomationProperties, primitives::ToggleButton, Application, Border, Button,
+    Control, ListBox, MenuItem, RichTextBlock, ScrollViewer, TextBlock, TextBox,
 };
 use serde_json::json;
 use wasm_bindgen::prelude::*;
@@ -92,14 +92,31 @@ pub fn inspect_view() -> String {
             })));
             Some(
                 json!({"type":visual.get_type().name(),"name":name,"text":text,
+            "foreground":visual.cast::<TextBlock>().and_then(|text|rich_text::foreground(text.foreground()))
+                .or_else(||visual.cast::<RichTextBlock>().and_then(|text|rich_text::foreground(text.foreground()))),
+            "fontSize":visual.cast::<TextBlock>().map(|text|text.font_size()),
+            "headlineRuns":visual.cast::<TextBlock>().filter(|text|text.has_name("ArticleHeadlineText"))
+                .and_then(|text|text.inlines()).map(|inlines|inlines.snapshot().iter().map(|inline|{
+                    let mut text = String::new();
+                    inline.append_text(&mut text);
+                    json!({"text":text,"weight":inline.font_weight().0,
+                        "foreground":rich_text::foreground(inline.foreground())})
+                }).collect::<Vec<_>>()),
+            "border":visual.cast::<Border>().map(|border|{
+                let thickness=border.border_thickness();
+                json!({"brush":rich_text::foreground(border.border_brush()),
+                    "left":thickness.left,"top":thickness.top,"right":thickness.right,"bottom":thickness.bottom})
+            }),
             "automationName":AutomationProperties::get_name(&visual),"articleId":article_id,
             "treeCursor":visual.classes().contains("keyboard-cursor"),
+            "checked":visual.cast::<ToggleButton>().and_then(|toggle|toggle.is_checked()),
             "focused":visual.cast::<InputElement>().is_some_and(|i|i.is_focused()),
             "scroll":visual.cast::<ScrollViewer>().map(|scroll|json!({
                 "offsetX":scroll.offset().x,"offsetY":scroll.offset().y,
                 "viewportWidth":scroll.viewport().width,"viewportHeight":scroll.viewport().height,
                 "extentWidth":scroll.extent().width,"extentHeight":scroll.extent().height})),
             "textSelection":selection,
+            "richText":visual.cast::<RichTextBlock>().map(|text|rich_text::identity(&text)),
             "links":visual.cast::<RichTextBlock>().map(|text|rich_text::links(&text,p)),
             "x":p.x,"y":p.y,"width":b.width,"height":b.height,"hit":hit}),
             )

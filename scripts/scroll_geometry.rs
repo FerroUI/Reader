@@ -4,3 +4,5 @@
 mod extent;
 #[path = "../crates/reader-ui/src/reading/geometry.rs"]
 mod geometry;
+#[path = "../crates/reader-ui/src/reading/page_policy.rs"]
+mod page_policy;

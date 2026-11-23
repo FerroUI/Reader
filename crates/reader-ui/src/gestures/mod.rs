@@ -5,4 +5,4 @@ pub(crate) mod motion;
 mod tap;
 
 pub(crate) use guard::{attach, cancel_active};
-pub(crate) use tap::attach_article_tap;
+pub(crate) use tap::{attach_article_tap, attach_headline_tap};
