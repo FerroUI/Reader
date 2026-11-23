@@ -134,6 +134,7 @@ export async function readingScaleChecks(h, check) {
         "native hyperlink hit bounds follow the enlarged glyph layout");
       assert.deepEqual((await h.state()).settings, saved.settings, "magnification does not rewrite persistent settings");
       assert.deepEqual((await h.state()).articles, saved.articles, "magnification does not mark another article read");
+      await h.capture("17-reading-magnification");
       await h.page.press("n");
       view = await settled(h);
       near(paragraph(view, "Magnification selection").fontSize, 16, "the previous current article returns to its base size");
@@ -150,7 +151,6 @@ export async function readingScaleChecks(h, check) {
       for (let i = 0; i < 6; i++) await h.page.press("-");
       view = await settled(h);
       near(paragraph(view, "Inactive paragraph 1").fontSize, 16, "magnification stops at 100%");
-      await h.capture("17-reading-magnification");
     });
 
     await check("list magnification retains density, source/date layout and current-only expansion", async () => {
@@ -188,11 +188,17 @@ export async function readingScaleChecks(h, check) {
       let view = await prepare(h, data);
       view = await settled(h);
       const normal = paragraph(view, "Wide reading body"), original = identity(normal);
-      near(normal.width, 650, "sidebar-visible article body keeps the original 650px cap", 1);
+      const normalBody = child(view, "ArticleBody", item(view, "ArticleEntry", BASE));
+      assert(normalBody, "the wide reading fixture has a native article body");
+      assert.equal(normalBody.maxWidth, 650, "the sidebar-visible native body retains the exact 650px cap");
+      assert(normalBody.width > 0 && normalBody.width <= 650 && within(normal, normalBody),
+        "naturally measured text stays within the configured body cap");
       await h.page.press("u"); sidebarHidden = true;
       view = await h.until(async () => {
         const view = await h.snapshot();
-        return paragraph(view, "Wide reading body")?.width > 1000 && view;
+        const body = child(view, "ArticleBody", item(view, "ArticleEntry", BASE));
+        return body?.maxWidth === null && body.width > 1000
+          && paragraph(view, "Wide reading body")?.width > 1000 && view;
       }, "hidden subscriptions release the full article body width");
       assert.deepEqual(identity(paragraph(view, "Wide reading body")), original);
       const title = view.elements.find(e => /TextBlock$/.test(e.type) && e.text === data.articles[0].title);
@@ -200,11 +206,18 @@ export async function readingScaleChecks(h, check) {
       assert(paragraph(view, "Wide reading body").height < normal.height, "text reflows into the newly available width");
       await h.capture("17-wide-reading-body");
       await h.page.press("u"); sidebarHidden = false;
-      await h.until(async () => Math.abs(paragraph(await h.snapshot(), "Wide reading body")?.width - 650) < 1,
-        "restoring subscriptions restores the body width cap");
+      await h.until(async () => {
+        const view = await h.snapshot(), body = child(view, "ArticleBody", item(view, "ArticleEntry", BASE));
+        const text = paragraph(view, "Wide reading body");
+        return body?.maxWidth === 650 && Math.abs(body.width - normalBody.width) < 1
+          && text && Math.abs(text.width - normal.width) < 1;
+      }, "restoring subscriptions restores the exact cap and the original measured text width");
       await h.page.press("f"); focusMode = true;
-      await h.until(async () => paragraph(await h.snapshot(), "Wide reading body")?.width > 1000,
-        "focus mode uses the same wider-body rule");
+      await h.until(async () => {
+        const view = await h.snapshot(), body = child(view, "ArticleBody", item(view, "ArticleEntry", BASE));
+        return body?.maxWidth === null && body.width > 1000
+          && paragraph(view, "Wide reading body")?.width > 1000;
+      }, "focus mode uses the same wider-body rule");
       await h.page.press("f"); focusMode = false;
     });
 

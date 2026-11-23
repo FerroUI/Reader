@@ -96,6 +96,8 @@ pub fn inspect_view() -> String {
                 .or_else(||visual.cast::<RichTextBlock>().and_then(|text|rich_text::foreground(text.foreground()))),
             "fontSize":visual.cast::<TextBlock>().map(|text|text.font_size())
                 .or_else(||visual.cast::<RichTextBlock>().map(|text|text.font_size())),
+            "maxWidth":visual.cast::<Control>().map(|control|control.max_width())
+                .filter(|width|width.is_finite()),
             "headlineRuns":visual.cast::<TextBlock>().filter(|text|text.has_name("ArticleHeadlineText"))
                 .and_then(|text|text.inlines()).map(|inlines|inlines.snapshot().iter().map(|inline|{
                     let mut text = String::new();
