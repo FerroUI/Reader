@@ -43,6 +43,7 @@ pub(super) fn row(
             Button {Grid.column:1,name:"SubscriptionFolder",class:row_class(selected,keyboard_cursor),
                 horizontal_content_alignment:H::Stretch,automation_properties_name:name.to_owned(),context_menu:context,
                 with:move |button|{
+                    menus::attach_context_keys(button);
                     let vm=hold_vm.clone();
                     let name=held_name.clone();
                     crate::gestures::attach_held_menu(button,Rc::new(move||vm.library_generation()==held_generation && vm.folders().contains(&name)));

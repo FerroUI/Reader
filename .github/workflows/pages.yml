@@ -159,6 +159,15 @@ jobs:
           path: target/ui-smoke
           retention-days: 7
           if-no-files-found: warn
+      # Keep the exact failed executable available for local interaction debugging.
+      - name: Preserve browser build after a failed verification
+        if: failure() && (contains(github.event.head_commit.message, '[verify-ui]') || inputs.verify_ui)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: reader-browser-debug
+          path: target/browser/reader-browser
+          retention-days: 1
+          if-no-files-found: warn
       - uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
           path: target/browser/reader-browser

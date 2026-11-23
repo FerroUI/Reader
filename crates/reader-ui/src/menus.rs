@@ -1,9 +1,11 @@
+mod keyboard;
 mod opening;
 mod pointer;
 use ferroui_base::input::{ContextRequestedEventArgs, Key};
 use ferroui_base::Rect;
 use ferroui_controls::{Button, Control, MenuItemToggleType};
 use ferroui_view::prelude::*;
+pub(crate) use keyboard::attach_context_keys;
 use reader_state::AppViewModel;
 
 pub fn item(label: &str, action: impl Fn() + 'static) -> Element {

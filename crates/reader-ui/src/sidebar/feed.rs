@@ -59,7 +59,7 @@ pub(super) fn feed_row(
     border().key(format!("feed:{group}:{id}")).border_thickness((3.0,0.0,0.0,0.0)).border_brush(if selected{"#DD4B39"}else{"Transparent"}).child(
         grid().name("SubscriptionRow").with(move|control|crate::drag::attach_row_target(&control.clone().upcast(),target_vm.clone(),id,target_folder.clone())).child(
         button().name("SubscriptionLink").with(move |button|crate::drag::attach_source(button,drag_vm.clone(),id)).class(row_class(selected,keyboard_cursor)).height(if crate::responsive::touch(&vm){44.0}else{23.0}).padding((inset-3.0,0.0,12.0,0.0)).horizontal_content_alignment(H::Stretch)
-        .automation_properties_name(format!("{} ({} unread)",feed.title,crate::format::unread(count))).tool_tip_tip(feed.error.clone().unwrap_or_else(||feed.url.clone())).context_menu(menu)
+        .automation_properties_name(format!("{} ({} unread)",feed.title,crate::format::unread(count))).tool_tip_tip(feed.error.clone().unwrap_or_else(||feed.url.clone())).context_menu(menu).with(menus::attach_context_keys)
         .on_click(move |_|{if crate::drag::consume_click(id){return;}cursor::open(&go,&go_ui,go_node.clone());}).child(rsx!{
             Grid {column_definitions:"20,*,Auto",
                 {icon(Icon::Feed,12.0,if feed.error.is_some(){"#DD4B39"}else{"#E89437"})}

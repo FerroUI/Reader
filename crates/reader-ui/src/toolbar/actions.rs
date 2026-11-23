@@ -100,11 +100,13 @@ pub(super) fn sort_menu(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Element {
         View::Folder(_) => "Folder settings",
         _ => "View settings",
     };
-    menus::attach(
-        &vm,
-        reader_controls::dropdown(label).width(115.0),
-        sort_items(vm.clone(), ui),
-    )
+    let settings = reader_controls::dropdown(label);
+    let settings = if matches!(vm.view(), View::Folder(_)) {
+        settings.min_width(132.0)
+    } else {
+        settings.width(115.0)
+    };
+    menus::attach(&vm, settings, sort_items(vm.clone(), ui))
 }
 fn sort_items(vm: Rc<AppViewModel>, ui: Rc<Session>) -> Vec<Element> {
     let order = vm.state().settings.sort;

@@ -33,7 +33,9 @@ export async function folderChecks(h, check, site) {
       assert.deepEqual(JSON.parse(await h.page.evaluate("readerApp.currentView()")), {Feed: BASE + 2});
       await h.click(element => folder(element), "open folder from its navigation row");
       await keyboardContext(h);
-      await itemState(h, "Rename folder...", {enabled: true});
+      await itemState(h, "Refresh folder", {enabled: true, selected: true, focused: true});
+      await h.page.press("ArrowDown");
+      await itemState(h, "Rename folder...", {enabled: true, selected: true, focused: true});
       await dismiss(h);
       await h.clickLabel("Folder settings");
       await itemState(h, "Delete folder...", {enabled: true});
