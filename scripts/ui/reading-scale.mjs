@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { sleep } from "../../FerroUI/scripts/browser/harness.mjs";
 
 const BASE = 590000;
 const replace = (h, data) => h.page.evaluate(`readerApp.importData(${JSON.stringify(JSON.stringify(data))})`);
@@ -10,6 +11,17 @@ const near = (actual, expected, label, tolerance = 0.05) => assert(Math.abs(actu
 const within = (e, parent) => e.x >= parent.x - 1 && e.y >= parent.y - 1
   && e.x + e.width <= parent.x + parent.width + 1 && e.y + e.height <= parent.y + parent.height + 1;
 const child = (view, name, parent) => view.elements.find(e => e.name === name && within(e, parent));
+
+// The generic single-character helper omits physical metadata for '='. Reader
+// resolves this shortcut from Equal, while Shift+Equal produces the '+' key.
+async function pressEqual(h, shift = false) {
+  const key = shift ? "+" : "=";
+  const base = {key, code: "Equal", windowsVirtualKeyCode: 187, nativeVirtualKeyCode: 187,
+    modifiers: shift ? 8 : 0};
+  await h.page.send("Input.dispatchKeyEvent", {type: "keyDown", ...base, text: key});
+  await h.page.send("Input.dispatchKeyEvent", {type: "keyUp", ...base});
+  await sleep(80);
+}
 
 function fixture(baseline, count = 2) {
   const data = structuredClone(baseline), now = Math.floor(Date.now() / 1000);
@@ -86,7 +98,7 @@ export async function readingScaleChecks(h, check) {
     await check("current-article magnification preserves the base preference and native text selection", async () => {
       const data = fixture(baseline);
       await prepare(h, data);
-      await h.page.press("=");
+      await pressEqual(h);
       let view = await settled(h);
       near(paragraph(view, "Magnification selection").fontSize, 16,
         "changing magnification without a current item leaves all bodies at base size");
@@ -103,7 +115,7 @@ export async function readingScaleChecks(h, check) {
       const original = identity(originalBlock);
       const saved = await h.state();
       for (const percent of [110, 120, 130, 140, 150, 150]) {
-        await h.page.press("=");
+        await pressEqual(h, percent === 120);
         view = await h.until(async () => {
           const view = await h.snapshot(), block = paragraph(view, "Magnification selection");
           return block && Math.abs(block.fontSize - 16 * percent / 100) < 0.05 && view;
@@ -129,7 +141,7 @@ export async function readingScaleChecks(h, check) {
       assert.deepEqual(identity(paragraph(view, "Magnification selection")), original);
       assert.deepEqual(paragraph(view, "Magnification selection").textSelection, selection);
       await h.clickName("SearchReader");
-      await h.page.press("="); await h.page.press("-");
+      await pressEqual(h); await h.page.press("-");
       view = await h.snapshot();
       near(paragraph(view, "Inactive paragraph 1").fontSize, 24, "typing punctuation in Search does not run magnification commands");
       assert.equal(item(view, "SearchReader").text, "=-");
@@ -145,7 +157,7 @@ export async function readingScaleChecks(h, check) {
       const data = fixture(baseline);
       await prepare(h, data, "List");
       await h.page.press("n");
-      for (let i = 0; i < 5; i++) await h.page.press("=");
+      for (let i = 0; i < 5; i++) await pressEqual(h);
       let view = await settled(h), row = item(view, "ArticleRow", BASE);
       near(row.height, 37, "magnification leaves the original fixed headline height intact");
       for (const name of ["ArticleHeadlineText", "ArticleHeadlineSource", "ArticleHeadlineDate"])
@@ -221,7 +233,7 @@ export async function readingScaleChecks(h, check) {
         assert.deepEqual((await h.state()).articles, saved.articles, "layout reflow does not alter read state");
         return view;
       };
-      for (let i = 0; i < 3; i++) await h.page.press("=");
+      for (let i = 0; i < 3; i++) await pressEqual(h);
       await anchored("magnification preserves the reading paragraph's viewport position");
       await h.page.press("u"); sidebarHidden = true;
       await anchored("sidebar hiding preserves the reading paragraph's viewport position");

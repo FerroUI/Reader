@@ -1,4 +1,5 @@
 mod opening;
+mod pointer;
 use ferroui_base::input::{ContextRequestedEventArgs, Key};
 use ferroui_base::Rect;
 use ferroui_controls::{Button, Control, MenuItemToggleType};
@@ -59,6 +60,7 @@ pub fn context(vm: &AppViewModel, items: Vec<Element>) -> Element {
     let mut menu = context_menu()
         .name("ReaderMenu")
         .with(crate::transient::attach_menu)
+        .with(pointer::attach)
         .class(if crate::responsive::touch(vm) {
             "reader-touch"
         } else {

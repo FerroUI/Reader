@@ -134,14 +134,24 @@ export async function menuPolishChecks(h, check) {
       await itemState(h, "List view", {checked: true});
       await itemState(h, "Sort by oldest", {checked: true});
       await dismiss(h);
+      const opener = await h.control(element => /Button$/.test(element.type) && element.automationName === "More actions", "the restored More actions button");
+      await h.until(async () => (await h.snapshot()).elements.some(element => element.automationName === "More actions" && element.focused),
+        "Escape restores focus after changing the menu's preferences");
+      // Keep the mouse at the opener: the constrained phone popup covers it,
+      // so native layout creates hover events without any new pointer input.
+      await h.page.mouseMove(opener.x + opener.width / 2, opener.y + opener.height / 2);
       await h.page.press("ArrowDown");
-      await itemState(h, "List view", {selected: true});
+      assert(inside(opener, await getMenu(h)), "this constrained popup covers its stationary opener pointer");
+      await itemState(h, "List view", {selected: true, focused: true});
       await h.page.press("ArrowDown");
       await itemState(h, "Expanded view", {selected: true});
       await h.page.press("ArrowDown");
       await itemState(h, "Mark all as read", {selected: true, focused: true});
       assert(!(await h.snapshot()).elements.some(element => /MenuItem$/.test(element.type) && !element.enabled && element.selected),
         "native arrow navigation skips disabled Previous and Next commands");
+      const first = await itemState(h, "List view");
+      await h.page.mouseMove(first.x + first.width / 2, first.y + first.height / 2);
+      await itemState(h, "List view", {selected: true, focused: true});
       await h.capture("20-menu-phone-disabled");
       await dismiss(h);
     });

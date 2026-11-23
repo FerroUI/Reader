@@ -38,10 +38,15 @@ pub(super) fn track(button: &Ref<Button>) {
 /// Arrow keys open the dropdown and select its first/last enabled native item.
 /// Defer selection until the popup's presenter has completed its first layout.
 pub(super) fn with_selection(button: &Control, forward: bool) {
-    super::request(button);
     let Some(menu) = button.context_menu() else {
         return;
     };
+    menu.classes().set(super::pointer::KEYBOARD_OPEN, true);
+    super::request(button);
+    if !menu.is_open() {
+        menu.classes().set(super::pointer::KEYBOARD_OPEN, false);
+        return;
+    }
     let weak = menu.downgrade();
     Dispatcher::ui_thread().post_local(
         move || {
