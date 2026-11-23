@@ -119,7 +119,7 @@ export async function orderingChecks(h, check) {
       await prepare(); await h.resize(320, 740); await navigate(h, "All");
       touch = await createTouch(h.page);
       await h.clickLabel("Show subscriptions");
-      await h.clickName("SubscriptionSettings");
+      await touch.tapControl(await h.control(e => e.name === "SubscriptionSettings", "phone subscription heading"));
       const menu = await h.control(e => e.name === "ReaderMenu", "phone subscription settings");
       viewportBounds(menu, await h.snapshot());
       for (const name of ["Sort alphabetically", "Sort by drag and drop", "Show all", "Show updated"])
@@ -130,7 +130,7 @@ export async function orderingChecks(h, check) {
       viewportBounds(await h.control(e => e.name === "ReaderMenu", "held folder ordering menu"), await h.snapshot());
       const down = await itemState(h, "Move down", {enabled: true});
       assert(down.height >= 44 && down.hit, "the held folder exposes a reachable move command");
-      await h.capture("23-phone-folder-order"); await clickItem(h, "Move down");
+      await h.capture("23-phone-folder-order"); await touch.tapControl(down);
       await h.until(async () => (await h.state()).subscription_order.root[2]?.Folder === BETA, "phone folder move changes root order");
       await touch.disable(); touch = null;
       await h.resize(1363, 960); await navigate(h, {Feed: BASE + 3});

@@ -14,6 +14,7 @@ export async function japaneseChecks(h, check) {
         + "<pre><code>let 挨拶 = \"こんにちは、世界。\";\n// 日本語と ASCII code</code></pre>"
         + "<blockquote>読む・考える・共有する。</blockquote>";
       await h.resize(1363, 936); await replace(h, data); await navigate(h, {Feed: BASE + 3});
+      await h.page.send("Input.dispatchMouseEvent", {type: "mouseMoved", x: 1200, y: 800, pointerType: "mouse"});
       const result = await h.page.evaluate(`(() => {
         const fonts = ['Liberation Sans', 'Liberation Serif', 'Liberation Mono'];
         return fonts.flatMap(family => [[false,false],[true,false],[false,true],[true,true]].map(([bold,italic]) => ({
@@ -26,10 +27,11 @@ export async function japaneseChecks(h, check) {
       }
       const mono = result.find(sample => sample.family === "Liberation Mono" && !sample.bold && !sample.italic).glyphs;
       assert.equal(mono.find(glyph => glyph.character === "i").advance, mono.find(glyph => glyph.character === "W").advance);
-      await h.control(e => e.name === "ArticleHeadlineText" && e.text === article.title, "Japanese native headline");
+      await h.control(e => /TextBlock$/.test(e.type) && e.text === article.title, "Japanese native headline");
+      await h.control(e => /RichTextBlock$/.test(e.type) && e.text?.includes("日本語の記事を読む"), "Japanese native rich text");
       await h.capture("24-japanese-desktop");
       await h.resize(320, 844);
-      await h.control(e => e.name === "ArticleHeadlineText" && e.text === article.title, "Japanese phone headline");
+      await h.control(e => /TextBlock$/.test(e.type) && e.text === article.title, "Japanese phone headline");
       await h.capture("24-japanese-phone");
       await h.record("24-japanese-glyphs", result);
     });
