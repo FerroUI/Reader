@@ -114,12 +114,13 @@ fn read_state(vm: Rc<AppViewModel>, row: &Row) -> Element {
     };
     check_box()
         .name("ArticleReadState")
-        .class("reader-check")
+        .class("reader-read-state")
         .content(label)
         .automation_properties_name(label)
         .font_size(13.0)
         .foreground("#444444")
         .padding((8.0, 0.0))
+        .height(if row.touch { 44.0 } else { 26.0 })
         .min_height(if row.touch { 44.0 } else { 26.0 })
         .is_checked(Some(checked))
         .on_click(move |event| {

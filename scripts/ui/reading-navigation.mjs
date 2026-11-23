@@ -27,6 +27,21 @@ async function focusStream(h) {
   await h.page.click(title.x + 5, title.y + title.height / 2);
 }
 
+async function prepareStream(h, data) {
+  await replace(h, data);
+  await go(h, {Feed: ALPHA});
+  await focusStream(h);
+  // Empty per-stream preferences intentionally restore the default Expanded
+  // mode on import/navigation. Select the fixture's mode on its actual stream.
+  const mode = data.settings.view_mode;
+  await h.page.press(mode === "List" ? "2" : "1");
+  await h.until(async () => {
+    if ((await h.state()).settings.view_mode !== mode) return false;
+    return (await h.snapshot()).elements.some(e => e.articleId === FIRST
+      && e.name === (mode === "List" ? "ArticleRow" : "ArticleEntry"));
+  }, `${mode} fixture is rendered in its selected stream`);
+}
+
 async function fixtureServer() {
   const server = http.createServer((_, response) => {
     response.writeHead(200, {"content-type": "text/html; charset=utf-8", "cache-control": "no-store"});
@@ -98,9 +113,7 @@ async function focusedLinkSpace(h, url) {
 }
 
 async function streamPaging(h, mode, data, origin) {
-  await replace(h, data);
-  await go(h, {Feed: ALPHA});
-  await focusStream(h);
+  await prepareStream(h, data);
   const initial = await settled(h);
   await h.page.press("Space", ["shift"]);
   assert.equal(await read(h, FIRST), false, "initial Shift+Space must not open the last item");
@@ -186,8 +199,7 @@ export async function readingNavigationChecks(h, check) {
       await h.resize(1363, 936);
     });
     await check("Space remains native input in search and subscription editors", async () => {
-      await replace(h, fixture(baseline, "List", server.origin));
-      await go(h, {Feed: ALPHA});
+      await prepareStream(h, fixture(baseline, "List", server.origin));
       const before = (await h.state()).articles;
       await h.edit("SearchReader", "paging");
       await h.page.press("Space");

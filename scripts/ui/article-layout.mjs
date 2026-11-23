@@ -21,6 +21,11 @@ function fixture(baseline, density = "Comfortable", mode = "List") {
 async function prepare(h, data) {
   await replace(h, data);
   await h.page.evaluate('readerApp.navigate("\\"All\\"")');
+  // Streams with no saved entry intentionally restore their own default mode.
+  // Choose the fixture's presentation through the same command as the user.
+  await h.click(e => /TextBlock$/.test(e.type) && e.text?.startsWith("All items (")
+    && e.y > 110 && e.y < 180, "layout fixture stream title");
+  await h.page.press(data.settings.view_mode === "List" ? "2" : "1");
   return h.until(async () => {
     const view = await h.snapshot();
     const first = item(view, data.settings.view_mode === "List" ? "ArticleRow" : "ArticleEntry", data.articles[0].id);
@@ -46,6 +51,7 @@ export async function articleLayoutChecks(h, check) {
       assert.equal(headline.headlineRuns[1].foreground, "#777777");
       for (const name of ["ArticleHeadlineSource", "ArticleHeadlineDate"])
         assert.equal(rowChild(view, name, row).fontSize, 13, `${name} uses the original headline font`);
+      assert.equal(rowChild(view, "ArticleHeadlineSource", row).width, 143);
       const long = item(view, "ArticleRow", data.articles[1].id);
       for (const name of ["ArticleHeadlineText", "ArticleHeadlineDate", "ArticleHeadlineOriginal"])
         assert(rowChild(view, name, long), `${name} stays inside a long-title row`);
@@ -69,6 +75,10 @@ export async function articleLayoutChecks(h, check) {
       assert.deepEqual(edge.border, {brush: "#4D90F0", left: 1, top: 0, right: 0, bottom: 0});
       const current = rowChild(view, "ArticleHeadlineText", retained);
       assert.equal(current.headlineRuns[0].weight, 400, "opened/read title returns to normal weight");
+      const readState = view.elements.find(e => e.name === "ArticleReadState" && within(e, expanded));
+      assert.equal(readState?.height, 26, "the native footer checkbox has no Material 48px layout column");
+      const outline = view.elements.find(e => e.name === "ReaderReadStateOutline" && within(e, readState));
+      assert(outline && outline.width === 13 && outline.height === 13, "the compact native checkbox uses the original-sized outline");
       await h.capture("16-list-expanded-headline");
       // The date/background is part of the same headline toggle, not an inert
       // strip or a replacement card. Native action buttons remain independent.

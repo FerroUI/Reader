@@ -168,6 +168,7 @@ pub fn install_theme(app: &Application) {
     install_list(app);
     crate::menus::install(app);
     crate::checks::install(app);
+    crate::read_state::install(app);
     crate::touch::install(app);
 }
 fn install_list(app: &Application) {

@@ -42,6 +42,13 @@ export async function sendToChecks(h, check) {
     await h.resize(1363, 936);
     await replace(h, fixture(baseline));
     await go(h);
+    await h.click(e => /TextBlock$/.test(e.type) && e.text?.startsWith("Renamed & Unicode source")
+      && e.x > 200 && e.y < 180, "Send to stream title");
+    await h.page.press("2");
+    await h.until(async () => {
+      const elements = (await h.snapshot()).elements;
+      return elements.some(e => e.name === "ArticleRow") && !elements.some(e => e.name === "ArticleEntry");
+    }, "Send to fixture starts in native collapsed List view");
     await check("Send to configuration validates templates without opening or reading items", async () => {
       await h.page.press("n"); // Scan the collapsed item without opening it.
       await h.page.press("t", ["shift"]);

@@ -81,8 +81,11 @@ pub(super) fn view(vm: Rc<AppViewModel>, row: &Row) -> El<Border> {
                 .text(row.source.to_string())
                 .font_size(13.0)
                 .foreground("#555555")
+                // Original source: left 1.85em, width 11em, right padding 1em.
+                .width(143.0)
+                .horizontal_alignment(H::Left)
                 .text_trimming(<dyn TextTrimming>::character_ellipsis())
-                .margin((0.0, 0.0, 13.0, 0.0))
+                .margin((-1.95, 0.0, 13.0, 0.0))
                 .vertical_alignment(V::Center),
         );
     }
