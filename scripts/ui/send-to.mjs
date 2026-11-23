@@ -14,6 +14,24 @@ const destinations = async h => (await h.state()).settings.send_to;
 const checkbox = h => h.control(e => e.name === "ArticleReadState", "article read-state checkbox");
 const read = async h => (await h.state()).articles.find(a => a.id === ITEM).read;
 
+async function focusStream(h) {
+  // Programmatic navigation after reload does not focus the native canvas.
+  // Plain stream text establishes the browser input target without opening an item.
+  await h.click(e => /TextBlock$/.test(e.type) && e.text?.startsWith("Renamed & Unicode source")
+    && e.x > 200 && e.y < 180, "Send to stream title");
+}
+
+async function scanItem(h) {
+  await focusStream(h);
+  await h.page.press("n");
+  await h.until(async () => {
+    const elements = (await h.snapshot()).elements;
+    return elements.some(e => e.name === "ArticleList" && e.focused)
+      && elements.some(e => e.name === "ArticleHeadlineEdge" && e.border?.brush === "#4D90F0")
+      && !elements.some(e => e.name === "ArticleEntry");
+  }, "N focuses the native article list and scans the collapsed item");
+}
+
 function fixture(baseline, {mode = "List", automatic = false, configured = false, isRead = false} = {}) {
   const data = structuredClone(baseline), now = Math.floor(Date.now() / 1000);
   data.feeds = [{id: FEED, title: "Renamed & Unicode source", url: "https://news.invalid/feed.xml",
@@ -42,15 +60,14 @@ export async function sendToChecks(h, check) {
     await h.resize(1363, 936);
     await replace(h, fixture(baseline));
     await go(h);
-    await h.click(e => /TextBlock$/.test(e.type) && e.text?.startsWith("Renamed & Unicode source")
-      && e.x > 200 && e.y < 180, "Send to stream title");
+    await focusStream(h);
     await h.page.press("2");
     await h.until(async () => {
       const elements = (await h.snapshot()).elements;
       return elements.some(e => e.name === "ArticleRow") && !elements.some(e => e.name === "ArticleEntry");
     }, "Send to fixture starts in native collapsed List view");
     await check("Send to configuration validates templates without opening or reading items", async () => {
-      await h.page.press("n"); // Scan the collapsed item without opening it.
+      await scanItem(h);
       await h.page.press("t", ["shift"]);
       await h.clickLabel("Create a custom link");
       await h.edit("SendToName", "Reading notebook");
@@ -121,7 +138,7 @@ export async function sendToChecks(h, check) {
       await h.page.evaluate("readerApp.flushSave(); import('./host.js').then(m => m.flush())");
       await h.reload(); await h.ready(); await go(h);
       assert.deepEqual(await destinations(h), [{id: 1, name: "Notebook 日本語", url_template: template, enabled: true}]);
-      await h.page.press("n");
+      await scanItem(h);
       await h.page.press("t", ["shift"]);
       await menu(h, "Notebook 日本語");
       assert(!(await h.snapshot()).elements.some(e => e.name === "ArticleEntry"), "Shift+T preserves a collapsed scanned item");
